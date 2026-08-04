@@ -1,3 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">BiteSavers</string>
+
+    <!-- Header -->
+    <string name="greeting_prefix">👋 Good Evening</string>
+    <string name="search_hint_food_items">Search places</string>
+    <string name="avatar_initials">SL</string>
+
+    <!-- Filters -->
+    <string name="filter_all">All</string>
+    <string name="filter_bakery">Bakery</string>
+    <string name="filter_restaurant">Restaurant</string>
+    <string name="filter_noodles">Noodles</string>
+    <string name="filter_free">Free</string>
+
+    <!-- Sections -->
+    <string name="nearby_deals_title">Nearby Deals</string>
+    <string name="offers_title">Offers</string>
+    <string name="bags_nearby">%1$d bags nearby</string>
+    <string name="distance_km">%1$.1f km</string>
+    <string name="time_left_hours">%1$d h</string>
+
+    <!-- Offer card -->
+    <string name="currency_rm">RM %1$.2f</string>
+    <string name="original_price">RM %1$.2f</string>
+    <string name="discount_tag">-%1$d%%</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_orders">Orders</string>
+    <string name="nav_saved">Saved</string>
+    <string name="nav_profile">Profile</string>
+
+    <string name="cd_notifications">Notifications</string>
+    <string name="cd_search">Search</string>
 </resources>
