@@ -21,7 +21,7 @@ class MainActivity : ComponentActivity() {
             BiteSaversTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Greeting(
-                        name = "Android",
+                        name = "Jyan Lim",
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
