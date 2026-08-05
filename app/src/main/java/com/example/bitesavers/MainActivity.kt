@@ -1,5 +1,6 @@
 package com.example.bitesavers
 
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -11,20 +12,19 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.bitesavers.discovery.ui.DiscoveryRoute
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+
         enableEdgeToEdge()
         setContent {
             BiteSaversTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Jyan Lim",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                DiscoveryRoute()
             }
         }
     }
