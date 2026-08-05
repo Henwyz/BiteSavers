@@ -61,4 +61,7 @@ dependencies {
 
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+
+    // The core mapping engine we use to render vector tiles from Maptiler in UI
+    implementation("org.maplibre.gl:android-sdk:11.5.1")
 }

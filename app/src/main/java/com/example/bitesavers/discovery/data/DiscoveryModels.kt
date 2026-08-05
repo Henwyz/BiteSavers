@@ -19,6 +19,7 @@ data class UserUiModel(
     val avatarInitials: String
 )
 
+//For the pin dropped on the map with its necessary information
 data class NearbyDealMarkerUiModel(
     val id: String,
     val labelPrice: String,
@@ -52,3 +53,4 @@ data class DiscoveryUiState(
     val offers: List<OfferUiModel>,
     val filteredOffers: List<OfferUiModel>
 )
+
