@@ -1,11 +1,11 @@
-package com.example.bitesavers.discovery.logic
+package com.example.bitesavers.customer.discovery.logic
 
 import androidx.lifecycle.ViewModel
-import com.example.bitesavers.discovery.data.DiscoveryCategory
-import com.example.bitesavers.discovery.data.DiscoveryDummyData
-import com.example.bitesavers.discovery.data.DiscoveryUiState
-import com.example.bitesavers.discovery.data.OfferUiModel
-import com.example.bitesavers.discovery.data.UserRole
+import com.example.bitesavers.customer.discovery.data.DiscoveryDummyData
+import com.example.bitesavers.customer.discovery.data.DiscoveryUiState
+import com.example.bitesavers.data.model.DiscoveryCategory
+import com.example.bitesavers.data.model.OfferUiModel
+import com.example.bitesavers.data.model.UserRole
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

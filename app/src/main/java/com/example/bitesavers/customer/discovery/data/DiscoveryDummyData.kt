@@ -1,6 +1,9 @@
-package com.example.bitesavers.discovery.data
+package com.example.bitesavers.customer.discovery.data
 
 import com.example.bitesavers.R
+import com.example.bitesavers.data.model.DiscoveryCategory
+import com.example.bitesavers.data.model.OfferUiModel
+import com.example.bitesavers.data.model.UserRole
 
 object DiscoveryDummyData {
 
@@ -38,7 +41,10 @@ object DiscoveryDummyData {
             quantityLeft = 10,
             hoursToClose = 2,
             category = DiscoveryCategory.RESTAURANT,
-            isEligibleForNgoFree = false
+            isEligibleForNgoFree = false,
+            liveTemperature = 65.0,
+            storageType = "HOT",
+            description = "Extra portions of our signature Bolognese Spaghetti from lunch service. Packed in thermal containers to keep it warm and fresh."
         ),
         OfferUiModel(
             id = "o2",
@@ -52,7 +58,10 @@ object DiscoveryDummyData {
             quantityLeft = 6,
             hoursToClose = 1,
             category = DiscoveryCategory.NOODLES,
-            isEligibleForNgoFree = false
+            isEligibleForNgoFree = false,
+            liveTemperature = 62.0,
+            storageType = "HOT",
+            description = "Authentic Nasi Goreng Ayam cooked with fresh ingredients. A generous portion left over from the evening rush, ready to be rescued!"
         )
     )
 
@@ -68,7 +77,6 @@ object DiscoveryDummyData {
             isLoading = false,
             nearbyMarkers = defaultMarkers,
             offers = defaultOffers,
-
             filteredOffers = defaultOffers
         )
     }

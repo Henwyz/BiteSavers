@@ -1,4 +1,4 @@
-package com.example.bitesavers.discovery.ui
+package com.example.bitesavers.customer.discovery.ui
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -13,7 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.bitesavers.discovery.data.DiscoveryCategory
+import com.example.bitesavers.data.model.DiscoveryCategory
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @Composable

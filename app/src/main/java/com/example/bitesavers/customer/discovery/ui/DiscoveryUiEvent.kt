@@ -1,8 +1,8 @@
-package com.example.bitesavers.discovery.ui
+package com.example.bitesavers.customer.discovery.ui
 
-import com.example.bitesavers.discovery.data.DiscoveryCategory
-import com.example.bitesavers.discovery.data.OfferUiModel
-import com.example.bitesavers.discovery.data.UserRole
+import com.example.bitesavers.data.model.DiscoveryCategory
+import com.example.bitesavers.data.model.OfferUiModel
+import com.example.bitesavers.data.model.UserRole
 
 //For this file, it is a complete list of every single action a user can take on the Discovery Screen
 

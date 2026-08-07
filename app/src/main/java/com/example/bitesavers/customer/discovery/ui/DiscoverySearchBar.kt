@@ -1,4 +1,4 @@
-package com.example.bitesavers.discovery.ui
+package com.example.bitesavers.customer.discovery.ui
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding

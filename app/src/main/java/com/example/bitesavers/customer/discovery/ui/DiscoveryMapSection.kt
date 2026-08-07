@@ -1,4 +1,4 @@
-package com.example.bitesavers.discovery.ui
+package com.example.bitesavers.customer.discovery.ui
 
 import android.view.MotionEvent
 import androidx.compose.foundation.background
@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import com.example.bitesavers.discovery.data.NearbyDealMarkerUiModel
+import com.example.bitesavers.customer.discovery.data.NearbyDealMarkerUiModel
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 // MapLibre Imports

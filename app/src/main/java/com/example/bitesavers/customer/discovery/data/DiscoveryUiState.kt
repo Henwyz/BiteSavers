@@ -1,17 +1,8 @@
-package com.example.bitesavers.discovery.data
+package com.example.bitesavers.customer.discovery.data
 
-enum class UserRole {
-    CONSUMER,
-    NGO
-}
-
-enum class DiscoveryCategory {
-    ALL,
-    BAKERY,
-    RESTAURANT,
-    NOODLES,
-    FREE
-}
+import com.example.bitesavers.data.model.DiscoveryCategory
+import com.example.bitesavers.data.model.OfferUiModel
+import com.example.bitesavers.data.model.UserRole
 
 data class UserUiModel(
     val greeting: String,
@@ -27,20 +18,6 @@ data class NearbyDealMarkerUiModel(
     val longitude: Double
 )
 
-data class OfferUiModel(
-    val id: String,
-    val title: String,
-    val storeName: String,
-    val imageResId: Int,
-    val discountPercent: Int,
-    val currentPrice: Double,
-    val originalPrice: Double,
-    val distanceKm: Double,
-    val quantityLeft: Int,
-    val hoursToClose: Int,
-    val category: DiscoveryCategory,
-    val isEligibleForNgoFree: Boolean
-)
 
 data class DiscoveryUiState(
     val user: UserUiModel,

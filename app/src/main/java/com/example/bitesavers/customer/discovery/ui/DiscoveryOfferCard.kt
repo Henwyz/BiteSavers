@@ -1,5 +1,6 @@
-package com.example.bitesavers.discovery.ui
+package com.example.bitesavers.customer.discovery.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,10 +26,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.Image
 import com.example.bitesavers.R
-import com.example.bitesavers.discovery.data.DiscoveryCategory
-import com.example.bitesavers.discovery.data.OfferUiModel
+import com.example.bitesavers.data.model.DiscoveryCategory
+import com.example.bitesavers.data.model.OfferUiModel
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 import java.util.Locale
 
@@ -138,7 +138,10 @@ private fun DiscoveryOfferCardPreview() {
                 quantityLeft = 10,
                 hoursToClose = 2,
                 category = DiscoveryCategory.RESTAURANT,
-                isEligibleForNgoFree = false
+                isEligibleForNgoFree = false,
+                liveTemperature = 65.0,
+                storageType = "HOT",
+                description = "Extra portions of our signature Bolognese Spaghetti."
             ),
             onClick = {}
         )
