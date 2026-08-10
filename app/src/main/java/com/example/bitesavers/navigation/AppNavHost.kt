@@ -13,8 +13,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.bitesavers.customer.details.logic.FoodDetailViewModel
-import com.example.bitesavers.customer.details.ui.FoodDetailScreen
+import com.example.bitesavers.customer.details.ui.FoodDetailRoute // Updated to use the Route
 import com.example.bitesavers.customer.discovery.ui.DiscoveryRoute
+import com.example.bitesavers.customer.ticket.ui.TicketRoute // Imported the new Ticket Route
 
 @Composable
 fun AppNavHost(
@@ -50,21 +51,38 @@ fun AppNavHost(
             PlaceholderScreen("Profile Coming Soon")
         }
 
+        // 5. FOOD DETAIL SCREEN
         composable(
-            route = "food_detail/{offerId}",
+            route = Screen.FoodDetail.route, // Using your sealed class!
             arguments = listOf(
                 navArgument("offerId") { type = NavType.StringType }
             )
         ) {
             val viewModel: FoodDetailViewModel = viewModel()
 
-            FoodDetailScreen(
+            // Using the Route wrapper we built so it handles the UiEvents perfectly
+            FoodDetailRoute(
                 viewModel = viewModel,
                 onBackClick = {
-                    navController.popBackStack() // Go back
+                    navController.popBackStack()
                 },
                 onReserveSuccess = {
-                    navController.popBackStack() // Go back after success
+                    // THE JUMP: Now navigates to the ticket screen instead of popping back
+                    navController.navigate(Screen.Ticket.route)
+                }
+            )
+        }
+
+        // 6. TICKET SCREEN
+        composable(Screen.Ticket.route) {
+            TicketRoute(
+                onNavigateBack = {
+                    // Returns the user to the Discovery screen and clears the history
+                    // so pressing the physical back button on the phone doesn't
+                    // accidentally reopen the receipt.
+                    navController.navigate(Screen.Discovery.route) {
+                        popUpTo(Screen.Discovery.route) { inclusive = true }
+                    }
                 }
             )
         }

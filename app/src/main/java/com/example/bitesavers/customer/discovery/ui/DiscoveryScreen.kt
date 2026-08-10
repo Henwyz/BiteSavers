@@ -23,9 +23,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitesavers.customer.discovery.data.DiscoveryUiState
 import com.example.bitesavers.customer.discovery.logic.DiscoveryViewModel
+import com.example.bitesavers.customer.discovery.ui.components.DiscoveryFilterRow
+import com.example.bitesavers.customer.discovery.ui.components.DiscoveryHeader
+import com.example.bitesavers.customer.discovery.ui.components.DiscoveryMapSection
+import com.example.bitesavers.customer.discovery.ui.components.DiscoveryOfferCard
+import com.example.bitesavers.customer.discovery.ui.components.DiscoverySearchBar
 
 @Composable
 fun DiscoveryRoute(
@@ -33,7 +39,7 @@ fun DiscoveryRoute(
     onOfferClick: (String) -> Unit = {}
 ) {
     //Whenever data changes, this triggers a screen redraw automatically
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     DiscoveryScreen(
         state = uiState,

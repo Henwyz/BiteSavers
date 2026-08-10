@@ -1,7 +1,8 @@
-package com.example.bitesavers.customer.details.ui
+package com.example.bitesavers.customer.details.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -79,7 +80,7 @@ fun FoodDetailSafetyBanner(
 @Composable
 private fun FoodDetailSafetyBannerPreview() {
     BiteSaversTheme {
-        androidx.compose.foundation.layout.Box(modifier = Modifier.padding(16.dp)) {
+        Box(modifier = Modifier.padding(16.dp)) {
             FoodDetailSafetyBanner(
                 temperatureText = "Live temp: 60.0 °C - within safe hot storage zone",
                 isSafe = true

@@ -1,4 +1,4 @@
-package com.example.bitesavers.customer.discovery.ui
+package com.example.bitesavers.customer.discovery.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

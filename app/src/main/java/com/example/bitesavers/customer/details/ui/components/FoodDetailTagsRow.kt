@@ -1,4 +1,4 @@
-package com.example.bitesavers.customer.details.ui
+package com.example.bitesavers.customer.details.ui.components
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement

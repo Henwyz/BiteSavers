@@ -11,4 +11,7 @@ sealed class Screen(val route: String) {
         // A handy function to build the final string when we actually click a card
         fun createRoute(offerId: String) = "food_detail/$offerId"
     }
+
+    // NEW: Added the Ticket Screen!
+    object Ticket : Screen("ticket_screen")
 }

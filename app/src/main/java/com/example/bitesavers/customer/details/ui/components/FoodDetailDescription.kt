@@ -1,6 +1,7 @@
-package com.example.bitesavers.customer.details.ui
+package com.example.bitesavers.customer.details.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -39,7 +40,7 @@ fun FoodDetailDescription(
 @Composable
 private fun FoodDetailDescriptionPreview() {
     BiteSaversTheme {
-        androidx.compose.foundation.layout.Box(modifier = Modifier.padding(16.dp)) {
+        Box(modifier = Modifier.padding(16.dp)) {
             FoodDetailDescription(
                 description = "Freshly prepared surplus items from Artisan Bakery. Packaged securely to preserve temperature and quality."
             )

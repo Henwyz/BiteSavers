@@ -1,4 +1,4 @@
-package com.example.bitesavers.customer.discovery.ui
+package com.example.bitesavers.customer.discovery.ui.components
 
 import android.view.MotionEvent
 import androidx.compose.foundation.background

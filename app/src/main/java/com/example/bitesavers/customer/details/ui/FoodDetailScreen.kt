@@ -3,62 +3,79 @@ package com.example.bitesavers.customer.details.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.example.bitesavers.R
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.bitesavers.customer.details.data.FoodDetailUiState
 import com.example.bitesavers.customer.details.logic.FoodDetailViewModel
+import com.example.bitesavers.customer.details.ui.components.FoodDetailCheckoutBar
+import com.example.bitesavers.customer.details.ui.components.FoodDetailDescription
+import com.example.bitesavers.customer.details.ui.components.FoodDetailHeader
+import com.example.bitesavers.customer.details.ui.components.FoodDetailHero
+import com.example.bitesavers.customer.details.ui.components.FoodDetailQuantitySelector
+import com.example.bitesavers.customer.details.ui.components.FoodDetailSafetyBanner
+import com.example.bitesavers.customer.details.ui.components.FoodDetailStatusRow
+import com.example.bitesavers.customer.details.ui.components.FoodDetailTagsRow
+import com.example.bitesavers.customer.details.ui.components.FoodDetailTopBar
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * THE ROUTE WRAPPER
+ */
 @Composable
-fun FoodDetailScreen(
+fun FoodDetailRoute(
     viewModel: FoodDetailViewModel,
     onBackClick: () -> Unit,
     onReserveSuccess: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    FoodDetailScreen(
+        state = uiState,
+        onEvent = { event ->
+            // 1. Send every event to the ViewModel
+            viewModel.onEvent(event)
+
+            // 2. Handle Navigation triggers
+            when (event) {
+                is FoodDetailUiEvent.OnNavigateBack -> onBackClick()
+                is FoodDetailUiEvent.OnReserveClicked -> onReserveSuccess()
+                else -> Unit // Quantity changes don't require navigation
+            }
+        }
+    )
+}
+
+/**
+ * THE STATELESS SCREEN
+ */
+@Composable
+fun FoodDetailScreen(
+    state: FoodDetailUiState,
+    onEvent: (FoodDetailUiEvent) -> Unit
+) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(text = "Offer Details") },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_arrow_back),
-                            contentDescription = "Navigate Back"
-                        )
-                    }
-                },
-                // This single line kills the giant empty gap at the top!
-                windowInsets = WindowInsets(0.dp)
+            FoodDetailTopBar(
+                onBackClick = { onEvent(FoodDetailUiEvent.OnNavigateBack) }
             )
         },
         bottomBar = {
-            if (uiState.offer != null) {
+            if (state.offer != null) {
                 FoodDetailCheckoutBar(
-                    totalPrice = uiState.totalPrice,
-                    onReserveClick = {
-                        onReserveSuccess()
-                    }
+                    totalPrice = state.totalPrice,
+                    onReserveClick = { onEvent(FoodDetailUiEvent.OnReserveClicked) }
                 )
             }
         }
@@ -69,14 +86,14 @@ fun FoodDetailScreen(
                 .padding(innerPadding)
         ) {
             when {
-                uiState.isLoading -> {
+                state.isLoading -> {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
-                uiState.errorMessage != null -> {
+                state.errorMessage != null -> {
                     Text(
-                        text = uiState.errorMessage ?: "Unknown error occurred",
+                        text = state.errorMessage,
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.error,
                         modifier = Modifier
@@ -84,8 +101,8 @@ fun FoodDetailScreen(
                             .padding(16.dp)
                     )
                 }
-                uiState.offer != null -> {
-                    val offer = uiState.offer!!
+                state.offer != null -> {
+                    val offer = state.offer
                     val scrollState = rememberScrollState()
 
                     Column(
@@ -111,8 +128,8 @@ fun FoodDetailScreen(
                             )
 
                             FoodDetailSafetyBanner(
-                                temperatureText = uiState.temperatureText,
-                                isSafe = uiState.isTemperatureSafe
+                                temperatureText = state.temperatureText,
+                                isSafe = state.isTemperatureSafe
                             )
 
                             FoodDetailTagsRow(
@@ -124,9 +141,9 @@ fun FoodDetailScreen(
                             )
 
                             FoodDetailQuantitySelector(
-                                quantity = uiState.quantity,
-                                onIncrease = { viewModel.onIncreaseQuantity() },
-                                onDecrease = { viewModel.onDecreaseQuantity() }
+                                quantity = state.quantity,
+                                onIncrease = { onEvent(FoodDetailUiEvent.OnIncreaseQuantity) },
+                                onDecrease = { onEvent(FoodDetailUiEvent.OnDecreaseQuantity) }
                             )
 
                             androidx.compose.foundation.layout.Spacer(modifier = Modifier.padding(bottom = 16.dp))
