@@ -14,9 +14,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.bitesavers.R
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @Composable
@@ -43,13 +45,13 @@ fun FoodDetailStatusRow(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    text = "⏰ EXPIRES IN",
+                    text = stringResource(id = R.string.detail_expires_in_label),
                     style = MaterialTheme.typography.labelMedium,
                     color = Color(0xFF856404),
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "${hoursToClose}h 00m",
+                    text = stringResource(id = R.string.detail_expires_in_time, hoursToClose),
                     style = MaterialTheme.typography.titleLarge,
                     color = Color(0xFF856404),
                     fontWeight = FontWeight.Bold
@@ -71,13 +73,13 @@ fun FoodDetailStatusRow(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    text = "🛒 STOCK LEFT",
+                    text = stringResource(id = R.string.detail_stock_left_label),
                     style = MaterialTheme.typography.labelMedium,
                     color = Color(0xFF155724),
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "$stockLeft",
+                    text = stockLeft.toString(),
                     style = MaterialTheme.typography.titleLarge,
                     color = Color(0xFF155724),
                     fontWeight = FontWeight.Bold

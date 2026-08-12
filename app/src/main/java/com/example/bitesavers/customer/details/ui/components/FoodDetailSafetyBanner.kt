@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -53,7 +54,7 @@ fun FoodDetailSafetyBanner(
         ) {
             Image(
                 painter = painterResource(id = iconResId),
-                contentDescription = "Safety Status Icon",
+                contentDescription = stringResource(id = R.string.cd_safety_status_icon),
                 modifier = Modifier.size(32.dp)
             )
 
@@ -61,13 +62,13 @@ fun FoodDetailSafetyBanner(
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(
-                    text = if (isSafe) "Smart Box Safety Verified" else "Temperature Alert!",
+                    text = if (isSafe) stringResource(id = R.string.detail_safety_verified) else stringResource(id = R.string.detail_temperature_alert),
                     style = MaterialTheme.typography.titleSmall,
                     color = contentColor,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = temperatureText.ifEmpty { "Live temp monitoring active" },
+                    text = temperatureText.ifEmpty { stringResource(id = R.string.detail_live_temp_active) },
                     style = MaterialTheme.typography.bodySmall,
                     color = if (isSafe) Color(0xFFC8E6C9) else Color(0xFFFFEBEE)
                 )

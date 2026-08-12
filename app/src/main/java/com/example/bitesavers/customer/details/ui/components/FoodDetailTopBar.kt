@@ -8,6 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.bitesavers.R
 
@@ -17,13 +18,13 @@ fun FoodDetailTopBar(
     onBackClick: () -> Unit
 ) {
     TopAppBar(
-        title = { Text(text = "Offer Details") },
+        title = { Text(text = stringResource(id = R.string.detail_top_bar_title)) },
         navigationIcon = {
             IconButton(onClick = onBackClick) {
                 // Using your tutor's advice here!
                 Icon(
                     painter = painterResource(id = R.drawable.ic_arrow_back),
-                    contentDescription = "Navigate Back"
+                    contentDescription = stringResource(id = R.string.cd_navigate_back)
                 )
             }
         },

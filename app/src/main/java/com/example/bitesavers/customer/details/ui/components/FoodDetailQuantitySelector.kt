@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -36,7 +37,7 @@ fun FoodDetailQuantitySelector(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(
-            text = "Select Quantity",
+            text = stringResource(id = R.string.detail_select_quantity),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
@@ -56,14 +57,14 @@ fun FoodDetailQuantitySelector(
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_minus),
-                    contentDescription = "Decrease",
+                    contentDescription = stringResource(id = R.string.cd_decrease),
                     tint = Color.DarkGray,
                     modifier = Modifier.size(20.dp)
                 )
             }
 
             Text(
-                text = "$quantity",
+                text = quantity.toString(),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black // Forced to black so it doesn't vanish in dark mode!
@@ -75,7 +76,7 @@ fun FoodDetailQuantitySelector(
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_add),
-                    contentDescription = "Increase",
+                    contentDescription = stringResource(id = R.string.cd_increase),
                     tint = Color.DarkGray,
                     modifier = Modifier.size(20.dp)
                 )

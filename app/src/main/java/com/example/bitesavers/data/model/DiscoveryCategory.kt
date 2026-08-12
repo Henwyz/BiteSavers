@@ -2,8 +2,9 @@ package com.example.bitesavers.data.model
 
 enum class DiscoveryCategory {
     ALL,
+    HOT_MEALS,
     BAKERY,
-    RESTAURANT,
-    NOODLES,
+    DESSERTS,
+    BEVERAGES,
     FREE
 }

@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -43,13 +44,13 @@ fun PickupTicketPaymentCard(totalPaid: Double) {
         ) {
             Column {
                 Text(
-                    text = "TOTAL PAID",
+                    text = stringResource(id = R.string.ticket_total_paid),
                     fontSize = 10.sp,
                     color = Color(0xFF757575),
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "RM %.2f".format(totalPaid),
+                    text = stringResource(id = R.string.currency_rm, totalPaid),
                     fontSize = 24.sp,
                     color = Color(0xFF143B2A), // Dark Green
                     fontWeight = FontWeight.ExtraBold
@@ -57,7 +58,7 @@ fun PickupTicketPaymentCard(totalPaid: Double) {
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = "PAYMENT METHOD",
+                    text = stringResource(id = R.string.ticket_payment_method),
                     fontSize = 10.sp,
                     color = Color(0xFF757575),
                     fontWeight = FontWeight.SemiBold
@@ -72,13 +73,13 @@ fun PickupTicketPaymentCard(totalPaid: Double) {
                     // Custom payment icon
                     Icon(
                         painter = painterResource(id = R.drawable.ic_payment),
-                        contentDescription = "Payment Method",
+                        contentDescription = stringResource(id = R.string.cd_payment_method),
                         tint = Color(0xFF143B2A),
                         modifier = Modifier.size(14.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "BiteSaver Pay",
+                        text = stringResource(id = R.string.ticket_payment_bitesaver_pay),
                         fontSize = 12.sp,
                         color = Color(0xFF143B2A),
                         fontWeight = FontWeight.Bold

@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -42,14 +43,14 @@ fun PickupTicketSummaryCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "Reservation Summary",
+                text = stringResource(id = R.string.ticket_summary_title),
                 color = Color(0xFF143B2A),
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "#Order ID : $orderId",
+                text = stringResource(id = R.string.ticket_order_id, orderId),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.ExtraBold,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -59,19 +60,19 @@ fun PickupTicketSummaryCard(
 
             // Using specific drawables for each row
             SummaryRow(
-                label = "RESTAURANT",
+                label = stringResource(id = R.string.ticket_label_restaurant),
                 value = storeName,
                 iconRes = R.drawable.ic_store // Add this to your res/drawable
             )
             HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
             SummaryRow(
-                label = "PICKUP WINDOW",
+                label = stringResource(id = R.string.ticket_label_pickup_window),
                 value = pickupWindow,
                 iconRes = R.drawable.ic_clock // Add this to your res/drawable
             )
             HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
             SummaryRow(
-                label = "ITEM",
+                label = stringResource(id = R.string.ticket_label_item),
                 value = itemName,
                 iconRes = R.drawable.ic_bag // Add this to your res/drawable
             )

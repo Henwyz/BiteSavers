@@ -10,16 +10,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape // Added for the corners
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface // Added for the background block
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -30,22 +31,21 @@ import com.example.bitesavers.ui.theme.BiteSaversTheme
 @Composable
 fun DiscoveryHeader(
     user: UserUiModel,
+    location: String, // <--- ADDED: It now takes location as its own variable!
     onNotificationClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // 1. Wrap the entire header in a Surface
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surfaceVariant, // Gives it a contrasting color
-        shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp) // Rounds the bottom corners
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
     ) {
-        // 2. Your exact Row, just nested inside!
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 20.dp), // Increased vertical padding slightly
+                .padding(horizontal = 16.dp, vertical = 20.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
+            verticalAlignment = Alignment.Top // Or Alignment.CenterVertically if you want them centered!
         ) {
             Column {
                 Text(
@@ -59,7 +59,8 @@ fun DiscoveryHeader(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "📍 Kuala Lumpur",
+                    // UPDATED: Now uses the standalone location variable
+                    text = stringResource(id = R.string.location_format, location),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -68,7 +69,7 @@ fun DiscoveryHeader(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_notification),
-                    contentDescription = "Notifications",
+                    contentDescription = stringResource(id = R.string.cd_notifications),
                     modifier = Modifier
                         .size(22.dp)
                         .clickable { onNotificationClick() }
@@ -96,10 +97,12 @@ private fun DiscoveryHeaderPreview() {
     BiteSaversTheme {
         DiscoveryHeader(
             user = UserUiModel(
-                greeting = "👋 Good Evening",
+                greeting = stringResource(id = R.string.greeting_prefix),
                 displayName = "Sarah Tan",
-                avatarInitials = "ST"
+                avatarInitials = stringResource(id = R.string.avatar_initials)
             ),
+            // You inject the preview location right here!
+            location = "Tanjung Bungah, Penang",
             onNotificationClick = {}
         )
     }

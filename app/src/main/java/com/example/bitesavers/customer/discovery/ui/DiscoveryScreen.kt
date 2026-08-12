@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed // NEW IMPORT!
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -22,9 +22,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource // NEW IMPORT
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.bitesavers.R // NEW IMPORT
 import com.example.bitesavers.customer.discovery.data.DiscoveryUiState
 import com.example.bitesavers.customer.discovery.logic.DiscoveryViewModel
 import com.example.bitesavers.customer.discovery.ui.components.DiscoveryFilterRow
@@ -38,13 +40,10 @@ fun DiscoveryRoute(
     viewModel: DiscoveryViewModel = viewModel(),
     onOfferClick: (String) -> Unit = {}
 ) {
-    //Whenever data changes, this triggers a screen redraw automatically
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     DiscoveryScreen(
         state = uiState,
-        //the onEvent lambda acts like a switchboard. When a button is clicked in the UI
-        //it sends a message up to here, and the Route decides which ViewModel function to trigger
         onEvent = { event ->
             when (event) {
                 is DiscoveryUiEvent.OnSearchQueryChanged ->
@@ -88,6 +87,7 @@ fun DiscoveryScreen(
             item(span = { GridItemSpan(maxLineSpan) }) {
                 DiscoveryHeader(
                     user = state.user,
+                    location = "Kuala Lumpur", // UPDATED: Passed a temporary location string!
                     onNotificationClick = {
                         onEvent(DiscoveryUiEvent.OnNotificationClicked)
                     }
@@ -118,7 +118,8 @@ fun DiscoveryScreen(
                     )
 
                     Text(
-                        text = "Recommended for you",
+                        // UPDATED TO USE STRING RESOURCE!
+                        text = stringResource(id = R.string.discovery_recommended_title),
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.padding(top = 8.dp)
                     )
@@ -140,7 +141,6 @@ fun DiscoveryScreen(
             }
         }
 
-        //still need a place to show Snackbars, so i align them to the bottom of the Box.
         SnackbarHost(
             hostState = snackbarHostState,
             modifier = Modifier.align(Alignment.BottomCenter)

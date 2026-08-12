@@ -9,6 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource // NEW IMPORT
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Icon
@@ -22,20 +23,20 @@ fun DiscoverySearchBar(
     modifier: Modifier = Modifier
 ) {
     OutlinedTextField(
-        value = query, // The text currently showing in the box
-            // We pass the function directly here because the signatures match perfectly
-            // (both expect a String and return Unit). This saves memory!
+        value = query,
         onValueChange = onQueryChange,
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
         singleLine = true,
         shape = MaterialTheme.shapes.large,
-        placeholder = { Text("Search stores or meals") },
+        // UPDATED TO USE STRING RESOURCE!
+        placeholder = { Text(stringResource(id = R.string.search_hint_food_items)) },
         leadingIcon = {
             Icon(
-                painter = painterResource(id = R.drawable.ic_search), // make sure exists
-                contentDescription = "Search"
+                painter = painterResource(id = R.drawable.ic_search),
+                // UPDATED TO USE STRING RESOURCE!
+                contentDescription = stringResource(id = R.string.cd_search)
             )
         },
         colors = OutlinedTextFieldDefaults.colors(

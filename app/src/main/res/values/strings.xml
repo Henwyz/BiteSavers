@@ -2,16 +2,19 @@
 <resources>
     <string name="app_name">BiteSavers</string>
 
+    <!--========== Discovery Page ===========-->
     <!-- Header -->
     <string name="greeting_prefix">👋 Good Evening</string>
     <string name="search_hint_food_items">Search places</string>
     <string name="avatar_initials">SL</string>
+    <string name="location_format">📍 %1$s</string>
 
     <!-- Filters -->
     <string name="filter_all">All</string>
+    <string name="filter_hot_meals">Hot Meals</string>
     <string name="filter_bakery">Bakery</string>
-    <string name="filter_restaurant">Restaurant</string>
-    <string name="filter_noodles">Noodles</string>
+    <string name="filter_desserts">Desserts</string>
+    <string name="filter_beverages">Beverages</string>
     <string name="filter_free">Free</string>
 
     <!-- Sections -->
@@ -20,12 +23,76 @@
     <string name="bags_nearby">%1$d bags nearby</string>
     <string name="distance_km">%1$.1f km</string>
     <string name="time_left_hours">%1$d h</string>
+    <string name="map_preview_placeholder">Map Preview Placeholder</string>
+    <string name="discovery_recommended_title">Recommended for you</string>
 
     <!-- Offer card -->
     <string name="currency_rm">RM %1$.2f</string>
     <string name="original_price">RM %1$.2f</string>
     <string name="discount_tag">-%1$d%%</string>
+    <string name="offer_details">%1$.1f km • %2$d left • closes in %3$dh</string>
 
+    <!--========== Food Detail Page ===========-->
+    <string name="action_reserve_now">Reserve Now</string>
+    <string name="detail_about_title">About this surplus item</string>
+    <string name="detail_category_format">Category: %1$s</string>
+    <string name="detail_saved_amount">Saved RM%1$.2f</string>
+
+    <!-- Food Detail Hero -->
+    <string name="cd_food_item_image">Food Item Image</string>
+
+    <!-- Food Detail Quantity Selector -->
+    <string name="detail_select_quantity">Select Quantity</string>
+    <string name="cd_decrease">Decrease</string>
+    <string name="cd_increase">Increase</string>
+
+    <!-- Food Detail Safety Banner -->
+    <string name="cd_safety_status_icon">Safety Status Icon</string>
+    <string name="detail_safety_verified">Smart Box Safety Verified</string>
+    <string name="detail_temperature_alert">Temperature Alert!</string>
+    <string name="detail_live_temp_active">Live temp monitoring active</string>
+
+    <!-- Food Detail Status Row -->
+    <string name="detail_expires_in_label">⏰ EXPIRES IN</string>
+    <string name="detail_expires_in_time">%1$dh 00m</string>
+    <string name="detail_stock_left_label">🛒 STOCK LEFT</string>
+
+    <!-- Food Detail Tags Row -->
+    <string name="detail_distance_away">📍 %1$.1f km away</string>
+    <string name="detail_rating_dummy">⭐ 4.8 (120+ ratings)</string>
+    <string name="detail_co2_saved_dummy">🌱 ~1.2kg CO₂ saved</string>
+
+    <!-- Food Detail Top Bar -->
+    <string name="detail_top_bar_title">Offer Details</string>
+    <string name="cd_navigate_back">Navigate Back</string>
+
+    <!--========== Ticket Page ===========-->
+    <string name="ticket_header_title">Pickup Ticket</string>
+    <string name="ticket_header_subtitle">Show this to staff at pickup</string>
+    <string name="ticket_status_confirmed">• RESERVATION CONFIRMED</string>
+    <string name="ticket_status_awaiting">• AWAITING PICKUP</string>
+
+    <!-- Pickup Payment Card -->
+    <string name="ticket_total_paid">TOTAL PAID</string>
+    <string name="ticket_payment_method">PAYMENT METHOD</string>
+    <string name="cd_payment_method">Payment Method</string>
+    <string name="ticket_payment_bitesaver_pay">BiteSaver Pay</string>
+
+    <!-- Pickup Ticket PIN Card -->
+    <string name="ticket_collection_pin">🔑 COLLECTION PIN</string>
+    <string name="ticket_pin_instruction">Tell this PIN to the staff to collect</string>
+
+    <!-- Pickup Ticket Summary Card -->
+    <string name="ticket_summary_title">Reservation Summary</string>
+    <string name="ticket_order_id">#Order ID : %1$s</string>
+    <string name="ticket_label_restaurant">RESTAURANT</string>
+    <string name="ticket_label_pickup_window">PICKUP WINDOW</string>
+    <string name="ticket_label_item">ITEM</string>
+
+    <string name="cd_impact_icon">Impact</string>
+    <string name="ticket_impact_message">You saved RM %1$d and prevented -%2$.1f kg of food waste. Thank you!</string>
+
+    <!--========== General ===========-->
     <!-- Bottom navigation -->
     <string name="nav_home">Home</string>
     <string name="nav_orders">Orders</string>

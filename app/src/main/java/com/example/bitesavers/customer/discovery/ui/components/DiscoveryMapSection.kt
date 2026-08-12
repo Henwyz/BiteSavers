@@ -20,11 +20,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource // NEW IMPORT
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.example.bitesavers.R // NEW IMPORT
 import com.example.bitesavers.customer.discovery.data.NearbyDealMarkerUiModel
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 
@@ -61,15 +63,13 @@ private fun DiscoveryMapMapLibre(
     val styleUrl = "https://api.maptiler.com/maps/streets-v4/style.json?key=3OJ2B5f1qI0Cqbcpt5xf"
     val context = LocalContext.current
 
-    // Initialize the map view exactly once
     val mapView = remember {
         MapLibre.getInstance(context)
-        MapView(context) //fixed command to get the core context and mapview instance
+        MapView(context)
     }
 
-    // Crucial: Tie the map to the app's lifecycle so it actually renders
-    val lifecycle = LocalLifecycleOwner.current.lifecycle //grabs the current activity life status
-    DisposableEffect(lifecycle, mapView) { //only runs when it appears on screen
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(lifecycle, mapView) {
         val lifecycleObserver = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_START -> mapView.onStart()
@@ -78,17 +78,14 @@ private fun DiscoveryMapMapLibre(
                 Lifecycle.Event.ON_STOP -> mapView.onStop()
                 Lifecycle.Event.ON_DESTROY -> mapView.onDestroy()
                 else -> {}
-                //need to declare those events cuz if not, the map will run in the background even
-                //if we minimise the app etc, and other cases too
             }
         }
         lifecycle.addObserver(lifecycleObserver)
         onDispose {
-            lifecycle.removeObserver(lifecycleObserver) //cleans up observer when composable leaves screen
+            lifecycle.removeObserver(lifecycleObserver)
         }
     }
 
-    //AndroidView = embed traditional Android View
     AndroidView(
         modifier = modifier
             .fillMaxWidth()
@@ -97,50 +94,38 @@ private fun DiscoveryMapMapLibre(
             .clip(RoundedCornerShape(16.dp)),
         factory = {
             mapView.apply {
-                //Tells the parent scroll (LazyColumn) to not steal the drag when user touches the map
                 setOnTouchListener { view, event ->
                     when (event.action) {
-                        MotionEvent.ACTION_DOWN, //fingers touches down
-                        MotionEvent.ACTION_MOVE -> { //fingers drag around
+                        MotionEvent.ACTION_DOWN,
+                        MotionEvent.ACTION_MOVE -> {
                             view.parent.requestDisallowInterceptTouchEvent(true)
-                        } //this allows map to take full control
-                        MotionEvent.ACTION_UP, //fingers lift up
+                        }
+                        MotionEvent.ACTION_UP,
                         MotionEvent.ACTION_CANCEL -> {
                             view.parent.requestDisallowInterceptTouchEvent(false)
-                            //gives control back to the parent scroll
                         }
                     }
                     false
                 }
 
-//                Why it's needed: When your app opens, the container (MapView) is created first,
-//                but downloading the actual vector map style JSON and tiles from MapTiler happens
-//                over the internet asynchronously in the background. If you tried to drop pins or
-//                move the camera before the map engine finished booting up, the app would instantly
-//                crash with a NullPointerException.
-
-                getMapAsync { map: MapLibreMap -> //only hand the MapLibreMap after the map is fully initialized and ready
-                    // Use the Style Builder for safer loading
+                getMapAsync { map: MapLibreMap ->
                     map.setStyle(Style.Builder().fromUri(styleUrl)) { style: Style ->
 
-                        // Center the camera on the first marker
                         val center = markers.firstOrNull()?.let { LatLng(it.latitude, it.longitude) }
-                            ?: LatLng(3.1390, 101.6869) //calculate the center coordinates
+                            ?: LatLng(3.1390, 101.6869)
 
-                        // Use moveCamera and CameraUpdateFactory to guarantee it resolves
                         val cameraPosition = CameraPosition.Builder()
                             .target(center)
                             .zoom(14.0)
                             .build()
                         map.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
 
-                        // Drop the pins
                         markers.forEach { markerData ->
                             map.addMarker(
                                 MarkerOptions()
                                     .position(LatLng(markerData.latitude, markerData.longitude))
                                     .title(markerData.labelPrice)
-                            ) //loads into the map
+                            )
                         }
                     }
                 }
@@ -163,7 +148,8 @@ private fun DiscoveryMapPlaceholder(
             .background(MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Text(
-            text = "Map Preview Placeholder",
+            // UPDATED TO USE STRING RESOURCE!
+            text = stringResource(id = R.string.map_preview_placeholder),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier

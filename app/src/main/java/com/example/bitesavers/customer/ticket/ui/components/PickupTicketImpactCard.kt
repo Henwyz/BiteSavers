@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -34,13 +35,13 @@ fun PickupTicketImpactCard(savedAmount: Double, co2Saved: Double) {
         // Updated to painterResource!
         Icon(
             painter = painterResource(id = R.drawable.ic_eco),
-            contentDescription = "Impact",
+            contentDescription = stringResource(id = R.string.cd_impact_icon),
             tint = Color(0xFF1976D2),
             modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.width(12.dp))
         Text(
-            text = "You saved RM ${savedAmount.toInt()} and prevented -${co2Saved} kg of food waste. Thank you!",
+            text = stringResource(id = R.string.ticket_impact_message, savedAmount.toInt(), co2Saved),
             fontSize = 12.sp,
             color = Color(0xFF143B2A),
             fontWeight = FontWeight.Medium

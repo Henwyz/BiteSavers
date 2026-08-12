@@ -12,10 +12,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.bitesavers.R
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @Composable
@@ -29,9 +31,9 @@ fun FoodDetailTagsRow(
             .horizontalScroll(rememberScrollState()), // This allows the tags to swipe sideways!
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        DetailTagChip(text = "📍 ${distanceKm} km away")
-        DetailTagChip(text = "⭐ 4.8 (120+ ratings)")
-        DetailTagChip(text = "🌱 ~1.2kg CO₂ saved")
+        DetailTagChip(text = stringResource(id = R.string.detail_distance_away, distanceKm))
+        DetailTagChip(text = stringResource(id = R.string.detail_rating_dummy))
+        DetailTagChip(text = stringResource(id = R.string.detail_co2_saved_dummy))
     }
 }
 

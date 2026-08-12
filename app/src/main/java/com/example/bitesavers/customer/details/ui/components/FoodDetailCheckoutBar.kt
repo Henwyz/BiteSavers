@@ -18,8 +18,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource // NEW IMPORT
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.bitesavers.R // NEW IMPORT
 
 @Composable
 fun FoodDetailCheckoutBar(
@@ -51,14 +53,14 @@ fun FoodDetailCheckoutBar(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Reserve Now",
+                        text = stringResource(id = R.string.action_reserve_now),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                     Spacer(modifier = Modifier.width(8.dp)) // Small squished gap
                     Text(
-                        text = "RM %.2f".format(totalPrice),
+                        text = stringResource(id = R.string.currency_rm, totalPrice),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF81C784)

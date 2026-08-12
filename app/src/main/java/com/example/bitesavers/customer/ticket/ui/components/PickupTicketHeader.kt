@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -48,20 +49,20 @@ fun PickupTicketHeader(onBackClick: () -> Unit) {
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_arrow_back),
-                    contentDescription = "Back",
+                    contentDescription = stringResource(id = R.string.cd_navigate_back),
                     tint = Color.Black
                 )
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column {
                 Text(
-                    text = "Pickup Ticket",
+                    text = stringResource(id = R.string.ticket_header_title),
                     color = Color.White,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "Show this to staff at pickup",
+                    text = stringResource(id = R.string.ticket_header_subtitle),
                     color = Color(0xFF00FF00), // Bright Green
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold
@@ -78,8 +79,18 @@ fun PickupTicketHeader(onBackClick: () -> Unit) {
                 .padding(12.dp),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            Text("• RESERVATION CONFIRMED", color = Color(0xFF00FF00), fontSize = 10.sp, fontWeight = FontWeight.Bold)
-            Text("• AWAITING PICKUP", color = Color(0xFF00FF00), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            Text(
+                text = stringResource(id = R.string.ticket_status_confirmed),
+                color = Color(0xFF00FF00),
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = stringResource(id = R.string.ticket_status_awaiting),
+                color = Color(0xFF00FF00),
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }

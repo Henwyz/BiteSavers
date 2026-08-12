@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource // NEW IMPORT
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -30,7 +31,6 @@ import com.example.bitesavers.R
 import com.example.bitesavers.data.model.DiscoveryCategory
 import com.example.bitesavers.data.model.OfferUiModel
 import com.example.bitesavers.ui.theme.BiteSaversTheme
-import java.util.Locale
 
 @Composable
 fun DiscoveryOfferCard(
@@ -56,7 +56,6 @@ fun DiscoveryOfferCard(
                     .fillMaxWidth()
                     .height(160.dp),
                 contentScale = ContentScale.Crop
-                //crop perfectly without stretching the food
             )
 
             Box(
@@ -67,7 +66,8 @@ fun DiscoveryOfferCard(
                     .align(Alignment.TopStart)
             ) {
                 Text(
-                    text = "${offer.discountPercent}% OFF",
+                    // UPDATED: Uses the discount_tag string format
+                    text = stringResource(id = R.string.discount_tag, offer.discountPercent),
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onErrorContainer,
@@ -95,13 +95,15 @@ fun DiscoveryOfferCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "RM ${offer.currentPrice.toPrice()}",
+                    // UPDATED: stringResource handles the double decimal formatting natively!
+                    text = stringResource(id = R.string.currency_rm, offer.currentPrice),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "RM ${offer.originalPrice.toPrice()}",
+                    // UPDATED: stringResource handles the double decimal formatting natively!
+                    text = stringResource(id = R.string.original_price, offer.originalPrice),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -110,16 +112,19 @@ fun DiscoveryOfferCard(
             Spacer(modifier = Modifier.size(8.dp))
 
             Text(
-                text = "${offer.distanceKm} km • ${offer.quantityLeft} left • closes in ${offer.hoursToClose}h",
+                // UPDATED: Uses the new combined details format
+                text = stringResource(
+                    id = R.string.offer_details,
+                    offer.distanceKm,
+                    offer.quantityLeft,
+                    offer.hoursToClose
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
 }
-
-private fun Double.toPrice(): String = String.format(Locale.US, "%.2f", this)
-//function that forces the app to always show two decimal places
 
 @Preview(showBackground = true)
 @Composable
@@ -130,14 +135,14 @@ private fun DiscoveryOfferCardPreview() {
                 id = "1",
                 title = "Bolognese Spaghetti",
                 storeName = "Mr Lee Western Food",
-                imageResId = R.drawable.food_spaghetti, // replace if needed
+                imageResId = R.drawable.food_spaghetti,
                 discountPercent = 30,
                 currentPrice = 10.50,
                 originalPrice = 15.00,
                 distanceKm = 1.9,
                 quantityLeft = 10,
                 hoursToClose = 2,
-                category = DiscoveryCategory.RESTAURANT,
+                category = DiscoveryCategory.HOT_MEALS, // UPDATED to match your new enum!
                 isEligibleForNgoFree = false,
                 liveTemperature = 65.0,
                 storageType = "HOT",

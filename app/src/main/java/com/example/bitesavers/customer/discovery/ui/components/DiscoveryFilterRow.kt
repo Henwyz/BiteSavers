@@ -11,8 +11,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.bitesavers.R
 import com.example.bitesavers.data.model.DiscoveryCategory
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 
@@ -25,9 +27,6 @@ fun DiscoveryFilterRow(
 ) {
     Row(
         modifier = modifier
-            //allows user to swipe left and right
-            //rememberScrollState() tells compose to remember how far user has scrolled
-            //so it doesnt snap back to the beginning when the screen redraws
             .horizontalScroll(rememberScrollState())
             .padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -35,7 +34,6 @@ fun DiscoveryFilterRow(
         categories.forEach { category ->
             val selected = category == selectedCategory
 
-            //built in component for selecting category
             FilterChip(
                 selected = selected,
                 onClick = { onCategorySelected(category) },
@@ -51,15 +49,15 @@ fun DiscoveryFilterRow(
     }
 }
 
-//Since our enum are all written in caps, this toDisplayText (Extension Function)
-//convert the raw code names into readable string
+@Composable
 private fun DiscoveryCategory.toDisplayText(): String {
     return when (this) {
-        DiscoveryCategory.ALL -> "All"
-        DiscoveryCategory.BAKERY -> "Bakery"
-        DiscoveryCategory.RESTAURANT -> "Restaurant"
-        DiscoveryCategory.NOODLES -> "Noodles"
-        DiscoveryCategory.FREE -> "Free"
+        DiscoveryCategory.ALL -> stringResource(id = R.string.filter_all)
+        DiscoveryCategory.HOT_MEALS -> stringResource(id = R.string.filter_hot_meals)
+        DiscoveryCategory.BAKERY -> stringResource(id = R.string.filter_bakery)
+        DiscoveryCategory.DESSERTS -> stringResource(id = R.string.filter_desserts)
+        DiscoveryCategory.BEVERAGES -> stringResource(id = R.string.filter_beverages)
+        DiscoveryCategory.FREE -> stringResource(id = R.string.filter_free)
     }
 }
 
@@ -70,9 +68,11 @@ private fun DiscoveryFilterRowPreview() {
         DiscoveryFilterRow(
             categories = listOf(
                 DiscoveryCategory.ALL,
+                DiscoveryCategory.HOT_MEALS,
                 DiscoveryCategory.BAKERY,
-                DiscoveryCategory.RESTAURANT,
-                DiscoveryCategory.NOODLES
+                DiscoveryCategory.DESSERTS,
+                DiscoveryCategory.BEVERAGES,
+                DiscoveryCategory.FREE
             ),
             selectedCategory = DiscoveryCategory.ALL,
             onCategorySelected = {}

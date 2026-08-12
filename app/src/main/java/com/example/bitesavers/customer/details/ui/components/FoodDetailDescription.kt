@@ -9,9 +9,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource // NEW IMPORT
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.bitesavers.R // NEW IMPORT
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @Composable
@@ -24,12 +26,12 @@ fun FoodDetailDescription(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
-            text = "About this surplus item",
+            text = stringResource(id = R.string.detail_about_title),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = description, // Now displaying the dynamic text!
+            text = description,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
