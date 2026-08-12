@@ -15,7 +15,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -48,7 +47,7 @@ fun FoodDetailQuantitySelector(
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFFF1F3F4), RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
             IconButton(
@@ -58,7 +57,7 @@ fun FoodDetailQuantitySelector(
                 Icon(
                     painter = painterResource(id = R.drawable.ic_minus),
                     contentDescription = stringResource(id = R.string.cd_decrease),
-                    tint = Color.DarkGray,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -67,7 +66,7 @@ fun FoodDetailQuantitySelector(
                 text = quantity.toString(),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = Color.Black // Forced to black so it doesn't vanish in dark mode!
+                color = MaterialTheme.colorScheme.onSurface // Forced to black so it doesn't vanish in dark mode!
             )
 
             IconButton(
@@ -77,7 +76,7 @@ fun FoodDetailQuantitySelector(
                 Icon(
                     painter = painterResource(id = R.drawable.ic_add),
                     contentDescription = stringResource(id = R.string.cd_increase),
-                    tint = Color.DarkGray,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp)
                 )
             }

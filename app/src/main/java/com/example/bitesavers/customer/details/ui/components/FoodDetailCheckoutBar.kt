@@ -17,11 +17,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource // NEW IMPORT
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.bitesavers.R // NEW IMPORT
+import com.example.bitesavers.R
+import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @Composable
 fun FoodDetailCheckoutBar(
@@ -44,29 +45,40 @@ fun FoodDetailCheckoutBar(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF1B4D3E)
+                    containerColor = MaterialTheme.colorScheme.primary
                 ),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp)
             ) {
                 Row(
-                    horizontalArrangement = Arrangement.Center, // Keeps words together in the middle
+                    horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = stringResource(id = R.string.action_reserve_now),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
-                    Spacer(modifier = Modifier.width(8.dp)) // Small squished gap
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = stringResource(id = R.string.currency_rm, totalPrice),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF81C784)
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                     )
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun FoodDetailCheckoutBarPreview() {
+    BiteSaversTheme {
+        FoodDetailCheckoutBar(
+            totalPrice = 10.50,
+            onReserveClick = {}
+        )
     }
 }

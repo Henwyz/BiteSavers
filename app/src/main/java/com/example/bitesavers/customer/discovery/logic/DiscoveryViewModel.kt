@@ -83,11 +83,13 @@ class DiscoveryViewModel : ViewModel() {
 
         return state.offers.asSequence() //process it as stream
             .filter { offer ->
+                // UPDATED: Now matches your actual app categories!
                 when (state.selectedCategory) {
                     DiscoveryCategory.ALL -> true
                     DiscoveryCategory.BAKERY -> offer.category == DiscoveryCategory.BAKERY
-                    DiscoveryCategory.RESTAURANT -> offer.category == DiscoveryCategory.RESTAURANT
-                    DiscoveryCategory.NOODLES -> offer.category == DiscoveryCategory.NOODLES
+                    DiscoveryCategory.HOT_MEALS -> offer.category == DiscoveryCategory.HOT_MEALS
+                    DiscoveryCategory.DESSERTS -> offer.category == DiscoveryCategory.DESSERTS
+                    DiscoveryCategory.BEVERAGES -> offer.category == DiscoveryCategory.BEVERAGES
                     DiscoveryCategory.FREE -> {
                         state.userRole == UserRole.NGO &&
                                 offer.hoursToClose <= 1 &&

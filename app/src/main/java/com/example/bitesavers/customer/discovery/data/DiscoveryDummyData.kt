@@ -16,8 +16,8 @@ object DiscoveryDummyData {
     val defaultCategories = listOf(
         DiscoveryCategory.ALL,
         DiscoveryCategory.BAKERY,
-        DiscoveryCategory.RESTAURANT,
-        DiscoveryCategory.NOODLES
+        DiscoveryCategory.HOT_MEALS,
+        DiscoveryCategory.BAKERY
     )
 
     //dummy data for markers
@@ -40,7 +40,7 @@ object DiscoveryDummyData {
             distanceKm = 1.9,
             quantityLeft = 10,
             hoursToClose = 2,
-            category = DiscoveryCategory.RESTAURANT,
+            category = DiscoveryCategory.HOT_MEALS,
             isEligibleForNgoFree = false,
             liveTemperature = 65.0,
             storageType = "HOT",
@@ -57,7 +57,7 @@ object DiscoveryDummyData {
             distanceKm = 3.2,
             quantityLeft = 6,
             hoursToClose = 1,
-            category = DiscoveryCategory.NOODLES,
+            category = DiscoveryCategory.HOT_MEALS,
             isEligibleForNgoFree = false,
             liveTemperature = 62.0,
             storageType = "HOT",

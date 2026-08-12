@@ -23,7 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource // NEW IMPORT
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -62,15 +62,16 @@ fun DiscoveryOfferCard(
                 modifier = Modifier
                     .padding(10.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(MaterialTheme.colorScheme.errorContainer)
+                    // UPDATED: Using the 'tertiary' role to pull your custom DiscountOrange!
+                    .background(MaterialTheme.colorScheme.tertiary)
                     .align(Alignment.TopStart)
             ) {
                 Text(
-                    // UPDATED: Uses the discount_tag string format
                     text = stringResource(id = R.string.discount_tag, offer.discountPercent),
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                     style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    // UPDATED: Ensuring the text contrasts correctly with the orange
+                    color = MaterialTheme.colorScheme.onTertiary,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -95,14 +96,12 @@ fun DiscoveryOfferCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    // UPDATED: stringResource handles the double decimal formatting natively!
                     text = stringResource(id = R.string.currency_rm, offer.currentPrice),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    // UPDATED: stringResource handles the double decimal formatting natively!
                     text = stringResource(id = R.string.original_price, offer.originalPrice),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -112,7 +111,6 @@ fun DiscoveryOfferCard(
             Spacer(modifier = Modifier.size(8.dp))
 
             Text(
-                // UPDATED: Uses the new combined details format
                 text = stringResource(
                     id = R.string.offer_details,
                     offer.distanceKm,
@@ -142,7 +140,7 @@ private fun DiscoveryOfferCardPreview() {
                 distanceKm = 1.9,
                 quantityLeft = 10,
                 hoursToClose = 2,
-                category = DiscoveryCategory.HOT_MEALS, // UPDATED to match your new enum!
+                category = DiscoveryCategory.HOT_MEALS,
                 isEligibleForNgoFree = false,
                 liveTemperature = 65.0,
                 storageType = "HOT",

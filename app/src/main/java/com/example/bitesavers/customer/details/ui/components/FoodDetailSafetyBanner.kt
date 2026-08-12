@@ -1,6 +1,5 @@
 package com.example.bitesavers.customer.details.ui.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,12 +10,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -31,13 +30,10 @@ fun FoodDetailSafetyBanner(
     isSafe: Boolean,
     modifier: Modifier = Modifier
 ) {
-    // Dynamic background and tint logic
-    val containerColor = if (isSafe) Color(0xFF1B4D3E) else Color(0xFFC62828) // Deep green or warning red
-    val contentColor = Color.White
+    val containerColor = if (isSafe) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+    val contentColor = if (isSafe) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onError
 
-    // Switch between your custom drawable resources depending on safety status
-    // (Make sure to drop your custom icon files like ic_safety_check / ic_warning into res/drawable!)
-    val iconResId = if (isSafe) R.drawable.ic_safe else R.drawable.ic_danger // Placeholder drawable references
+    val iconResId = if (isSafe) R.drawable.ic_safe else R.drawable.ic_danger
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -52,9 +48,11 @@ fun FoodDetailSafetyBanner(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Image(
+
+            Icon(
                 painter = painterResource(id = iconResId),
                 contentDescription = stringResource(id = R.string.cd_safety_status_icon),
+                tint = contentColor,
                 modifier = Modifier.size(32.dp)
             )
 
@@ -70,7 +68,7 @@ fun FoodDetailSafetyBanner(
                 Text(
                     text = temperatureText.ifEmpty { stringResource(id = R.string.detail_live_temp_active) },
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (isSafe) Color(0xFFC8E6C9) else Color(0xFFFFEBEE)
+                    color = contentColor.copy(alpha = 0.8f)
                 )
             }
         }

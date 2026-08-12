@@ -13,12 +13,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -32,7 +32,7 @@ import com.example.bitesavers.ui.theme.BiteSaversTheme
 fun PickupTicketPaymentCard(totalPaid: Double) {
     Surface(
         shape = RoundedCornerShape(16.dp),
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -46,13 +46,13 @@ fun PickupTicketPaymentCard(totalPaid: Double) {
                 Text(
                     text = stringResource(id = R.string.ticket_total_paid),
                     fontSize = 10.sp,
-                    color = Color(0xFF757575),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
                     text = stringResource(id = R.string.currency_rm, totalPaid),
                     fontSize = 24.sp,
-                    color = Color(0xFF143B2A), // Dark Green
+                    color = MaterialTheme.colorScheme.primary, // Dark Green
                     fontWeight = FontWeight.ExtraBold
                 )
             }
@@ -60,13 +60,13 @@ fun PickupTicketPaymentCard(totalPaid: Double) {
                 Text(
                     text = stringResource(id = R.string.ticket_payment_method),
                     fontSize = 10.sp,
-                    color = Color(0xFF757575),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.SemiBold
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(
                     modifier = Modifier
-                        .background(Color(0xFFC8E6C9), RoundedCornerShape(12.dp)) // Light green pill
+                        .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(12.dp)) // Light green pill
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -74,14 +74,14 @@ fun PickupTicketPaymentCard(totalPaid: Double) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_payment),
                         contentDescription = stringResource(id = R.string.cd_payment_method),
-                        tint = Color(0xFF143B2A),
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.size(14.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = stringResource(id = R.string.ticket_payment_bitesaver_pay),
                         fontSize = 12.sp,
-                        color = Color(0xFF143B2A),
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -96,7 +96,7 @@ private fun PickupTicketPaymentCardPreview() {
     BiteSaversTheme {
         Box(
             modifier = Modifier
-                .background(Color(0xFFF4FAF5))
+                .background(MaterialTheme.colorScheme.background)
                 .padding(16.dp)
         ) {
             PickupTicketPaymentCard(totalPaid = 5.00)

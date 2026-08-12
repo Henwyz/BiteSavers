@@ -12,12 +12,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,7 +30,8 @@ import com.example.bitesavers.ui.theme.BiteSaversTheme
 fun PickupTicketPinCard(pin: String) {
     Surface(
         shape = RoundedCornerShape(16.dp),
-        color = Color(0xFF143B2A), // Dark Green
+        // Swapped to surfaceVariant so it matches the beautiful dark summary card below it
+        color = MaterialTheme.colorScheme.surfaceVariant,
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
@@ -39,7 +40,7 @@ fun PickupTicketPinCard(pin: String) {
         ) {
             Text(
                 text = stringResource(id = R.string.ticket_collection_pin),
-                color = Color(0xFF1B5E20), // Darker green for text, or use Bright Green Color(0xFF00FF00) if preferred
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -47,17 +48,17 @@ fun PickupTicketPinCard(pin: String) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Loops through each character in the PIN string and creates a circle
                 pin.forEach { digit ->
                     Box(
                         modifier = Modifier
                             .size(56.dp)
-                            .background(Color(0xFF2E7D32), CircleShape), // Pin Circle Green
+                            // Keeping the PIN circles Primary green so they pop against the dark card!
+                            .background(MaterialTheme.colorScheme.primary, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = digit.toString(),
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onPrimary,
                             fontSize = 32.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -67,7 +68,7 @@ fun PickupTicketPinCard(pin: String) {
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = stringResource(id = R.string.ticket_pin_instruction),
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium
             )

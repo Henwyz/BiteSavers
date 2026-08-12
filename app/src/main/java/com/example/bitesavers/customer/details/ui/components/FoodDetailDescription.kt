@@ -9,11 +9,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource // NEW IMPORT
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.bitesavers.R // NEW IMPORT
+import com.example.bitesavers.R
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @Composable

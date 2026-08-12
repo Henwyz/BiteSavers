@@ -7,11 +7,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -41,14 +41,14 @@ fun FoodDetailTagsRow(
 private fun DetailTagChip(text: String) {
     Surface(
         shape = RoundedCornerShape(8.dp),
-        color = Color(0xFFF1F3F4)
+        color = MaterialTheme.colorScheme.surfaceVariant
     ) {
         Text(
             text = text,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
-            color = Color(0xFF333333)
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }

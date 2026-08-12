@@ -5,21 +5,24 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -35,8 +38,8 @@ fun PickupTicketHeader(onBackClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
-            .background(Color(0xFF143B2A)) // Dark Green
-            .padding(top = 48.dp, bottom = 24.dp, start = 16.dp, end = 16.dp)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(top = 16.dp, bottom = 24.dp, start = 16.dp, end = 16.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically
@@ -44,26 +47,26 @@ fun PickupTicketHeader(onBackClick: () -> Unit) {
             IconButton(
                 onClick = onBackClick,
                 modifier = Modifier
-                    .background(Color.White, CircleShape)
+                    .background(MaterialTheme.colorScheme.background, CircleShape)
                     .size(40.dp)
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_arrow_back),
                     contentDescription = stringResource(id = R.string.cd_navigate_back),
-                    tint = Color.Black
+                    tint = MaterialTheme.colorScheme.onBackground
                 )
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column {
                 Text(
                     text = stringResource(id = R.string.ticket_header_title),
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = stringResource(id = R.string.ticket_header_subtitle),
-                    color = Color(0xFF00FF00), // Bright Green
+                    color = MaterialTheme.colorScheme.primary,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -75,19 +78,21 @@ fun PickupTicketHeader(onBackClick: () -> Unit) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFF1B5E20), RoundedCornerShape(12.dp))
+                // Swapped to 'primary' so it pops sharply against 'surfaceVariant'
+                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(12.dp))
                 .padding(12.dp),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             Text(
                 text = stringResource(id = R.string.ticket_status_confirmed),
-                color = Color(0xFF00FF00),
+                // Swapped text to 'onPrimary' to maintain perfect readability
+                color = MaterialTheme.colorScheme.onPrimary,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold
             )
             Text(
                 text = stringResource(id = R.string.ticket_status_awaiting),
-                color = Color(0xFF00FF00),
+                color = MaterialTheme.colorScheme.onPrimary,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold
             )

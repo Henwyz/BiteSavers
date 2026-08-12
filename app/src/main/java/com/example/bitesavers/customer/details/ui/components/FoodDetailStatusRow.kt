@@ -13,7 +13,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -36,7 +35,7 @@ fun FoodDetailStatusRow(
             modifier = Modifier.weight(1f),
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color(0xFFFFF3CD) // Soft yellow background
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer // Soft yellow/orange background
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
@@ -47,13 +46,13 @@ fun FoodDetailStatusRow(
                 Text(
                     text = stringResource(id = R.string.detail_expires_in_label),
                     style = MaterialTheme.typography.labelMedium,
-                    color = Color(0xFF856404),
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = stringResource(id = R.string.detail_expires_in_time, hoursToClose),
                     style = MaterialTheme.typography.titleLarge,
-                    color = Color(0xFF856404),
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -64,7 +63,7 @@ fun FoodDetailStatusRow(
             modifier = Modifier.weight(1f),
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color(0xFFD4EDDA) // Soft green background
+                containerColor = MaterialTheme.colorScheme.secondaryContainer // Soft green background
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
@@ -75,13 +74,13 @@ fun FoodDetailStatusRow(
                 Text(
                     text = stringResource(id = R.string.detail_stock_left_label),
                     style = MaterialTheme.typography.labelMedium,
-                    color = Color(0xFF155724),
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = stockLeft.toString(),
                     style = MaterialTheme.typography.titleLarge,
-                    color = Color(0xFF155724),
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
                     fontWeight = FontWeight.Bold
                 )
             }

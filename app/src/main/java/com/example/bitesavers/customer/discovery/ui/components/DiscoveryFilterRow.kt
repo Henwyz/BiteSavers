@@ -41,9 +41,16 @@ fun DiscoveryFilterRow(
                     Text(text = category.toDisplayText())
                 },
                 colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                    // UNSELECTED STATE
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    labelColor = MaterialTheme.colorScheme.onSecondaryContainer,
+
+                    // SELECTED STATE
+                    selectedContainerColor = MaterialTheme.colorScheme.primary,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                // Removes the default border for a cleaner brand look
+                border = null
             )
         }
     }

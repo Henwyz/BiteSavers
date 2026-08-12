@@ -92,6 +92,23 @@
     <string name="cd_impact_icon">Impact</string>
     <string name="ticket_impact_message">You saved RM %1$d and prevented -%2$.1f kg of food waste. Thank you!</string>
 
+    <!--========== Checkout Page ===========-->
+    <string name="checkout_total_payment">Total Payment</string>
+    <string name="action_confirm_payment">Confirm Payment</string>
+
+    <!-- Checkout Order Summary -->
+    <string name="checkout_summary_title">Order Summary</string>
+    <string name="checkout_item_quantity">%1$s  x%2$d</string>
+    <string name="checkout_subtotal">Subtotal</string>
+
+    <!-- Checkout Payment Card -->
+    <string name="checkout_payment_title">Payment Method</string>
+    <string name="checkout_payment_balance_format">Balance: RM %1$.2f</string>
+    <string name="action_change_payment">Change</string>
+
+    <!-- Checkout Top Bar -->
+    <string name="checkout_top_bar_title">Checkout</string>
+
     <!--========== General ===========-->
     <!-- Bottom navigation -->
     <string name="nav_home">Home</string>

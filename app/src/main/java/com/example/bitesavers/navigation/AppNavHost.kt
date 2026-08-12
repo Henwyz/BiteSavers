@@ -12,10 +12,11 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.bitesavers.customer.checkout.ui.CheckoutRoute // Imported the Checkout Route
 import com.example.bitesavers.customer.details.logic.FoodDetailViewModel
-import com.example.bitesavers.customer.details.ui.FoodDetailRoute // Updated to use the Route
+import com.example.bitesavers.customer.details.ui.FoodDetailRoute
 import com.example.bitesavers.customer.discovery.ui.DiscoveryRoute
-import com.example.bitesavers.customer.ticket.ui.TicketRoute // Imported the new Ticket Route
+import com.example.bitesavers.customer.ticket.ui.TicketRoute
 
 @Composable
 fun AppNavHost(
@@ -53,33 +54,45 @@ fun AppNavHost(
 
         // 5. FOOD DETAIL SCREEN
         composable(
-            route = Screen.FoodDetail.route, // Using your sealed class!
+            route = Screen.FoodDetail.route,
             arguments = listOf(
                 navArgument("offerId") { type = NavType.StringType }
             )
         ) {
             val viewModel: FoodDetailViewModel = viewModel()
 
-            // Using the Route wrapper we built so it handles the UiEvents perfectly
             FoodDetailRoute(
                 viewModel = viewModel,
                 onBackClick = {
                     navController.popBackStack()
                 },
                 onReserveSuccess = {
-                    // THE JUMP: Now navigates to the ticket screen instead of popping back
-                    navController.navigate(Screen.Ticket.route)
+                    navController.navigate(Screen.Checkout.route)
                 }
             )
         }
 
-        // 6. TICKET SCREEN
+        // 6. CHECKOUT SCREEN
+        composable(Screen.Checkout.route) {
+            CheckoutRoute(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onCheckoutSuccess = {
+                    // Navigate to Ticket when payment succeeds
+                    navController.navigate(Screen.Ticket.route) {
+                        // Pop the checkout screen off the stack so the user can't press back to pay again!
+                        popUpTo(Screen.Checkout.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // 7. TICKET SCREEN
         composable(Screen.Ticket.route) {
             TicketRoute(
                 onNavigateBack = {
                     // Returns the user to the Discovery screen and clears the history
-                    // so pressing the physical back button on the phone doesn't
-                    // accidentally reopen the receipt.
                     navController.navigate(Screen.Discovery.route) {
                         popUpTo(Screen.Discovery.route) { inclusive = true }
                     }
@@ -89,7 +102,6 @@ fun AppNavHost(
     }
 }
 
-// A quick temporary screen to prove our navigation works!
 @Composable
 fun PlaceholderScreen(title: String) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

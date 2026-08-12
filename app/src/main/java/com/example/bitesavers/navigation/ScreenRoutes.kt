@@ -12,6 +12,7 @@ sealed class Screen(val route: String) {
         fun createRoute(offerId: String) = "food_detail/$offerId"
     }
 
-    // NEW: Added the Ticket Screen!
+    object Checkout : Screen("checkout_screen")
+
     object Ticket : Screen("ticket_screen")
 }
