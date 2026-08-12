@@ -17,6 +17,7 @@ object DiscoveryDummyData {
         DiscoveryCategory.ALL,
         DiscoveryCategory.BAKERY,
         DiscoveryCategory.HOT_MEALS,
+        DiscoveryCategory.DESSERTS,
         DiscoveryCategory.BAKERY
     )
 

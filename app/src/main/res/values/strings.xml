@@ -10,12 +10,12 @@
     <string name="location_format">📍 %1$s</string>
 
     <!-- Filters -->
-    <string name="filter_all">All</string>
-    <string name="filter_hot_meals">Hot Meals</string>
-    <string name="filter_bakery">Bakery</string>
-    <string name="filter_desserts">Desserts</string>
-    <string name="filter_beverages">Beverages</string>
-    <string name="filter_free">Free</string>
+    <string name="category_all">All</string>
+    <string name="category_bakery">Bakery</string>
+    <string name="category_hot_meals">Hot Meals</string>
+    <string name="category_desserts">Desserts</string>
+    <string name="category_beverages">Beverages</string>
+    <string name="category_free">Claim for Free</string> <!-- The NGO exclusive tag! -->
 
     <!-- Sections -->
     <string name="nearby_deals_title">Nearby Deals</string>

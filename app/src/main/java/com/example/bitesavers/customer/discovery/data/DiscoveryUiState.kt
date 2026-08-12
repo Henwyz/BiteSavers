@@ -28,6 +28,7 @@ data class DiscoveryUiState(
     val isLoading: Boolean,
     val nearbyMarkers: List<NearbyDealMarkerUiModel>,
     val offers: List<OfferUiModel>,
-    val filteredOffers: List<OfferUiModel>
+    val filteredOffers: List<OfferUiModel>,
+    val selectedMapOfferId: String? = null
 )
 

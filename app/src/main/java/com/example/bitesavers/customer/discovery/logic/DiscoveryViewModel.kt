@@ -39,6 +39,13 @@ class DiscoveryViewModel : ViewModel() {
      */
     val uiState: StateFlow<DiscoveryUiState> = _uiState.asStateFlow()
 
+    // To Handle map pin clicked
+    fun onMapMarkerClicked(offerId: String?) {
+        _uiState.update { current ->
+            current.copy(selectedMapOfferId = offerId)
+        }
+    }
+
     fun onSearchQueryChanged(query: String) {
         _uiState.update { current -> //looks at the current state of the screen this second
             val updated = current.copy(searchQuery = query) //use copy because cannot directly change data

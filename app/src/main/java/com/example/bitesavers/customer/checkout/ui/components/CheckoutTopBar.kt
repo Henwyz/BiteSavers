@@ -28,8 +28,7 @@ fun CheckoutTopBar(
                     contentDescription = stringResource(id = R.string.cd_navigate_back)
                 )
             }
-        },
-        windowInsets = WindowInsets(0.dp) // Keeps the top spacing clean
+        }
     )
 }
 

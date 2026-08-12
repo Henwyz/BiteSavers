@@ -2,14 +2,17 @@ package com.example.bitesavers.customer.discovery.ui.components
 
 import android.view.MotionEvent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -20,13 +23,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.res.stringResource // NEW IMPORT
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import com.example.bitesavers.R // NEW IMPORT
+import com.example.bitesavers.R
 import com.example.bitesavers.customer.discovery.data.NearbyDealMarkerUiModel
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 
@@ -43,21 +47,74 @@ import org.maplibre.android.camera.CameraUpdateFactory
 @Composable
 fun DiscoveryMapSection(
     markers: List<NearbyDealMarkerUiModel>,
+    selectedOfferId: String?, // Passed from ViewModel
+    onMarkerClick: (String?) -> Unit, // Sends click to ViewModel
+    onOfferNavigate: (String) -> Unit, // Navigates to detail page
     modifier: Modifier = Modifier
 ) {
     val isInPreview = LocalInspectionMode.current
 
-    if (isInPreview) {
-        DiscoveryMapPlaceholder(modifier = modifier, markers = markers)
-    } else {
-        DiscoveryMapMapLibre(modifier = modifier, markers = markers)
+    // The Box allows the Compose overlay card to float on top of the MapLibre AndroidView
+    Box(modifier = modifier) {
+        if (isInPreview) {
+            DiscoveryMapPlaceholder(
+                markers = markers,
+                onMarkerClick = onMarkerClick
+            )
+        } else {
+            DiscoveryMapMapLibre(
+                markers = markers,
+                onMarkerClick = onMarkerClick
+            )
+        }
+
+        // --- THE POPUP OVERLAY CARD ---
+        if (selectedOfferId != null) {
+            val selectedMarker = markers.find { it.id == selectedOfferId }
+
+            if (selectedMarker != null) {
+                Surface(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .padding(start = 24.dp, end = 24.dp, bottom = 24.dp) // Floats above the bottom
+                        .clickable { onOfferNavigate(selectedMarker.id) }, // THE NAV JUMP!
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    shadowElevation = 8.dp
+                ) {
+                    // Note: You can replace this basic Column with your actual Reusable Offer Card!
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Selected Deal",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = selectedMarker.labelPrice,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "Tap to view details",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
-// For map implementation
 @Composable
 private fun DiscoveryMapMapLibre(
     markers: List<NearbyDealMarkerUiModel>,
+    onMarkerClick: (String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val styleUrl = "https://api.maptiler.com/maps/streets-v4/style.json?key=3OJ2B5f1qI0Cqbcpt5xf"
@@ -89,7 +146,7 @@ private fun DiscoveryMapMapLibre(
     AndroidView(
         modifier = modifier
             .fillMaxWidth()
-            .height(190.dp)
+            .height(190.dp) // Made it slightly taller so the popup fits nicely
             .padding(horizontal = 16.dp)
             .clip(RoundedCornerShape(16.dp)),
         factory = {
@@ -120,12 +177,31 @@ private fun DiscoveryMapMapLibre(
                             .build()
                         map.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
 
+                        // Add markers and hide the ID inside the "snippet"
                         markers.forEach { markerData ->
                             map.addMarker(
                                 MarkerOptions()
                                     .position(LatLng(markerData.latitude, markerData.longitude))
                                     .title(markerData.labelPrice)
+                                    .snippet(markerData.id) // Hide the ID here!
                             )
+                        }
+
+                        // Listen for marker clicks
+                        map.setOnMarkerClickListener { marker ->
+                            val clickedId = marker.snippet
+                            if (clickedId != null) {
+                                onMarkerClick(clickedId)
+                                true // Tells MapLibre we handled the click
+                            } else {
+                                false
+                            }
+                        }
+
+                        // Dismiss the card if they click the empty map background
+                        map.addOnMapClickListener {
+                            onMarkerClick(null)
+                            false
                         }
                     }
                 }
@@ -137,6 +213,7 @@ private fun DiscoveryMapMapLibre(
 @Composable
 private fun DiscoveryMapPlaceholder(
     markers: List<NearbyDealMarkerUiModel>,
+    onMarkerClick: (String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -146,9 +223,9 @@ private fun DiscoveryMapPlaceholder(
             .padding(horizontal = 16.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant)
+            .clickable { onMarkerClick(null) }
     ) {
         Text(
-            // UPDATED TO USE STRING RESOURCE!
             text = stringResource(id = R.string.map_preview_placeholder),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -167,7 +244,8 @@ private fun DiscoveryMapPlaceholder(
                 Text(
                     text = it.labelPrice,
                     style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable { onMarkerClick(it.id) }
                 )
             }
         }
@@ -183,7 +261,10 @@ private fun DiscoveryMapSectionPreview() {
                 NearbyDealMarkerUiModel("1", "RM 9", 3.1466, 101.6958),
                 NearbyDealMarkerUiModel("2", "RM 12", 3.1579, 101.7115),
                 NearbyDealMarkerUiModel("3", "RM 7", 3.1319, 101.6841)
-            )
+            ),
+            selectedOfferId = "1", // Hardcoded to show the popup in preview
+            onMarkerClick = {},
+            onOfferNavigate = {}
         )
     }
 }

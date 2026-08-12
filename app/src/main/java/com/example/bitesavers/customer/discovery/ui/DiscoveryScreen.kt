@@ -17,7 +17,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -54,6 +53,14 @@ fun DiscoveryRoute(
 
                 is DiscoveryUiEvent.OnOfferClicked ->
                     onOfferClick(event.offer.id)
+
+                // NEW: Handle Map Marker Clicks (Make sure to add this to your sealed class!)
+                is DiscoveryUiEvent.OnMapMarkerClicked ->
+                    viewModel.onMapMarkerClicked(event.offerId)
+
+                // NEW: Handle Navigation from the Map Popup (Add this to your sealed class too!)
+                is DiscoveryUiEvent.OnMapOfferNavigate ->
+                    onOfferClick(event.offerId)
 
                 is DiscoveryUiEvent.OnRoleChanged ->
                     viewModel.onUserRoleChanged(event.role)
@@ -108,13 +115,17 @@ fun DiscoveryScreen(
                     )
 
                     DiscoveryFilterRow(
-                        categories = state.availableCategories,
+                        availableCategories = state.availableCategories, // FIXED: Matched the parameter name from your component
                         selectedCategory = state.selectedCategory,
                         onCategorySelected = { onEvent(DiscoveryUiEvent.OnCategorySelected(it)) }
                     )
 
+                    // UPDATED: Wired up all the new map logic!
                     DiscoveryMapSection(
-                        markers = state.nearbyMarkers
+                        markers = state.nearbyMarkers,
+                        selectedOfferId = state.selectedMapOfferId,
+                        onMarkerClick = { onEvent(DiscoveryUiEvent.OnMapMarkerClicked(it)) },
+                        onOfferNavigate = { onEvent(DiscoveryUiEvent.OnMapOfferNavigate(it)) }
                     )
 
                     Text(
