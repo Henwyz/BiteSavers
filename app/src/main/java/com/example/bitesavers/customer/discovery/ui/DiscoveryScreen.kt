@@ -115,21 +115,21 @@ fun DiscoveryScreen(
                     )
 
                     DiscoveryFilterRow(
-                        availableCategories = state.availableCategories, // FIXED: Matched the parameter name from your component
+                        availableCategories = state.availableCategories,
                         selectedCategory = state.selectedCategory,
                         onCategorySelected = { onEvent(DiscoveryUiEvent.OnCategorySelected(it)) }
                     )
 
-                    // UPDATED: Wired up all the new map logic!
                     DiscoveryMapSection(
                         markers = state.nearbyMarkers,
+                        offers = state.filteredOffers,
+                        userRole = state.userRole,
                         selectedOfferId = state.selectedMapOfferId,
                         onMarkerClick = { onEvent(DiscoveryUiEvent.OnMapMarkerClicked(it)) },
                         onOfferNavigate = { onEvent(DiscoveryUiEvent.OnMapOfferNavigate(it)) }
                     )
 
                     Text(
-                        // UPDATED TO USE STRING RESOURCE!
                         text = stringResource(id = R.string.discovery_recommended_title),
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.padding(top = 8.dp)

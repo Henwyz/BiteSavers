@@ -31,6 +31,13 @@
     <string name="original_price">RM %1$.2f</string>
     <string name="discount_tag">-%1$d%%</string>
     <string name="offer_details">%1$.1f km • %2$d left • closes in %3$dh</string>
+    <string name="badge_ngo_free">NGO FREE CLAIM</string>
+    <string name="price_free">RM 0.00</string>
+
+    <!-- Discovery Empty State -->
+    <string name="empty_state_title">No deals found</string>
+    <string name="empty_state_message">We couldn\'t find any food deals matching your search or selected filter.</string>
+    <string name="empty_state_clear_filters">Clear Filters</string>
 
     <!--========== Food Detail Page ===========-->
     <string name="action_reserve_now">Reserve Now</string>
@@ -108,6 +115,12 @@
 
     <!-- Checkout Top Bar -->
     <string name="checkout_top_bar_title">Checkout</string>
+    <string name="cd_success_icon">Order Successful</string>
+    <string name="order_success_title">Order Placed Successfully!</string>
+    <string name="order_success_subtitle">Your food rescue reservation is confirmed. Show your ticket at pickup.</string>
+    <string name="btn_view_ticket">View Pickup Ticket</string>
+
+    <!--========== Order Success ===========-->
 
     <!--========== General ===========-->
     <!-- Bottom navigation -->

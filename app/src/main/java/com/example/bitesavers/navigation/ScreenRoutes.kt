@@ -14,5 +14,8 @@ sealed class Screen(val route: String) {
 
     object Checkout : Screen("checkout_screen")
 
+    // FIXED: Added the route string to the Success destination
+    object Success : Screen("success_screen")
+
     object Ticket : Screen("ticket_screen")
 }

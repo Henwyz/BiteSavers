@@ -3,6 +3,7 @@ package com.example.bitesavers.customer.discovery.logic
 import androidx.lifecycle.ViewModel
 import com.example.bitesavers.customer.discovery.data.DiscoveryDummyData
 import com.example.bitesavers.customer.discovery.data.DiscoveryUiState
+import com.example.bitesavers.customer.discovery.ui.DiscoveryUiEvent
 import com.example.bitesavers.data.model.DiscoveryCategory
 import com.example.bitesavers.data.model.OfferUiModel
 import com.example.bitesavers.data.model.UserRole
@@ -88,7 +89,16 @@ class DiscoveryViewModel : ViewModel() {
         val query = state.searchQuery.trim().lowercase()
         //takes the query (in all form)
 
-        return state.offers.asSequence() //process it as stream
+        return state.offers.asSequence()
+            .filter { offer ->
+                if (state.userRole == UserRole.CONSUMER) {
+                    // Customers can ONLY see items with MORE than 1 hour remaining
+                    offer.hoursToClose > 1
+                } else {
+                    // NGOs can see all active items
+                    true
+                }
+            } //process it as stream
             .filter { offer ->
                 // UPDATED: Now matches your actual app categories!
                 when (state.selectedCategory) {
@@ -110,5 +120,25 @@ class DiscoveryViewModel : ViewModel() {
                         offer.storeName.lowercase().contains(query)
             }
             .toList() //bundles the surviving food cards back into a standard list
+    }
+
+    fun onEvent(event: DiscoveryUiEvent) {
+        when (event) {
+            is DiscoveryUiEvent.OnSearchQueryChanged -> onSearchQueryChanged(event.query)
+            is DiscoveryUiEvent.OnCategorySelected -> onCategorySelected(event.category)
+            is DiscoveryUiEvent.OnMapMarkerClicked -> onMapMarkerClicked(event.offerId)
+            is DiscoveryUiEvent.OnResetFilters -> onResetFilters()
+            else -> {}
+        }
+    }
+
+    fun onResetFilters() {
+        _uiState.update { current ->
+            val updated = current.copy(
+                searchQuery = "",
+                selectedCategory = DiscoveryCategory.ALL
+            )
+            updated.copy(filteredOffers = applyFilters(updated))
+        }
     }
 }

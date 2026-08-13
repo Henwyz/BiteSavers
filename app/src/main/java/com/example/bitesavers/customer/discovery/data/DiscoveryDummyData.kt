@@ -18,14 +18,14 @@ object DiscoveryDummyData {
         DiscoveryCategory.BAKERY,
         DiscoveryCategory.HOT_MEALS,
         DiscoveryCategory.DESSERTS,
-        DiscoveryCategory.BAKERY
+        DiscoveryCategory.BEVERAGES,
     )
 
     //dummy data for markers
     val defaultMarkers = listOf(
-        NearbyDealMarkerUiModel("m1", "RM 9", 3.1390, 101.6869),
-        NearbyDealMarkerUiModel("m2", "RM 7", 3.1400, 101.6900),
-        NearbyDealMarkerUiModel("m3", "RM 12", 3.1370, 101.6920)
+        NearbyDealMarkerUiModel("o1", "RM 9", 3.1390, 101.6869),
+        NearbyDealMarkerUiModel("o2", "RM 7", 3.1400, 101.6900),
+        NearbyDealMarkerUiModel("o3", "RM 12", 3.1370, 101.6920)
     )
 
     //dummy data for list of fake food deals

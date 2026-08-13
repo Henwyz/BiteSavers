@@ -16,4 +16,6 @@ sealed class DiscoveryUiEvent {
 
     data class OnMapMarkerClicked(val offerId: String?) : DiscoveryUiEvent()
     data class OnMapOfferNavigate(val offerId: String) : DiscoveryUiEvent()
+
+    object OnResetFilters : DiscoveryUiEvent()
 }

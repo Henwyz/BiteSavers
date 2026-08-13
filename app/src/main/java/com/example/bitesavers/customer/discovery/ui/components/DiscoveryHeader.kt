@@ -45,7 +45,7 @@ fun DiscoveryHeader(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 20.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top // Or Alignment.CenterVertically if you want them centered!
+            verticalAlignment = Alignment.Top
         ) {
             Column {
                 Text(

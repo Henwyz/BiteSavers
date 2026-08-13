@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -32,6 +33,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.example.bitesavers.R
 import com.example.bitesavers.customer.discovery.data.NearbyDealMarkerUiModel
+import com.example.bitesavers.data.model.OfferUiModel
+import com.example.bitesavers.data.model.UserRole
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 // MapLibre Imports
@@ -47,12 +50,14 @@ import org.maplibre.android.camera.CameraUpdateFactory
 @Composable
 fun DiscoveryMapSection(
     markers: List<NearbyDealMarkerUiModel>,
-    selectedOfferId: String?, // Passed from ViewModel
-    onMarkerClick: (String?) -> Unit, // Sends click to ViewModel
-    onOfferNavigate: (String) -> Unit, // Navigates to detail page
+    offers: List<OfferUiModel> = emptyList(),
+    userRole: UserRole = UserRole.CONSUMER,
+    selectedOfferId: String?,
+    onMarkerClick: (String?) -> Unit,
+    onOfferNavigate: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isInPreview = LocalInspectionMode.current
+    val isInPreview = LocalInspectionMode.current //For preview ppurpose only
 
     // The Box allows the Compose overlay card to float on top of the MapLibre AndroidView
     Box(modifier = modifier) {
@@ -70,41 +75,20 @@ fun DiscoveryMapSection(
 
         // --- THE POPUP OVERLAY CARD ---
         if (selectedOfferId != null) {
-            val selectedMarker = markers.find { it.id == selectedOfferId }
+            val selectedOffer = offers.find { it.id == selectedOfferId }
 
-            if (selectedMarker != null) {
-                Surface(
+            if (selectedOffer != null) {
+                Box(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .padding(start = 24.dp, end = 24.dp, bottom = 24.dp) // Floats above the bottom
-                        .clickable { onOfferNavigate(selectedMarker.id) }, // THE NAV JUMP!
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    shadowElevation = 8.dp
+                        .padding(bottom = 12.dp)
+                        .widthIn(max = 280.dp) // Limits the card width so it doesn't span the whole map width
                 ) {
-                    // Note: You can replace this basic Column with your actual Reusable Offer Card!
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Text(
-                            text = "Selected Deal",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = selectedMarker.labelPrice,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "Tap to view details",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                    }
+                    CompactDiscoveryOfferCard(
+                        offer = selectedOffer,
+                        userRole = userRole,
+                        onClick = { onOfferNavigate(selectedOffer.id) }
+                    )
                 }
             }
         }
@@ -191,13 +175,20 @@ private fun DiscoveryMapMapLibre(
                         map.setOnMarkerClickListener { marker ->
                             val clickedId = marker.snippet
                             if (clickedId != null) {
+                                // Smoothly animate the camera to center on the clicked pin
+                                map.animateCamera(
+                                    CameraUpdateFactory.newLatLngZoom(
+                                        marker.position,
+                                        15.0 // Keep a focused zoom level
+                                    ),
+                                    400 // Animation duration in milliseconds
+                                )
                                 onMarkerClick(clickedId)
-                                true // Tells MapLibre we handled the click
+                                true
                             } else {
                                 false
                             }
                         }
-
                         // Dismiss the card if they click the empty map background
                         map.addOnMapClickListener {
                             onMarkerClick(null)

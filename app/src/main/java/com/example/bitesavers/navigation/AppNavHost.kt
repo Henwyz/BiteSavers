@@ -12,6 +12,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.bitesavers.customer.OrderSuccess.OrderSuccessScreen
 import com.example.bitesavers.customer.checkout.ui.CheckoutRoute // Imported the Checkout Route
 import com.example.bitesavers.customer.details.logic.FoodDetailViewModel
 import com.example.bitesavers.customer.details.ui.FoodDetailRoute
@@ -79,10 +80,20 @@ fun AppNavHost(
                     navController.popBackStack()
                 },
                 onCheckoutSuccess = {
-                    // Navigate to Ticket when payment succeeds
-                    navController.navigate(Screen.Ticket.route) {
-                        // Pop the checkout screen off the stack so the user can't press back to pay again!
+                    // Navigates to Success screen and removes Checkout from the backstack
+                    navController.navigate(Screen.Success.route) {
                         popUpTo(Screen.Checkout.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.Success.route) {
+            OrderSuccessScreen(
+                onViewTicketClick = {
+                    // Navigates to Ticket screen and clears the success screen from history
+                    navController.navigate(Screen.Ticket.route) {
+                        popUpTo(Screen.Success.route) { inclusive = true }
                     }
                 }
             )
