@@ -12,7 +12,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.example.bitesavers.customer.OrderSuccess.OrderSuccessScreen
+import com.example.bitesavers.customer.orders.OrderSuccessScreen
 import com.example.bitesavers.customer.checkout.ui.CheckoutRoute // Imported the Checkout Route
 import com.example.bitesavers.customer.details.logic.FoodDetailViewModel
 import com.example.bitesavers.customer.details.ui.FoodDetailRoute
@@ -67,43 +67,60 @@ fun AppNavHost(
                 onBackClick = {
                     navController.popBackStack()
                 },
-                onReserveSuccess = {
-                    navController.navigate(Screen.Checkout.route)
+                onReserveSuccess = { offerId, quantity ->
+                    navController.navigate(Screen.Checkout.createRoute(offerId, quantity))
                 }
             )
         }
 
         // 6. CHECKOUT SCREEN
-        composable(Screen.Checkout.route) {
+        composable(
+            route = Screen.Checkout.route,
+            arguments = listOf(
+                navArgument("offerId") { type = NavType.StringType },
+                navArgument("quantity") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val offerId = backStackEntry.arguments?.getString("offerId").orEmpty()
+            val quantity = backStackEntry.arguments?.getInt("quantity") ?: 1
+
             CheckoutRoute(
                 onNavigateBack = {
                     navController.popBackStack()
                 },
-                onCheckoutSuccess = {
-                    // Navigates to Success screen and removes Checkout from the backstack
-                    navController.navigate(Screen.Success.route) {
+                onCheckoutSuccess = { orderId ->
+                    navController.navigate(Screen.Success.createRoute(orderId)) {
                         popUpTo(Screen.Checkout.route) { inclusive = true }
                     }
                 }
             )
         }
 
-        composable(Screen.Success.route) {
+        // 7. SUCCESS SCREEN
+        composable(
+            route = Screen.Success.route,
+            arguments = listOf(navArgument("orderId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val orderId = backStackEntry.arguments?.getString("orderId").orEmpty()
+
             OrderSuccessScreen(
                 onViewTicketClick = {
-                    // Navigates to Ticket screen and clears the success screen from history
-                    navController.navigate(Screen.Ticket.route) {
+                    // Navigates to Ticket screen passing the orderId, and clears Success from history
+                    navController.navigate(Screen.Ticket.createRoute(orderId)) {
                         popUpTo(Screen.Success.route) { inclusive = true }
                     }
                 }
             )
         }
 
-        // 7. TICKET SCREEN
-        composable(Screen.Ticket.route) {
+        // 8. TICKET SCREEN
+        composable(
+            route = Screen.Ticket.route,
+            arguments = listOf(navArgument("orderId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            // TicketViewModel will automatically pick up this "orderId" argument via SavedStateHandle!
             TicketRoute(
                 onNavigateBack = {
-                    // Returns the user to the Discovery screen and clears the history
                     navController.navigate(Screen.Discovery.route) {
                         popUpTo(Screen.Discovery.route) { inclusive = true }
                     }

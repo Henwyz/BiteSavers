@@ -2,17 +2,21 @@ package com.example.bitesavers.customer.details.logic
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.bitesavers.customer.details.data.FoodDetailUiState
 import com.example.bitesavers.customer.details.ui.FoodDetailUiEvent
-import com.example.bitesavers.customer.discovery.data.DiscoveryDummyData
+import com.example.bitesavers.data.repository.OfferRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class FoodDetailViewModel(
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
+
+    private val repository: OfferRepository = OfferRepository()
 
     private val _uiState = MutableStateFlow(FoodDetailUiState())
     val uiState: StateFlow<FoodDetailUiState> = _uiState.asStateFlow()
@@ -41,30 +45,37 @@ class FoodDetailViewModel(
     }
 
     private fun fetchOfferDetails(offerId: String) {
-        val offer = DiscoveryDummyData.defaultOffers.find { it.id == offerId }
+        // Run database fetch on a background coroutine thread
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
 
-        if (offer != null) {
-            val temp = offer.liveTemperature
-            val isSafe = when (offer.storageType.uppercase()) {
-                "HOT" -> temp >= 60.0
-                "COLD" -> temp in 2.0..8.0
-                else -> true
-            }
-            val tempString = "Live temp: ${temp}°C - within safe ${offer.storageType.lowercase()} storage zone"
+            // Fetch the real item from Supabase
+            val offer = repository.fetchOfferById(offerId)
 
-            _uiState.update { current ->
-                current.copy(
-                    isLoading = false,
-                    offer = offer,
-                    quantity = 1,
-                    totalPrice = offer.currentPrice,
-                    temperatureText = tempString,
-                    isTemperatureSafe = isSafe
-                )
-            }
-        } else {
-            _uiState.update { current ->
-                current.copy(isLoading = false, errorMessage = "Offer not found")
+            if (offer != null) {
+                // Preserved your custom temperature and safety logic
+                val temp = offer.liveTemperature
+                val isSafe = when (offer.storageType.uppercase()) {
+                    "HOT" -> temp >= 60.0
+                    "COLD" -> temp in 2.0..8.0
+                    else -> true
+                }
+                val tempString = "Live temp: ${temp}°C - within safe ${offer.storageType.lowercase()} storage zone"
+
+                _uiState.update { current ->
+                    current.copy(
+                        isLoading = false,
+                        offer = offer,
+                        quantity = 1,
+                        totalPrice = offer.currentPrice,
+                        temperatureText = tempString,
+                        isTemperatureSafe = isSafe
+                    )
+                }
+            } else {
+                _uiState.update { current ->
+                    current.copy(isLoading = false, errorMessage = "Offer not found")
+                }
             }
         }
     }

@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    kotlin("plugin.serialization") version "2.0.0" //For database serialization
 }
 
 android {
@@ -66,4 +67,17 @@ dependencies {
 
     // The core mapping engine we use to render vector tiles from Maptiler in UI
     implementation("org.maplibre.gl:android-sdk:11.5.1")
+
+    // 1. Supabase BOM & Postgrest Module (Database operations)
+    implementation(platform("io.github.jan-tennert.supabase:bom:2.6.1"))
+    implementation("io.github.jan-tennert.supabase:postgrest-kt")
+
+    // 2. Ktor Client (Network engine required by Supabase-kt on Android)
+    implementation("io.ktor:ktor-client-android:2.3.12")
+    implementation("io.ktor:ktor-client-core:2.3.12")
+    implementation("io.ktor:ktor-client-okhttp:2.3.12")
+
+    // 3. Kotlinx Serialization (Translates JSON <-> Kotlin DTOs)
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1")
+
 }

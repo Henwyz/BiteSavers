@@ -8,11 +8,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator // Added
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text // Added
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment // Added
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -33,23 +36,22 @@ import com.example.bitesavers.ui.theme.BiteSaversTheme
 fun CheckoutRoute(
     viewModel: CheckoutViewModel = viewModel(),
     onNavigateBack: () -> Unit,
-    onCheckoutSuccess: () -> Unit // e.g., Navigate to Ticket Screen
+    onCheckoutSuccess: (String) -> Unit // 👈 1. Change type to accept a String (the orderId)
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // Listen for the payment success flag to trigger navigation safely
-    LaunchedEffect(uiState.isPaymentSuccessful) {
-        if (uiState.isPaymentSuccessful) {
-            onCheckoutSuccess()
+    // Listen for the payment success flag and pass the real orderId up
+    LaunchedEffect(uiState.isPaymentSuccessful, uiState.placedOrderId) {
+        if (uiState.isPaymentSuccessful && uiState.placedOrderId != null) {
+            onCheckoutSuccess(uiState.placedOrderId!!) // 👈 2. Pass the orderId here
         }
     }
 
     CheckoutScreen(
         state = uiState,
         onEvent = { event ->
-            viewModel.onEvent(event) // Send all events to ViewModel
+            viewModel.onEvent(event)
 
-            // Handle pure navigation events locally
             if (event is CheckoutUiEvent.OnNavigateBack) {
                 onNavigateBack()
             }
@@ -72,10 +74,13 @@ fun CheckoutScreen(
             )
         },
         bottomBar = {
-            CheckoutBottomBar(
-                totalPrice = state.totalPrice,
-                onConfirmClick = { onEvent(CheckoutUiEvent.OnConfirmPaymentClicked) }
-            )
+            // 👇 Only show the pay button if we aren't loading and there are no errors
+            if (!state.isLoading && state.errorMessage == null) {
+                CheckoutBottomBar(
+                    totalPrice = state.totalPrice,
+                    onConfirmClick = { onEvent(CheckoutUiEvent.OnConfirmPaymentClicked) }
+                )
+            }
         }
     ) { innerPadding ->
         Box(
@@ -85,24 +90,44 @@ fun CheckoutScreen(
                 .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                CheckoutSummaryCard(
-                    storeName = state.storeName,
-                    itemName = state.itemName,
-                    quantity = state.quantity,
-                    unitPrice = state.unitPrice
-                )
+            //handle loading, error and success states
+            when {
+                state.isLoading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
 
-                CheckoutPaymentCard(
-                    walletBalance = state.walletBalance,
-                    onChangeClick = { onEvent(CheckoutUiEvent.OnChangePaymentClicked) }
-                )
+                state.errorMessage != null -> {
+                    Text(
+                        text = state.errorMessage,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.align(Alignment.Center).padding(16.dp)
+                    )
+                }
+
+                else -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        CheckoutSummaryCard(
+                            storeName = state.storeName,
+                            itemName = state.itemName,
+                            quantity = state.quantity,
+                            unitPrice = state.unitPrice
+                        )
+
+                        CheckoutPaymentCard(
+                            walletBalance = state.walletBalance,
+                            onChangeClick = { onEvent(CheckoutUiEvent.OnChangePaymentClicked) }
+                        )
+                    }
+                }
             }
         }
     }

@@ -5,12 +5,11 @@ import com.example.bitesavers.data.model.OfferUiModel
 import com.example.bitesavers.data.model.UserRole
 
 data class UserUiModel(
-    val greeting: String,
-    val displayName: String,
-    val avatarInitials: String
+    val greeting: String = "Hello,",
+    val displayName: String = "Guest",
+    val avatarInitials: String = "G"
 )
 
-//For the pin dropped on the map with its necessary information
 data class NearbyDealMarkerUiModel(
     val id: String,
     val labelPrice: String,
@@ -18,17 +17,22 @@ data class NearbyDealMarkerUiModel(
     val longitude: Double
 )
 
-
 data class DiscoveryUiState(
-    val user: UserUiModel,
-    val searchQuery: String,
-    val selectedCategory: DiscoveryCategory,
-    val availableCategories: List<DiscoveryCategory>,
-    val userRole: UserRole,
-    val isLoading: Boolean,
-    val nearbyMarkers: List<NearbyDealMarkerUiModel>,
-    val offers: List<OfferUiModel>,
-    val filteredOffers: List<OfferUiModel>,
+    val user: UserUiModel = UserUiModel(),
+    val searchQuery: String = "",
+    val selectedCategory: DiscoveryCategory = DiscoveryCategory.ALL, // <-- Change here: removed '?' and set default to ALL
+    val availableCategories: List<DiscoveryCategory> = listOf(
+        DiscoveryCategory.ALL,
+        DiscoveryCategory.HOT_MEALS,
+        DiscoveryCategory.BAKERY,
+        DiscoveryCategory.DESSERTS,
+        DiscoveryCategory.BEVERAGES
+    ),
+    val userRole: UserRole = UserRole.CONSUMER,
+    val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
+    val errorMessage: String? = null,
+    val nearbyMarkers: List<NearbyDealMarkerUiModel> = emptyList(),
+    val offers: List<OfferUiModel> = emptyList(),
     val selectedMapOfferId: String? = null
 )
-

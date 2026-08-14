@@ -37,7 +37,7 @@ import com.example.bitesavers.customer.details.ui.components.FoodDetailTopBar
 fun FoodDetailRoute(
     viewModel: FoodDetailViewModel,
     onBackClick: () -> Unit,
-    onReserveSuccess: () -> Unit
+    onReserveSuccess: (String, Int) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -50,7 +50,13 @@ fun FoodDetailRoute(
             // 2. Handle Navigation triggers
             when (event) {
                 is FoodDetailUiEvent.OnNavigateBack -> onBackClick()
-                is FoodDetailUiEvent.OnReserveClicked -> onReserveSuccess()
+                is FoodDetailUiEvent.OnReserveClicked -> {
+                    val currentOfferId = uiState.offer?.id
+                    if (currentOfferId != null) {
+                        onReserveSuccess(currentOfferId, uiState.quantity)
+                    }
+                }
+
                 else -> Unit // Quantity changes don't require navigation
             }
         }

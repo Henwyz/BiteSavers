@@ -5,10 +5,12 @@ data class CheckoutUiState(
     val itemName: String = "",
     val quantity: Int = 1,
     val unitPrice: Double = 0.0,
-    val walletBalance: Double = 0.0,
-    val isPaymentSuccessful: Boolean = false // True when checkout is done!
+    val walletBalance: Double = 50.0, // Hardcoded initial wallet balance for testing
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null,
+    val isPaymentSuccessful: Boolean = false,
+    val placedOrderId: String? = null // 👈 ADD THIS FIELD HERE
 ) {
-    // Automatically calculates the total based on the current state
     val totalPrice: Double
         get() = quantity * unitPrice
 }

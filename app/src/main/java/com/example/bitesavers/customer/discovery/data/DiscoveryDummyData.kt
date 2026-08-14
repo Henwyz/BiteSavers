@@ -78,7 +78,6 @@ object DiscoveryDummyData {
             isLoading = false,
             nearbyMarkers = defaultMarkers,
             offers = defaultOffers,
-            filteredOffers = defaultOffers
         )
     }
 }

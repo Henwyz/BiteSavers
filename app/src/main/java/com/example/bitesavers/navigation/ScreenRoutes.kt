@@ -12,10 +12,15 @@ sealed class Screen(val route: String) {
         fun createRoute(offerId: String) = "food_detail/$offerId"
     }
 
-    object Checkout : Screen("checkout_screen")
+    object Checkout : Screen("checkout_screen/{offerId}/{quantity}") {
+        fun createRoute(offerId: String, quantity: Int) = "checkout_screen/$offerId/$quantity"
+    }
 
-    // FIXED: Added the route string to the Success destination
-    object Success : Screen("success_screen")
+    object Success : Screen("success_screen/{orderId}") {
+        fun createRoute(orderId: String) = "success_screen/$orderId"
+    }
 
-    object Ticket : Screen("ticket_screen")
+    object Ticket : Screen("ticket_screen/{orderId}") {
+        fun createRoute(orderId: String) = "ticket_screen/$orderId"
+    }
 }
