@@ -1,4 +1,4 @@
-package com.example.bitesavers.inventory.ui
+package com.example.bitesavers.business.inventory.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -40,8 +40,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import com.example.bitesavers.R
-import com.example.bitesavers.inventory.data.ListingItem
-import com.example.bitesavers.inventory.logic.InventoryViewModel
+import com.example.bitesavers.business.inventory.data.ListingItem
+import com.example.bitesavers.business.inventory.logic.InventoryViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)

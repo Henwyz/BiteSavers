@@ -1,7 +1,7 @@
-package com.example.bitesavers.inventory.logic
+package com.example.bitesavers.business.inventory.logic
 
 import androidx.lifecycle.ViewModel
-import com.example.bitesavers.inventory.data.ListingItem
+import com.example.bitesavers.business.inventory.data.ListingItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

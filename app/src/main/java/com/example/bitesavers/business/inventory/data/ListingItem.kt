@@ -1,4 +1,4 @@
-package com.example.bitesavers.inventory.data
+package com.example.bitesavers.business.inventory.data
 
 data class ListingItem(
     val id: String,

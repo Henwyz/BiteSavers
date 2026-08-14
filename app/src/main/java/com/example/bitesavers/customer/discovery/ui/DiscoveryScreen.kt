@@ -54,20 +54,21 @@ fun DiscoveryRoute(
                 is DiscoveryUiEvent.OnOfferClicked ->
                     onOfferClick(event.offer.id)
 
-                // NEW: Handle Map Marker Clicks (Make sure to add this to your sealed class!)
                 is DiscoveryUiEvent.OnMapMarkerClicked ->
                     viewModel.onMapMarkerClicked(event.offerId)
 
-                // NEW: Handle Navigation from the Map Popup (Add this to your sealed class too!)
                 is DiscoveryUiEvent.OnMapOfferNavigate ->
                     onOfferClick(event.offerId)
 
                 is DiscoveryUiEvent.OnRoleChanged ->
                     viewModel.onUserRoleChanged(event.role)
 
-                DiscoveryUiEvent.OnNotificationClicked -> {
+                is DiscoveryUiEvent.OnNotificationClicked -> {
                     // TODO: navigate to notifications
                 }
+
+                is DiscoveryUiEvent.OnResetFilters ->
+                    viewModel.onResetFilters()
             }
         }
     )
