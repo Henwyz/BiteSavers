@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    kotlin("plugin.serialization") version "2.0.0"
 }
 
 android {
@@ -68,4 +69,13 @@ dependencies {
 
     //import Icons
     implementation("androidx.compose.material:material-icons-extended:1.7.6")
+
+    // Supabase
+    implementation(platform("io.github.jan-tennert.supabase:bom:2.6.1")) // or your version
+    implementation("io.github.jan-tennert.supabase:postgrest-kt")
+    implementation("io.github.jan-tennert.supabase:gotrue-kt")
+    implementation("io.ktor:ktor-client-android:2.3.12")
+
+    // Serialization
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 }

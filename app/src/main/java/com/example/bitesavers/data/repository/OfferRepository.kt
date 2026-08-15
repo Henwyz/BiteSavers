@@ -21,7 +21,7 @@ class OfferRepository {
             val dtoList = client.from("offers")
                 .select {
                     filter {
-                        gt("quantity_left", 0) // 👈 Only fetch offers where quantity_left is greater than 0
+                        gt("quantity_left", 0)
                     }
                 }
                 .decodeList<OfferDto>()
@@ -97,6 +97,24 @@ class OfferRepository {
                 }
 
             insertedOrder.id
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    /**
+     * 4. Ticket Screen: Fetch a placed order by its order ID
+     */
+    suspend fun fetchOrderById(orderId: String): OrderDto? = withContext(Dispatchers.IO) {
+        try {
+            client.from("orders")
+                .select {
+                    filter {
+                        eq("id", orderId)
+                    }
+                }
+                .decodeSingle<OrderDto>()
         } catch (e: Exception) {
             e.printStackTrace()
             null
