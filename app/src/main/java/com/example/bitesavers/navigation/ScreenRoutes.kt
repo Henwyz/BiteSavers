@@ -23,4 +23,9 @@ sealed class Screen(val route: String) {
     object Ticket : Screen("ticket_screen/{orderId}") {
         fun createRoute(orderId: String) = "ticket_screen/$orderId"
     }
+
+    object NgoRegistration : Screen("ngo_registration_screen")
+    object NgoDetails : Screen("ngo_details_screen")
+    object NgoEdit : Screen("ngo_edit_screen")
+    object NgoUpdatePending : Screen("ngo_update_pending_screen")
 }

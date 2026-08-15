@@ -132,6 +132,65 @@
     <string name="cd_notifications">Notifications</string>
     <string name="cd_search">Search</string>
 
+    <!--========== Profile Page ===========-->
+    <string name="profile_sign_out">Sign Out</string>
+    <string name="profile_wallet_label">E-WALLET BALANCE</string>
+    <string name="profile_top_up">TOP UP</string>
+    <string name="profile_register_ngo">Register as NGO</string>
+    <string name="profile_ngo_pending">NGO application pending</string>
+    <string name="profile_ngo_approved">NGO account active</string>
+    <string name="profile_payment_methods">Payment Methods</string>
+    <string name="profile_privacy_security">Privacy &amp; Security</string>
+    <string name="profile_help_support">Help &amp; Support</string>
+    <string name="profile_about">About BiteSaver</string>
+    <string name="profile_stat_money_saved">Money Saved</string>
+    <string name="profile_stat_co2_reduced">CO₂ Reduced</string>
+    <string name="profile_stat_meals_rescued">Meals Rescued</string>
+
+    <!--========== Profile / NGO Registration Page ===========-->
+    <string name="ngo_registration_title">Register as NGO</string>
+    <string name="ngo_registration_subtitle">Tell us about your organization so we can verify your NGO status and unlock free surplus food claims.</string>
+    <string name="ngo_field_org_name">Organization Name</string>
+    <string name="ngo_field_registration_number">Registration Number</string>
+    <string name="ngo_field_contact_name">Contact Person Name</string>
+    <string name="ngo_field_contact_email">Contact Email</string>
+    <string name="ngo_field_contact_phone">Contact Phone Number</string>
+    <string name="ngo_field_cause_category">Cause Category</string>
+    <string name="ngo_field_address">Organization Address</string>
+    <string name="ngo_agree_terms">I confirm this information is accurate and agree to the Terms of Service.</string>
+    <string name="ngo_submit_application">Submit Application</string>
+
+    //more for Ngo Registration Page
+    <string name="cd_close">Close</string>
+
+    <string name="ngo_field_registration_type">Registration Type</string>
+    <string name="ngo_field_certificate">Certificate of Registration (PDF)</string>
+    <string name="ngo_certificate_placeholder">Tap to upload PDF</string>
+
+    <string name="ngo_placeholder_org_name">e.g. Kechara Soup Kitchen</string>
+    <string name="ngo_placeholder_registration_ssm">e.g. 202301012345 or 1234567-A</string>
+    <string name="ngo_placeholder_registration_ros">e.g. PPM-002-10-04091985</string>
+    <string name="ngo_placeholder_contact_name">e.g. Ahmad bin Ali</string>
+    <string name="ngo_placeholder_email">e.g. contact@ngo.org.my</string>
+    <string name="ngo_placeholder_phone">e.g. 012-3456789</string>
+    <string name="ngo_placeholder_address">e.g. No 12, Jalan Ampang, 50450 Kuala Lumpur</string>
+
+    <string name="ngo_tnc_dialog_title">Terms &amp; Conditions</string>
+    <string name="ngo_tnc_dialog_message">Please agree to the Terms of Service to submit your NGO application.</string>
+    <string name="ngo_tnc_dialog_confirm">Agree &amp; Submit</string>
+
+    //more for Ngo Registration Page 2
+    <string name="ngo_edit_title">Change NGO Details</string>
+    <string name="ngo_submit_edit">Change NGO Details</string>
+
+    <string name="ngo_details_title">NGO Details</string>
+    <string name="ngo_details_edit_button">Edit</string>
+    <string name="ngo_details_empty">No NGO details found.</string>
+
+    <string name="ngo_pending_title">Update Submitted</string>
+    <string name="ngo_pending_message">Your NGO details will be updated once approved. In the meantime, your current NGO details remain active.</string>
+    <string name="ngo_pending_understood">Understood</string>
+
 
     <!--========== Inventory ===========-->
     <string name="my_listings_title">My Listing</string>
