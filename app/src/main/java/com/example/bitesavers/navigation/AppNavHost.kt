@@ -23,6 +23,7 @@ import com.example.bitesavers.customer.details.ui.FoodDetailRoute
 import com.example.bitesavers.customer.discovery.ui.DiscoveryRoute
 import com.example.bitesavers.customer.profile.logic.NgoFormMode
 import com.example.bitesavers.customer.profile.ui.NgoDetailsScreen
+import com.example.bitesavers.customer.profile.ui.NgoDisableConfirmScreen
 import com.example.bitesavers.customer.profile.ui.NgoUpdatePendingScreen
 import com.example.bitesavers.customer.ticket.ui.TicketRoute
 
@@ -101,6 +102,9 @@ fun AppNavHost(
                 onEditClick = {
                     profileViewModel.startNgoEdit()
                     navController.navigate(Screen.NgoEdit.route)
+                },
+                onDisableClick = {
+                    navController.navigate(Screen.NgoDisableConfirm.route)
                 }
             )
         }
@@ -125,6 +129,21 @@ fun AppNavHost(
                 onUnderstoodClick = {
                     // Clears NgoUpdatePending, NgoEdit, and NgoDetails off the
                     // back stack in one go, landing cleanly back on Profile.
+                    navController.popBackStack(Screen.Profile.route, inclusive = false)
+                }
+            )
+        }
+
+        // NGO DISABLE CONFIRMATION SCREEN
+        composable(Screen.NgoDisableConfirm.route) {
+            val profileEntry = remember(it) {
+                navController.getBackStackEntry(Screen.Profile.route)
+            }
+            val profileViewModel: ProfileViewModel = viewModel(profileEntry)
+            NgoDisableConfirmScreen(
+                viewModel = profileViewModel,
+                onCancelClick = { navController.popBackStack() },
+                onDisabled = {
                     navController.popBackStack(Screen.Profile.route, inclusive = false)
                 }
             )
