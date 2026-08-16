@@ -62,7 +62,7 @@ class TicketViewModel(
                     it.copy(
                         orderId = shortOrderId,
                         storeName = offer?.storeName ?: "Store",
-                        pickupWindow = order.pickupWindowClose,
+                        pickupWindow = order.pickupWindowClose ?: "Within 2 hours",
                         itemName = offer?.title ?: "Surprise Bag",
                         totalPaid = order.totalPrice,
                         savedAmount = moneySaved,

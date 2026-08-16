@@ -16,14 +16,12 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.example.bitesavers.customer.orders.OrderSuccessScreen
 import com.example.bitesavers.customer.checkout.ui.CheckoutRoute // Imported the Checkout Route
 import com.example.bitesavers.customer.details.logic.FoodDetailViewModel
 import com.example.bitesavers.customer.details.ui.FoodDetailRoute
 import com.example.bitesavers.customer.discovery.ui.DiscoveryRoute
 import com.example.bitesavers.customer.orders.ui.OrdersRoute // 👈 Added import for OrdersRoute
 import com.example.bitesavers.customer.profile.logic.NgoFormMode
-import com.example.bitesavers.customer.profile.logic.ProfileViewModel
 import com.example.bitesavers.customer.profile.ui.NgoDetailsScreen
 import com.example.bitesavers.customer.profile.ui.NgoRegistrationScreen
 import com.example.bitesavers.customer.profile.ui.NgoDisableConfirmScreen
@@ -229,11 +227,13 @@ fun AppNavHost(
             route = Screen.Ticket.route,
             arguments = listOf(navArgument("orderId") { type = NavType.StringType })
         ) { backStackEntry ->
-            // TicketViewModel will automatically pick up this "orderId" argument via SavedStateHandle!
             TicketRoute(
                 onNavigateBack = {
-                    navController.navigate(Screen.Discovery.route) {
-                        popUpTo(Screen.Discovery.route) { inclusive = true }
+                    if (!navController.popBackStack()) {
+                        // If there's nothing on the back stack to pop (e.g. came directly from a deep link/notification), fallback to Discovery
+                        navController.navigate(Screen.Discovery.route) {
+                            popUpTo(Screen.Discovery.route) { inclusive = true }
+                        }
                     }
                 }
             )

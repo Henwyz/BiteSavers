@@ -65,8 +65,10 @@ fun OrderHistoryCard(
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp
                     ),
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.weight(1f)
                 )
+                Spacer(modifier = Modifier.width(8.dp))
                 OrderStatusBadge(status = order.status)
             }
 

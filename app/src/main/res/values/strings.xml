@@ -123,11 +123,12 @@
     <!--========== Order Success ===========-->
 
     <!--========== Orders Page ===========-->
-    <string name="orders_price_format">RM %.2f</string>
+    <string name="orders_price_format">RM %1$.2f</string>
 
     <!-- Orders Header -->
     <string name="orders_header_title">My Orders</string>
-    <string name="orders_header_summary_format">%1$d completed • RM %.2f saved</string>
+    <!-- Notice %2$.2f instead of %.2f -->
+    <string name="orders_header_summary_format">%1$d completed • RM %2$.2f saved</string>
     <string name="cd_orders_notification_icon">Notifications</string>
     <string name="cd_orders_profile_avatar">User Avatar</string>
 

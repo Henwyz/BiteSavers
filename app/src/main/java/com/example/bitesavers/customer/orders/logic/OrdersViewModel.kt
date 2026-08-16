@@ -59,12 +59,15 @@ class OrdersViewModel : ViewModel() {
                         else -> OrderStatusType.READY_FOR_PICKUP
                     }
 
+                    // Format createdAt if available, or fallback to current date
+                    val displayDate = order.createdAt?.take(10) ?: "Today"
+
                     CustomerOrderItemUiModel(
                         orderId = order.id.orEmpty(),
                         shortOrderId = "#BS-" + (order.id ?: "").takeLast(4).uppercase(),
-                        storeName = offer?.storeName ?: "Madam Lim Bakery",
-                        itemName = offer?.title ?: "Assorted Kuih Box",
-                        formattedDate = "10 Jul 2026",
+                        storeName = offer?.storeName ?: "Store",
+                        itemName = offer?.title ?: "Food Item",
+                        formattedDate = displayDate,
                         totalPrice = order.totalPrice,
                         moneySaved = saved,
                         status = statusType
