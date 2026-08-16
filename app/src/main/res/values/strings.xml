@@ -216,6 +216,44 @@
     <string name="ngo_pending_message">Your NGO details will be updated once approved. In the meantime, your current NGO details remain active.</string>
     <string name="ngo_pending_understood">Understood</string>
 
+    //more for Ngo Registration Page 3
+    <string name="ngo_field_reason_for_change">Reason for Change</string>
+    <string name="ngo_placeholder_reason_for_change">e.g. Updated contact person after staff change</string>
+
+    <string name="ngo_no_changes_title">No Changes Made</string>
+    <string name="ngo_no_changes_message">You haven\'t changed any details. Please update at least one field before submitting.</string>
+    <string name="ngo_dialog_ok">OK</string>
+
+    <string name="ngo_pending_edit_dialog_title">Change Request Pending</string>
+    <string name="ngo_pending_edit_dialog_message">You already have a change request pending approval. Please wait for approval before submitting another change.</string>
+
+    <string name="ngo_details_pending_banner">This information may not be accurate. Your change request is still pending approval.</string>
+    <string name="ngo_details_certificate_verified">Certificate Verified</string>
+
+    //more for Ngo Registration Page 4
+    <!-- ADDITIONS ROUND 5 — merge these into strings.xml too -->
+
+    <string name="ngo_select_category_placeholder">Select a Category</string>
+
+    <!-- These two REPLACE the old single ngo_tnc_dialog_message from round 2 —
+         that one is now unused; you can delete it or leave it, your call. -->
+    <string name="ngo_tnc_dialog_message_register">Please agree to the Terms of Service to submit your application.</string>
+    <string name="ngo_tnc_dialog_message_edit">Please agree to the Terms of Service to change the NGO details.</string>
+
+    <!-- Label used ONLY on the read-only details screen — no "(PDF)" suffix,
+         unlike ngo_field_certificate which is still used in the upload form. -->
+    <string name="ngo_details_certificate_label">Certificate of Registration</string>
+
+    <string name="ngo_details_disable_button">Disable NGO Account</string>
+
+    <string name="ngo_disable_title">Disable NGO Account</string>
+    <string name="ngo_disable_confirm_title">Are you sure you want to disable your NGO account?</string>
+    <string name="ngo_disable_confirm_message">You will lose access to NGO-only features, including free surplus food claims. This can only be undone by registering as an NGO again.</string>
+    <string name="ngo_disable_disable_button">Disable</string>
+    <string name="ngo_disable_cancel_button">Cancel</string>
+
+    <string name="ngo_disabled_dialog_title">NGO Account Disabled</string>
+    <string name="ngo_disabled_dialog_message">Your NGO account has been disabled.</string>
 
     <!--========== Inventory ===========-->
     <string name="my_listings_title">My Listing</string>

@@ -28,4 +28,5 @@ sealed class Screen(val route: String) {
     object NgoDetails : Screen("ngo_details_screen")
     object NgoEdit : Screen("ngo_edit_screen")
     object NgoUpdatePending : Screen("ngo_update_pending_screen")
+    object NgoDisableConfirm : Screen("ngo_disable_confirm_screen")
 }

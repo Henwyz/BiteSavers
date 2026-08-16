@@ -20,6 +20,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -48,6 +49,7 @@ fun NgoRegistrationScreen(
     val fieldErrors by viewModel.fieldErrors.collectAsStateWithLifecycle()
     val submissionState by viewModel.submissionState.collectAsStateWithLifecycle()
     val showTncDialog by viewModel.showTncDialog.collectAsStateWithLifecycle()
+    val showNoChangesDialog by viewModel.showNoChangesDialog.collectAsStateWithLifecycle()
     var categoryMenuExpanded by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
@@ -84,10 +86,30 @@ fun NgoRegistrationScreen(
                     }
                 }
             },
-            text = { Text(stringResource(R.string.ngo_tnc_dialog_message)) },
+            text = {
+                Text(
+                    if (mode == NgoFormMode.REGISTER)
+                        stringResource(R.string.ngo_tnc_dialog_message_register)
+                    else
+                        stringResource(R.string.ngo_tnc_dialog_message_edit)
+                )
+            },
             confirmButton = {
                 TextButton(onClick = { viewModel.agreeToTermsAndSubmit() }) {
                     Text(stringResource(R.string.ngo_tnc_dialog_confirm))
+                }
+            }
+        )
+    }
+
+    if (showNoChangesDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissNoChangesDialog() },
+            title = { Text(stringResource(R.string.ngo_no_changes_title)) },
+            text = { Text(stringResource(R.string.ngo_no_changes_message)) },
+            confirmButton = {
+                TextButton(onClick = { viewModel.dismissNoChangesDialog() }) {
+                    Text(stringResource(R.string.ngo_dialog_ok))
                 }
             }
         )
@@ -140,7 +162,8 @@ fun NgoRegistrationScreen(
                 value = application.organizationName,
                 placeholder = stringResource(R.string.ngo_placeholder_org_name),
                 errorMessage = fieldErrors.organizationName,
-                onValueChange = viewModel::updateOrganizationName
+                onValueChange = viewModel::updateOrganizationName,
+                onBlur = { viewModel.onFieldBlur("organizationName", application.organizationName) }
             )
 
             Text(
@@ -163,28 +186,32 @@ fun NgoRegistrationScreen(
                 else
                     stringResource(R.string.ngo_placeholder_registration_ros),
                 errorMessage = fieldErrors.registrationNumber,
-                onValueChange = viewModel::updateRegistrationNumber
+                onValueChange = viewModel::updateRegistrationNumber,
+                onBlur = { viewModel.onFieldBlur("registrationNumber", application.registrationNumber) }
             )
             FormField(
                 label = stringResource(R.string.ngo_field_contact_name),
                 value = application.contactPersonName,
                 placeholder = stringResource(R.string.ngo_placeholder_contact_name),
                 errorMessage = fieldErrors.contactPersonName,
-                onValueChange = viewModel::updateContactPersonName
+                onValueChange = viewModel::updateContactPersonName,
+                onBlur = { viewModel.onFieldBlur("contactPersonName", application.contactPersonName) }
             )
             FormField(
                 label = stringResource(R.string.ngo_field_contact_email),
                 value = application.contactEmail,
                 placeholder = stringResource(R.string.ngo_placeholder_email),
                 errorMessage = fieldErrors.contactEmail,
-                onValueChange = viewModel::updateContactEmail
+                onValueChange = viewModel::updateContactEmail,
+                onBlur = { viewModel.onFieldBlur("contactEmail", application.contactEmail) }
             )
             FormField(
                 label = stringResource(R.string.ngo_field_contact_phone),
                 value = application.contactPhone,
                 placeholder = stringResource(R.string.ngo_placeholder_phone),
                 errorMessage = fieldErrors.contactPhone,
-                onValueChange = viewModel::updateContactPhone
+                onValueChange = viewModel::updateContactPhone,
+                onBlur = { viewModel.onFieldBlur("contactPhone", application.contactPhone) }
             )
 
             Text(
@@ -196,12 +223,19 @@ fun NgoRegistrationScreen(
             ExposedDropdownMenuBox(
                 expanded = categoryMenuExpanded,
                 onExpandedChange = { categoryMenuExpanded = it },
-                modifier = Modifier.padding(bottom = 12.dp)
+                modifier = Modifier.padding(bottom = if (fieldErrors.causeCategory != null) 2.dp else 12.dp)
             ) {
                 OutlinedTextField(
-                    value = application.causeCategory.displayLabel,
+                    value = application.causeCategory?.displayLabel ?: "",
                     onValueChange = {},
                     readOnly = true,
+                    placeholder = {
+                        Text(
+                            stringResource(R.string.ngo_select_category_placeholder),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        )
+                    },
+                    isError = fieldErrors.causeCategory != null,
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryMenuExpanded) },
                     colors = ngoFieldColors(),
                     shape = RoundedCornerShape(16.dp),
@@ -224,20 +258,44 @@ fun NgoRegistrationScreen(
                     }
                 }
             }
+            if (fieldErrors.causeCategory != null) {
+                Text(
+                    fieldErrors.causeCategory!!,
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+            }
 
             FormField(
                 label = stringResource(R.string.ngo_field_address),
                 value = application.address,
                 placeholder = stringResource(R.string.ngo_placeholder_address),
                 errorMessage = fieldErrors.address,
-                onValueChange = viewModel::updateAddress
+                onValueChange = viewModel::updateAddress,
+                onBlur = { viewModel.onFieldBlur("address", application.address) }
             )
 
+            // Kept in both REGISTER and EDIT — only the read-only NgoDetailsScreen
+            // hides this in favor of a plain "Certificate Verified" line.
             CertificateUploadField(
                 fileName = application.certificateFileName,
                 onPickFile = { pdfPickerLauncher.launch("application/pdf") }
             )
             Spacer(Modifier.height(12.dp))
+
+            // Reason for change — EDIT mode only, deliberately placed last.
+            if (mode == NgoFormMode.EDIT) {
+                FormField(
+                    label = stringResource(R.string.ngo_field_reason_for_change),
+                    value = application.reasonForChange,
+                    placeholder = stringResource(R.string.ngo_placeholder_reason_for_change),
+                    errorMessage = fieldErrors.reasonForChange,
+                    onValueChange = viewModel::updateReasonForChange,
+                    onBlur = { viewModel.onFieldBlur("reasonForChange", application.reasonForChange) },
+                    singleLine = false
+                )
+            }
 
             Row(
                 modifier = Modifier
@@ -299,7 +357,9 @@ private fun FormField(
     value: String,
     placeholder: String,
     errorMessage: String?,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
+    onBlur: () -> Unit,
+    singleLine: Boolean = true
 ) {
     Text(
         label,
@@ -316,8 +376,14 @@ private fun FormField(
         isError = errorMessage != null,
         colors = ngoFieldColors(),
         shape = RoundedCornerShape(16.dp),
-        singleLine = true,
-        modifier = Modifier.fillMaxWidth()
+        singleLine = singleLine,
+        minLines = if (singleLine) 1 else 2,
+        modifier = Modifier
+            .fillMaxWidth()
+            // Validation triggers here, on blur — not on every keystroke.
+            // That's what avoids "invalid email" flashing while the user is
+            // still mid-typing the first time through the field.
+            .onFocusChanged { focusState -> if (!focusState.isFocused) onBlur() }
     )
     if (errorMessage != null) {
         Text(
