@@ -1,5 +1,6 @@
 package com.example.bitesavers.customer.discovery.ui.components
 
+import android.annotation.SuppressLint
 import android.view.MotionEvent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -46,12 +47,17 @@ import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.annotations.MarkerOptions
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
+import org.maplibre.android.location.LocationComponentActivationOptions
+import org.maplibre.android.location.modes.CameraMode
+import org.maplibre.android.location.modes.RenderMode
 
 @Composable
 fun DiscoveryMapSection(
     markers: List<NearbyDealMarkerUiModel>,
     offers: List<OfferUiModel> = emptyList(),
     userRole: UserRole = UserRole.CONSUMER,
+    userLatitude: Double? = null,
+    userLongitude: Double? = null,
     selectedOfferId: String?,
     onMarkerClick: (String?) -> Unit,
     onOfferNavigate: (String) -> Unit,
@@ -69,6 +75,8 @@ fun DiscoveryMapSection(
         } else {
             DiscoveryMapMapLibre(
                 markers = markers,
+                userLatitude = userLatitude,
+                userLongitude = userLongitude,
                 onMarkerClick = onMarkerClick
             )
         }
@@ -95,9 +103,12 @@ fun DiscoveryMapSection(
     }
 }
 
+@SuppressLint("MissingPermission")
 @Composable
 private fun DiscoveryMapMapLibre(
     markers: List<NearbyDealMarkerUiModel>,
+    userLatitude: Double?,
+    userLongitude: Double?,
     onMarkerClick: (String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -151,37 +162,32 @@ private fun DiscoveryMapMapLibre(
 
                 getMapAsync { map: MapLibreMap ->
                     map.setStyle(Style.Builder().fromUri(styleUrl)) { style: Style ->
-
-                        val center = markers.firstOrNull()?.let { LatLng(it.latitude, it.longitude) }
-                            ?: LatLng(3.1390, 101.6869)
-
-                        val cameraPosition = CameraPosition.Builder()
-                            .target(center)
-                            .zoom(14.0)
-                            .build()
-                        map.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
-
-                        // Add markers and hide the ID inside the "snippet"
-                        markers.forEach { markerData ->
-                            map.addMarker(
-                                MarkerOptions()
-                                    .position(LatLng(markerData.latitude, markerData.longitude))
-                                    .title(markerData.labelPrice)
-                                    .snippet(markerData.id) // Hide the ID here!
-                            )
+                        try {
+                            // 📍 Enable the blue user location puck
+                            val locationComponent = map.locationComponent
+                            val options = LocationComponentActivationOptions
+                                .builder(context, style)
+                                .useDefaultLocationEngine(true)
+                                .build()
+                            locationComponent.activateLocationComponent(options)
+                            locationComponent.isLocationComponentEnabled = true
+                            locationComponent.cameraMode = CameraMode.TRACKING
+                            locationComponent.renderMode = RenderMode.COMPASS
+                            locationComponent.zoomWhileTracking(16.0) // 👈 Keeps camera zoomed into street level
+                        } catch (e: Exception) {
+                            e.printStackTrace()
                         }
 
                         // Listen for marker clicks
                         map.setOnMarkerClickListener { marker ->
                             val clickedId = marker.snippet
                             if (clickedId != null) {
-                                // Smoothly animate the camera to center on the clicked pin
                                 map.animateCamera(
                                     CameraUpdateFactory.newLatLngZoom(
                                         marker.position,
-                                        15.0 // Keep a focused zoom level
+                                        16.5 // Focused zoom on tapped pin
                                     ),
-                                    400 // Animation duration in milliseconds
+                                    400
                                 )
                                 onMarkerClick(clickedId)
                                 true
@@ -189,11 +195,46 @@ private fun DiscoveryMapMapLibre(
                                 false
                             }
                         }
+
                         // Dismiss the card if they click the empty map background
                         map.addOnMapClickListener {
                             onMarkerClick(null)
                             false
                         }
+                    }
+                }
+            }
+        },
+        // 🔄 The `update` block is triggered whenever `markers` change!
+        update = { view ->
+            view.getMapAsync { map ->
+                if (map.style != null) {
+                    // Clear old pins and draw new closest 3 pins
+                    map.clear()
+                    markers.forEach { markerData ->
+                        map.addMarker(
+                            MarkerOptions()
+                                .position(LatLng(markerData.latitude, markerData.longitude))
+                                .title(markerData.labelPrice)
+                                .snippet(markerData.id)
+                        )
+                    }
+
+                    // 🎯 Center on user's exact coordinates if available; otherwise fallback to first marker
+                    val centerTarget = if (userLatitude != null && userLongitude != null) {
+                        LatLng(userLatitude, userLongitude)
+                    } else {
+                        markers.firstOrNull()?.let { LatLng(it.latitude, it.longitude) }
+                    }
+
+                    centerTarget?.let { target ->
+                        map.animateCamera(
+                            CameraUpdateFactory.newLatLngZoom(
+                                target,
+                                16.0 // 👈 Zoomed in to street level centered on you
+                            ),
+                            600
+                        )
                     }
                 }
             }

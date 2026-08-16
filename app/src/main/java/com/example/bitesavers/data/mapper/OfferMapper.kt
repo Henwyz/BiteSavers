@@ -12,23 +12,31 @@ fun OfferDto.toUiModel(): OfferUiModel {
         DiscoveryCategory.HOT_MEALS
     }
 
-    // "Attach this new function named toUiModel() directly onto any OfferDto object."
+    // Calculate discount dynamically from prices
+    val calculatedDiscount = if (this.originalPrice > 0) {
+        (((this.originalPrice - this.currentPrice) / this.originalPrice) * 100).toInt()
+    } else {
+        0
+    }
+
     return OfferUiModel(
         id = this.id,
         title = this.title,
         storeName = this.storeName,
-        // Default placeholder image resource; replace with dynamic image loader or resource if needed
         imageResId = R.drawable.ic_launcher_foreground,
-        discountPercent = this.discountPercent,
+        discountPercent = calculatedDiscount, // Computed here!
         currentPrice = this.currentPrice,
         originalPrice = this.originalPrice,
-        distanceKm = this.distanceKm,
+        distanceKm = 0.0, // Default 0.0; dynamically calculated via GPS in ViewModel
         quantityLeft = this.quantityLeft,
         hoursToClose = this.hoursToClose,
+        pickupWindow = this.pickupWindow ?: "Today, 8:00 PM - 9:30 PM",
         category = parsedCategory,
         isEligibleForNgoFree = this.isEligibleForNgoFree,
         liveTemperature = this.liveTemperature ?: 60.0,
         storageType = this.storageType ?: "HOT",
-        description = this.description ?: "Fresh surplus food ready for rescue."
+        description = this.description ?: "Fresh surplus food ready for rescue.",
+        latitude = this.latitude,
+        longitude = this.longitude
     )
 }

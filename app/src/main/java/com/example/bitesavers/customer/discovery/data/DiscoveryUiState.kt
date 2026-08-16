@@ -34,5 +34,7 @@ data class DiscoveryUiState(
     val errorMessage: String? = null,
     val nearbyMarkers: List<NearbyDealMarkerUiModel> = emptyList(),
     val offers: List<OfferUiModel> = emptyList(),
-    val selectedMapOfferId: String? = null
+    val selectedMapOfferId: String? = null,
+    val userLatitude: Double? = null,
+    val userLongitude: Double? = null
 )

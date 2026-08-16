@@ -1,5 +1,11 @@
 package com.example.bitesavers.customer.discovery.ui
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.location.Location
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,18 +19,21 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.material3.CircularProgressIndicator // 👈 Added
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitesavers.R
@@ -35,13 +44,84 @@ import com.example.bitesavers.customer.discovery.ui.components.DiscoveryHeader
 import com.example.bitesavers.customer.discovery.ui.components.DiscoveryMapSection
 import com.example.bitesavers.customer.discovery.ui.components.DiscoveryOfferCard
 import com.example.bitesavers.customer.discovery.ui.components.DiscoverySearchBar
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
+
+/**
+ * Helper to fetch live GPS coordinates actively using getCurrentLocation
+ * (falling back to lastLocation if cached).
+ */
+private fun fetchDeviceCoordinates(
+    context: Context,
+    onLocationReceived: (Double, Double) -> Unit
+) {
+    val fusedClient = LocationServices.getFusedLocationProviderClient(context)
+    try {
+        val cancellationTokenSource = CancellationTokenSource()
+        fusedClient.getCurrentLocation(
+            Priority.PRIORITY_HIGH_ACCURACY,
+            cancellationTokenSource.token
+        ).addOnSuccessListener { location: Location? ->
+            if (location != null) {
+                onLocationReceived(location.latitude, location.longitude)
+            } else {
+                fusedClient.lastLocation.addOnSuccessListener { fallback: Location? ->
+                    if (fallback != null) {
+                        onLocationReceived(fallback.latitude, fallback.longitude)
+                    }
+                }
+            }
+        }
+    } catch (e: SecurityException) {
+        android.util.Log.e("DiscoveryRoute", "Location permission missing when fetching", e)
+    }
+}
 
 @Composable
 fun DiscoveryRoute(
     viewModel: DiscoveryViewModel = viewModel(),
     onOfferClick: (String) -> Unit = {}
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // 🌐 GPS Location Launcher: Requests Fine and Coarse location permissions at runtime
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val isGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        if (isGranted) {
+            fetchDeviceCoordinates(context) { lat, lng ->
+                viewModel.updateUserLocation(lat, lng)
+            }
+        }
+    }
+
+    // 🚀 Check or trigger GPS permission request as soon as DiscoveryRoute is entered
+    LaunchedEffect(Unit) {
+        val hasFine = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        val hasCoarse = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (hasFine || hasCoarse) {
+            fetchDeviceCoordinates(context) { lat, lng ->
+                viewModel.updateUserLocation(lat, lng)
+            }
+        } else {
+            permissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        }
+    }
 
     DiscoveryScreen(
         state = uiState,
@@ -134,6 +214,8 @@ fun DiscoveryScreen(
                             markers = state.nearbyMarkers,
                             offers = state.offers,
                             userRole = state.userRole,
+                            userLatitude = state.userLatitude,
+                            userLongitude = state.userLongitude,
                             selectedOfferId = state.selectedMapOfferId,
                             onMarkerClick = { onEvent(DiscoveryUiEvent.OnMapMarkerClicked(it)) },
                             onOfferNavigate = { onEvent(DiscoveryUiEvent.OnMapOfferNavigate(it)) }
