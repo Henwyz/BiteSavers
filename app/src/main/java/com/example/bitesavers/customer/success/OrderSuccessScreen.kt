@@ -1,4 +1,4 @@
-package com.example.bitesavers.customer.orders
+package com.example.bitesavers.customer.success
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

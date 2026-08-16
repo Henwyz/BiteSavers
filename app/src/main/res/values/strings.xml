@@ -122,6 +122,31 @@
 
     <!--========== Order Success ===========-->
 
+    <!--========== Orders Page ===========-->
+    <string name="orders_price_format">RM %.2f</string>
+
+    <!-- Orders Header -->
+    <string name="orders_header_title">My Orders</string>
+    <string name="orders_header_summary_format">%1$d completed • RM %.2f saved</string>
+    <string name="cd_orders_notification_icon">Notifications</string>
+    <string name="cd_orders_profile_avatar">User Avatar</string>
+
+    <!-- Orders Tab Selector -->
+    <string name="orders_tab_active">Active</string>
+    <string name="orders_tab_history">History</string>
+
+    <!-- Orders Status Badges -->
+    <string name="orders_status_completed">Completed</string>
+    <string name="orders_status_cancelled">Cancelled</string>
+    <string name="orders_status_ready">Ready for Pickup</string>
+
+    <!-- Orders History / Active Card -->
+    <string name="cd_orders_time_icon">Time icon</string>
+
+    <!-- Orders Empty States -->
+    <string name="orders_empty_active">No active orders</string>
+    <string name="orders_empty_history">No order history</string>
+
     <!--========== General ===========-->
     <!-- Bottom navigation -->
     <string name="nav_home">Home</string>

@@ -1,8 +1,5 @@
 package com.example.bitesavers.navigation
 
-import com.example.bitesavers.customer.profile.logic.ProfileViewModel
-import com.example.bitesavers.customer.profile.ui.ProfileScreen
-import com.example.bitesavers.customer.profile.ui.NgoRegistrationScreen
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
@@ -16,14 +13,18 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.example.bitesavers.customer.orders.OrderSuccessScreen
-import com.example.bitesavers.customer.checkout.ui.CheckoutRoute // Imported the Checkout Route
+import com.example.bitesavers.customer.checkout.ui.CheckoutRoute
 import com.example.bitesavers.customer.details.logic.FoodDetailViewModel
 import com.example.bitesavers.customer.details.ui.FoodDetailRoute
 import com.example.bitesavers.customer.discovery.ui.DiscoveryRoute
+import com.example.bitesavers.customer.orders.ui.OrdersRoute // 👈 Added import for OrdersRoute
 import com.example.bitesavers.customer.profile.logic.NgoFormMode
+import com.example.bitesavers.customer.profile.logic.ProfileViewModel
 import com.example.bitesavers.customer.profile.ui.NgoDetailsScreen
+import com.example.bitesavers.customer.profile.ui.NgoRegistrationScreen
 import com.example.bitesavers.customer.profile.ui.NgoUpdatePendingScreen
+import com.example.bitesavers.customer.profile.ui.ProfileScreen
+import com.example.bitesavers.customer.success.OrderSuccessScreen
 import com.example.bitesavers.customer.ticket.ui.TicketRoute
 
 @Composable
@@ -45,9 +46,19 @@ fun AppNavHost(
             )
         }
 
-        // 2. ORDERS TAB (Placeholder for now)
+        // 2. ORDERS TAB (Now connected to real OrdersRoute)
         composable(Screen.Orders.route) {
-            PlaceholderScreen("Orders Coming Soon")
+            OrdersRoute(
+                onOrderClick = { orderId ->
+                    navController.navigate(Screen.Ticket.createRoute(orderId))
+                },
+                onNotificationClick = {
+                    // Optional notification navigation
+                },
+                onProfileClick = {
+                    navController.navigate(Screen.Profile.route)
+                }
+            )
         }
 
         // 3. SAVED TAB (Placeholder for now)

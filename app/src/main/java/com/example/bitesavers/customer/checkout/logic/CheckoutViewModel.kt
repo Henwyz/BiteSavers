@@ -7,6 +7,7 @@ import com.example.bitesavers.customer.checkout.data.CheckoutDummyData
 import com.example.bitesavers.customer.checkout.data.CheckoutUiState
 import com.example.bitesavers.customer.checkout.ui.CheckoutUiEvent
 import com.example.bitesavers.data.repository.OfferRepository
+import com.example.bitesavers.data.repository.OrderRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,7 +18,8 @@ class CheckoutViewModel(
     private val savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-    private val repository: OfferRepository = OfferRepository()
+    private val offerRepository: OfferRepository = OfferRepository()
+    private val orderRepository: OrderRepository = OrderRepository()
     private val _uiState = MutableStateFlow(CheckoutDummyData.initialState())
     val uiState: StateFlow<CheckoutUiState> = _uiState.asStateFlow()
 
@@ -38,7 +40,7 @@ class CheckoutViewModel(
             _uiState.update { it.copy(isLoading = true) }
 
             // 2. Fetch the data from repository (Supabase)
-            val offer = repository.fetchOfferById(offerId)
+            val offer = offerRepository.fetchOfferById(offerId)
 
             if (offer != null) {
                 _uiState.update { current ->
@@ -84,7 +86,7 @@ class CheckoutViewModel(
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
             // 1. Call Supabase via repository to save the order
-            val orderId = repository.placeOrder(
+            val orderId = orderRepository.placeOrder(
                 offerId = savedStateHandle.get<String>("offerId").orEmpty(),
                 userRole = "CONSUMER",
                 quantity = currentState.quantity,

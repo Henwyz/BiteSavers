@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.bitesavers.customer.ticket.data.TicketUiState
 import com.example.bitesavers.customer.ticket.ui.TicketUiEvent
 import com.example.bitesavers.data.repository.OfferRepository
+import com.example.bitesavers.data.repository.OrderRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,7 +17,8 @@ class TicketViewModel(
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val repository: OfferRepository = OfferRepository()
+    private val offerRepository: OfferRepository = OfferRepository()
+    private val orderRepository: OrderRepository = OrderRepository()
 
     private val _uiState = MutableStateFlow(TicketUiState(isLoading = true))
     val uiState: StateFlow<TicketUiState> = _uiState.asStateFlow()
@@ -43,10 +45,10 @@ class TicketViewModel(
             _uiState.update { it.copy(isLoading = true) }
 
             // 1. Fetch the order record from Supabase
-            val order = repository.fetchOrderById(orderId)
+            val order = orderRepository.fetchOrderById(orderId)
             if (order != null) {
                 // 2. Fetch the corresponding offer details
-                val offer = repository.fetchOfferById(order.offerId)
+                val offer = offerRepository.fetchOfferById(order.offerId)
 
                 val originalTotal = (offer?.originalPrice ?: 0.0) * order.quantity
                 val moneySaved = (originalTotal - order.totalPrice).coerceAtLeast(0.0)
