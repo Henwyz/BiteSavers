@@ -26,14 +26,21 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bitesavers.R
+import com.example.bitesavers.data.model.PaymentMethod
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @Composable
-fun PickupTicketPaymentCard(totalPaid: Double) {
+fun PickupTicketPaymentCard(
+    totalPaid: Double,
+    paymentMethod: String = "BITESAVER_PAY",
+    modifier: Modifier = Modifier
+) {
+    val method = PaymentMethod.fromId(paymentMethod)
+
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface,
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier
@@ -79,7 +86,7 @@ fun PickupTicketPaymentCard(totalPaid: Double) {
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = stringResource(id = R.string.ticket_payment_bitesaver_pay),
+                        text = method.displayName,
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                         fontWeight = FontWeight.Bold
@@ -99,7 +106,10 @@ private fun PickupTicketPaymentCardPreview() {
                 .background(MaterialTheme.colorScheme.background)
                 .padding(16.dp)
         ) {
-            PickupTicketPaymentCard(totalPaid = 5.00)
+            PickupTicketPaymentCard(
+                totalPaid = 5.00,
+                paymentMethod = "TNG_EWALLET"
+            )
         }
     }
 }

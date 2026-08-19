@@ -120,6 +120,15 @@
     <string name="order_success_subtitle">Your food rescue reservation is confirmed. Show your ticket at pickup.</string>
     <string name="btn_view_ticket">View Pickup Ticket</string>
 
+    <!-- Checkout Payment Selection Sheet -->
+    <string name="payment_sheet_title">Select Payment Method</string>
+    <string name="payment_method_bitesaver_pay">BiteSaver Pay</string>
+    <string name="payment_method_bitesaver_pay_subtitle">Balance: RM 50.00</string>
+    <string name="payment_method_tng">Touch \'n Go eWallet</string>
+    <string name="payment_method_tng_subtitle">Linked: +60 12-*** 7890</string>
+    <string name="payment_method_cash">Cash on Pickup</string>
+    <string name="payment_method_cash_subtitle">Pay directly at store counter</string>
+
     <!--========== Order Success ===========-->
 
     <!--========== Orders Page ===========-->
@@ -255,6 +264,17 @@
 
     <string name="ngo_disabled_dialog_title">NGO Account Disabled</string>
     <string name="ngo_disabled_dialog_message">Your NGO account has been disabled.</string>
+
+    <!--========== Payment Method ===========-->
+    <string name="payment_methods_title">Payment Methods</string>
+    <string name="add_payment_method_title">Add Card / E-Wallet</string>
+    <string name="action_add_payment_method">+ Add New Payment Method</string>
+    <string name="field_card_number">Card Number</string>
+    <string name="field_card_holder">Cardholder Name</string>
+    <string name="field_expiry_date">Expiry Date (MM/YY)</string>
+    <string name="field_cvv">CVV</string>
+    <string name="action_save_payment">Save Payment Method</string>
+    <string name="payment_method_added_success">Payment method added successfully!</string>
 
     <!--========== Inventory ===========-->
     <string name="my_listings_title">My Listing</string>

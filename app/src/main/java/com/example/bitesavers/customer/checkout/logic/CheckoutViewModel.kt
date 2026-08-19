@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.bitesavers.customer.checkout.data.CheckoutDummyData
 import com.example.bitesavers.customer.checkout.data.CheckoutUiState
 import com.example.bitesavers.customer.checkout.ui.CheckoutUiEvent
+import com.example.bitesavers.data.model.PaymentMethod
 import com.example.bitesavers.data.repository.OfferRepository
 import com.example.bitesavers.data.repository.OrderRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,12 +45,22 @@ class CheckoutViewModel(
 
             if (offer != null) {
                 _uiState.update { current ->
+                    val calculatedTotalPrice = offer.currentPrice * quantity
+
+                    // Automatically default to CASH_ON_PICKUP if wallet balance is insufficient
+                    val defaultMethod = if (current.walletBalance >= calculatedTotalPrice) {
+                        PaymentMethod.BITESAVER_PAY
+                    } else {
+                        PaymentMethod.CASH_ON_PICKUP
+                    }
+
                     current.copy(
                         isLoading = false,
                         storeName = offer.storeName,
                         itemName = offer.title,
                         unitPrice = offer.currentPrice,
-                        quantity = quantity
+                        quantity = quantity,
+                        selectedPaymentMethod = defaultMethod
                     )
                 }
             } else {
@@ -66,7 +77,21 @@ class CheckoutViewModel(
                 // Handled in the Route wrapper
             }
             is CheckoutUiEvent.OnChangePaymentClicked -> {
-                // TODO: Open a bottom sheet to change payment method
+                _uiState.update { it.copy(isPaymentSheetVisible = true) }
+            }
+            is CheckoutUiEvent.OnDismissPaymentSheet -> {
+                _uiState.update { it.copy(isPaymentSheetVisible = false) }
+            }
+            is CheckoutUiEvent.OnSelectPaymentMethod -> {
+                _uiState.update {
+                    it.copy(
+                        selectedPaymentMethod = event.method,
+                        isPaymentSheetVisible = false
+                    )
+                }
+            }
+            is CheckoutUiEvent.OnAddNewPaymentClicked -> {
+                // Handled at navigation level in CheckoutRoute
             }
             is CheckoutUiEvent.OnConfirmPaymentClicked -> {
                 processPayment()
@@ -77,8 +102,11 @@ class CheckoutViewModel(
     private fun processPayment() {
         val currentState = _uiState.value
 
-        if (currentState.walletBalance < currentState.totalPrice) {
-            _uiState.update { it.copy(errorMessage = "Insufficient Funds. Please top up your wallet.") }
+        // Only check in-app wallet balance if BiteSaver Pay is selected
+        if (currentState.selectedPaymentMethod == PaymentMethod.BITESAVER_PAY &&
+            currentState.walletBalance < currentState.totalPrice
+        ) {
+            _uiState.update { it.copy(errorMessage = "Insufficient Funds. Please top up your wallet or select Cash on Pickup.") }
             return
         }
 
@@ -91,7 +119,8 @@ class CheckoutViewModel(
                 userRole = "CONSUMER",
                 quantity = currentState.quantity,
                 totalPrice = currentState.totalPrice,
-                hoursToClose = 2 // You can pass dynamic hours if you have them from the offer
+                hoursToClose = 2, // You can pass dynamic hours if you have them from the offer
+                paymentMethod = currentState.selectedPaymentMethod.id
             )
 
             if (orderId != null) {
@@ -99,7 +128,11 @@ class CheckoutViewModel(
                 _uiState.update { current ->
                     current.copy(
                         isLoading = false,
-                        walletBalance = current.walletBalance - current.totalPrice,
+                        walletBalance = if (current.selectedPaymentMethod == PaymentMethod.BITESAVER_PAY) {
+                            current.walletBalance - current.totalPrice
+                        } else {
+                            current.walletBalance
+                        },
                         placedOrderId = orderId, // Stores the UUID returned by Supabase
                         isPaymentSuccessful = true
                     )

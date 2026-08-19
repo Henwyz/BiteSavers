@@ -90,7 +90,10 @@ fun PickupTicketScreen(
                     itemName = state.itemName
                 )
 
-                PickupTicketPaymentCard(totalPaid = state.totalPaid)
+                PickupTicketPaymentCard(
+                    totalPaid = state.totalPaid,
+                    paymentMethod = state.paymentMethod
+                )
 
                 PickupTicketImpactCard(
                     savedAmount = state.savedAmount,
@@ -105,7 +108,6 @@ fun PickupTicketScreen(
 @Composable
 private fun PickupTicketPreview() {
     BiteSaversTheme {
-        // We construct a mock state here just so the preview looks correct
         PickupTicketScreen(
             state = TicketUiState(
                 orderId = "BS-28401",
@@ -115,7 +117,8 @@ private fun PickupTicketPreview() {
                 totalPaid = 5.00,
                 savedAmount = 5.00,
                 co2Saved = 0.8,
-                pin = "7667"
+                pin = "7667",
+                paymentMethod = "TNG_EWALLET"
             ),
             onEvent = {}
         )

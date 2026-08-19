@@ -1,5 +1,7 @@
 package com.example.bitesavers.customer.checkout.data
 
+import com.example.bitesavers.data.model.PaymentMethod
+
 data class CheckoutUiState(
     val storeName: String = "",
     val itemName: String = "",
@@ -9,7 +11,9 @@ data class CheckoutUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val isPaymentSuccessful: Boolean = false,
-    val placedOrderId: String? = null // 👈 ADD THIS FIELD HERE
+    val placedOrderId: String? = null,
+    val selectedPaymentMethod: PaymentMethod = PaymentMethod.BITESAVER_PAY,
+    val isPaymentSheetVisible: Boolean = false
 ) {
     val totalPrice: Double
         get() = quantity * unitPrice

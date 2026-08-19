@@ -27,6 +27,8 @@ import com.example.bitesavers.customer.checkout.ui.components.CheckoutBottomBar
 import com.example.bitesavers.customer.checkout.ui.components.CheckoutPaymentCard
 import com.example.bitesavers.customer.checkout.ui.components.CheckoutSummaryCard
 import com.example.bitesavers.customer.checkout.ui.components.CheckoutTopBar
+import com.example.bitesavers.customer.checkout.ui.components.PaymentMethodSelectionSheet // 👈 Added
+import com.example.bitesavers.data.model.PaymentMethod
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 /**
@@ -36,14 +38,14 @@ import com.example.bitesavers.ui.theme.BiteSaversTheme
 fun CheckoutRoute(
     viewModel: CheckoutViewModel = viewModel(),
     onNavigateBack: () -> Unit,
-    onCheckoutSuccess: (String) -> Unit // 👈 1. Change type to accept a String (the orderId)
+    onNavigateToPaymentMethods: () -> Unit, // 👈 Add parameter
+    onCheckoutSuccess: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // Listen for the payment success flag and pass the real orderId up
     LaunchedEffect(uiState.isPaymentSuccessful, uiState.placedOrderId) {
         if (uiState.isPaymentSuccessful && uiState.placedOrderId != null) {
-            onCheckoutSuccess(uiState.placedOrderId!!) // 👈 2. Pass the orderId here
+            onCheckoutSuccess(uiState.placedOrderId!!)
         }
     }
 
@@ -52,8 +54,10 @@ fun CheckoutRoute(
         onEvent = { event ->
             viewModel.onEvent(event)
 
-            if (event is CheckoutUiEvent.OnNavigateBack) {
-                onNavigateBack()
+            when (event) {
+                is CheckoutUiEvent.OnNavigateBack -> onNavigateBack()
+                is CheckoutUiEvent.OnAddNewPaymentClicked -> onNavigateToPaymentMethods()
+                else -> {}
             }
         }
     )
@@ -74,7 +78,7 @@ fun CheckoutScreen(
             )
         },
         bottomBar = {
-            // 👇 Only show the pay button if we aren't loading and there are no errors
+            // Only show the pay button if we aren't loading and there are no errors
             if (!state.isLoading && state.errorMessage == null) {
                 CheckoutBottomBar(
                     totalPrice = state.totalPrice,
@@ -86,7 +90,6 @@ fun CheckoutScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                // Swapped the hardcoded hex for your dynamic background theme role
                 .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
         ) {
@@ -123,11 +126,28 @@ fun CheckoutScreen(
                         )
 
                         CheckoutPaymentCard(
-                            walletBalance = state.walletBalance,
+                            paymentMethod = state.selectedPaymentMethod,
                             onChangeClick = { onEvent(CheckoutUiEvent.OnChangePaymentClicked) }
                         )
                     }
                 }
+            }
+
+            //Show Payment Method Bottom Sheet when state.isPaymentSheetVisible == true
+            if (state.isPaymentSheetVisible) {
+                PaymentMethodSelectionSheet(
+                    selectedMethod = state.selectedPaymentMethod,
+                    onMethodSelect = { method ->
+                        onEvent(CheckoutUiEvent.OnSelectPaymentMethod(method))
+                    },
+                    onAddNewPaymentClick = {
+                        onEvent(CheckoutUiEvent.OnDismissPaymentSheet)
+                        onEvent(CheckoutUiEvent.OnAddNewPaymentClicked)
+                    },
+                    onDismiss = {
+                        onEvent(CheckoutUiEvent.OnDismissPaymentSheet)
+                    }
+                )
             }
         }
     }
@@ -143,7 +163,8 @@ private fun CheckoutScreenPreview() {
                 itemName = "Butter Croissant",
                 quantity = 2,
                 unitPrice = 2.50,
-                walletBalance = 45.50
+                walletBalance = 45.50,
+                selectedPaymentMethod = PaymentMethod.BITESAVER_PAY
             ),
             onEvent = {}
         )

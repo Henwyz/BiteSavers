@@ -20,6 +20,9 @@ data class OrderDto(
     @SerialName("total_price")
     val totalPrice: Double,
 
+    @SerialName("payment_method")
+    val paymentMethod: String = "BITESAVER_PAY",
+
     @SerialName("status")
     val status: String = "READY_FOR_PICKUP",
 

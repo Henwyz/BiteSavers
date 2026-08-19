@@ -26,11 +26,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.bitesavers.R
+import com.example.bitesavers.data.model.PaymentMethod
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @Composable
 fun CheckoutPaymentCard(
-    walletBalance: Double,
+    paymentMethod: PaymentMethod,
     onChangeClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -93,14 +94,13 @@ fun CheckoutPaymentCard(
                 // Payment Details
                 Column {
                     Text(
-                        // Reusing the string from the ticket page!
-                        text = stringResource(id = R.string.ticket_payment_bitesaver_pay),
+                        text = paymentMethod.displayName,
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = stringResource(id = R.string.checkout_payment_balance_format, walletBalance),
+                        text = paymentMethod.subtitle,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -116,7 +116,7 @@ private fun CheckoutPaymentCardPreview() {
     BiteSaversTheme {
         Box(modifier = Modifier.padding(16.dp)) {
             CheckoutPaymentCard(
-                walletBalance = 45.50,
+                paymentMethod = PaymentMethod.BITESAVER_PAY,
                 onChangeClick = {}
             )
         }

@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.bitesavers.R
@@ -70,7 +71,9 @@ fun CheckoutSummaryCard(
                     text = storeName,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
 
@@ -85,7 +88,12 @@ fun CheckoutSummaryCard(
                 Text(
                     text = stringResource(id = R.string.checkout_item_quantity, itemName, quantity),
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 12.dp),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = stringResource(id = R.string.currency_rm, unitPrice),
@@ -126,10 +134,10 @@ private fun CheckoutSummaryCardPreview() {
     BiteSaversTheme {
         Box(modifier = Modifier.padding(16.dp)) {
             CheckoutSummaryCard(
-                storeName = "Artisan Bakery",
-                itemName = "Butter Croissant",
+                storeName = "Artisan Bakery & Cafe Specialist",
+                itemName = "Artisanal Multigrain Sourdough Bread with Sun-dried Tomatoes",
                 quantity = 2,
-                unitPrice = 2.50
+                unitPrice = 12.50
             )
         }
     }

@@ -12,12 +12,21 @@ class OrderRepository {
 
     // 3. Checkout Screen: Place an order
     suspend fun placeOrder(
-        offerId: String, userRole: String, quantity: Int, totalPrice: Double, hoursToClose: Int
+        offerId: String,
+        userRole: String,
+        quantity: Int,
+        totalPrice: Double,
+        hoursToClose: Int,
+        paymentMethod: String = "BITESAVER_PAY" //Added with default fallback
     ): String? = withContext(Dispatchers.IO) {
         try {
             val order = OrderDto(
-                offerId = offerId, userRole = userRole, quantity = quantity,
-                totalPrice = totalPrice, status = "READY_FOR_PICKUP",
+                offerId = offerId,
+                userRole = userRole,
+                quantity = quantity,
+                totalPrice = totalPrice,
+                paymentMethod = paymentMethod,
+                status = "READY_FOR_PICKUP",
                 pickupWindowClose = "Within $hoursToClose hour(s)"
             )
 
@@ -50,7 +59,7 @@ class OrderRepository {
         try {
             client.from("orders")
                 .select {
-                    // Optional: You can filter by userRole or status here if needed
+                    // Optional: filter by userRole or status here if future
                 }
                 .decodeList<OrderDto>()
         } catch (e: Exception) {

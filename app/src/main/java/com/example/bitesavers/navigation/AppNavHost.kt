@@ -1,8 +1,5 @@
 package com.example.bitesavers.navigation
 
-import com.example.bitesavers.customer.profile.logic.ProfileViewModel
-import com.example.bitesavers.customer.profile.ui.ProfileScreen
-import com.example.bitesavers.customer.profile.ui.NgoRegistrationScreen
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
@@ -16,16 +13,18 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.example.bitesavers.customer.checkout.ui.CheckoutRoute // Imported the Checkout Route
+import com.example.bitesavers.customer.checkout.ui.CheckoutRoute
 import com.example.bitesavers.customer.details.logic.FoodDetailViewModel
 import com.example.bitesavers.customer.details.ui.FoodDetailRoute
 import com.example.bitesavers.customer.discovery.ui.DiscoveryRoute
-import com.example.bitesavers.customer.orders.ui.OrdersRoute // 👈 Added import for OrdersRoute
+import com.example.bitesavers.customer.orders.ui.OrdersRoute
 import com.example.bitesavers.customer.profile.logic.NgoFormMode
+import com.example.bitesavers.customer.profile.logic.ProfileViewModel
 import com.example.bitesavers.customer.profile.ui.NgoDetailsScreen
-import com.example.bitesavers.customer.profile.ui.NgoRegistrationScreen
 import com.example.bitesavers.customer.profile.ui.NgoDisableConfirmScreen
+import com.example.bitesavers.customer.profile.ui.NgoRegistrationScreen
 import com.example.bitesavers.customer.profile.ui.NgoUpdatePendingScreen
+import com.example.bitesavers.customer.profile.ui.PaymentMethodsRoute
 import com.example.bitesavers.customer.profile.ui.ProfileScreen
 import com.example.bitesavers.customer.success.OrderSuccessScreen
 import com.example.bitesavers.customer.ticket.ui.TicketRoute
@@ -49,7 +48,7 @@ fun AppNavHost(
             )
         }
 
-        // 2. ORDERS TAB (Now connected to real OrdersRoute)
+        // 2. ORDERS TAB
         composable(Screen.Orders.route) {
             OrdersRoute(
                 onOrderClick = { orderId ->
@@ -81,16 +80,24 @@ fun AppNavHost(
                 onViewNgoDetailsClick = {
                     navController.navigate(Screen.NgoDetails.route)
                 },
+                onPaymentMethodsClick = {
+                    navController.navigate(Screen.PaymentMethods.route)
+                },
                 onSignOutClick = {
                     // TODO: wire to Member 3's login route once it exists
                 }
             )
         }
 
+        // PAYMENT METHODS SCREEN
+        composable(Screen.PaymentMethods.route) {
+            PaymentMethodsRoute(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
         // NGO REGISTRATION SCREEN (brand-new application)
         composable(Screen.NgoRegistration.route) {
-            // Scope to Profile's back stack entry so all NGO-related screens
-            // share the same ProfileViewModel.
             val profileEntry = remember(it) {
                 navController.getBackStackEntry(Screen.Profile.route)
             }
@@ -140,8 +147,6 @@ fun AppNavHost(
         composable(Screen.NgoUpdatePending.route) {
             NgoUpdatePendingScreen(
                 onUnderstoodClick = {
-                    // Clears NgoUpdatePending, NgoEdit, and NgoDetails off the
-                    // back stack in one go, landing cleanly back on Profile.
                     navController.popBackStack(Screen.Profile.route, inclusive = false)
                 }
             )
@@ -189,13 +194,13 @@ fun AppNavHost(
                 navArgument("offerId") { type = NavType.StringType },
                 navArgument("quantity") { type = NavType.IntType }
             )
-        ) { backStackEntry ->
-            val offerId = backStackEntry.arguments?.getString("offerId").orEmpty()
-            val quantity = backStackEntry.arguments?.getInt("quantity") ?: 1
-
+        ) {
             CheckoutRoute(
                 onNavigateBack = {
                     navController.popBackStack()
+                },
+                onNavigateToPaymentMethods = { // 👈 ADDED: Navigate from checkout sheet to payment methods
+                    navController.navigate(Screen.PaymentMethods.route)
                 },
                 onCheckoutSuccess = { orderId ->
                     navController.navigate(Screen.Success.createRoute(orderId)) {
@@ -214,7 +219,6 @@ fun AppNavHost(
 
             OrderSuccessScreen(
                 onViewTicketClick = {
-                    // Navigates to Ticket screen passing the orderId, and clears Success from history
                     navController.navigate(Screen.Ticket.createRoute(orderId)) {
                         popUpTo(Screen.Success.route) { inclusive = true }
                     }
@@ -226,11 +230,10 @@ fun AppNavHost(
         composable(
             route = Screen.Ticket.route,
             arguments = listOf(navArgument("orderId") { type = NavType.StringType })
-        ) { backStackEntry ->
+        ) {
             TicketRoute(
                 onNavigateBack = {
                     if (!navController.popBackStack()) {
-                        // If there's nothing on the back stack to pop (e.g. came directly from a deep link/notification), fallback to Discovery
                         navController.navigate(Screen.Discovery.route) {
                             popUpTo(Screen.Discovery.route) { inclusive = true }
                         }

@@ -31,6 +31,7 @@ import com.example.bitesavers.customer.profile.logic.SustainabilityCalculator
 fun ProfileScreen(
     onRegisterAsNgoClick: () -> Unit,
     onViewNgoDetailsClick: () -> Unit,
+    onPaymentMethodsClick: () -> Unit, // <--- ADDED: Navigation callback for Payment Methods screen
     onSignOutClick: () -> Unit,
     viewModel: ProfileViewModel = viewModel()
 ) {
@@ -217,7 +218,7 @@ fun ProfileScreen(
             ProfileMenuRow(
                 icon = { Icon(Icons.Filled.CreditCard, contentDescription = null, tint = menuIconTint, modifier = Modifier.size(16.dp)) },
                 labelResId = R.string.profile_payment_methods,
-                onClick = {}
+                onClick = onPaymentMethodsClick // <--- MODIFIED: Trigger payment methods navigation
             )
             ProfileMenuRow(
                 icon = { Icon(Icons.Filled.Lock, contentDescription = null, tint = menuIconTint, modifier = Modifier.size(16.dp)) },
