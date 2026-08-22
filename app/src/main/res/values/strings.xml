@@ -283,4 +283,33 @@
     <string name="btn_edit">Edit</string>
     <string name="btn_delete">Delete</string>
     <string name="remaining_count">%1$d remaining</string>
+
+    <!-- BUSINESS SIDE ADDITIONS — merge these into strings.xml too -->
+
+    <string name="nav_listings">Listings</string>
+    <string name="nav_analytics">Analytics</string>
+
+    <!--========== Business Analytics ===========-->
+    <string name="analytics_title">Analytics</string>
+    <string name="analytics_revenue_recovered">Revenue Recovered</string>
+    <string name="analytics_meals_rescued">Meals Rescued</string>
+    <string name="analytics_unique_consumers">Unique Consumer</string>
+    <string name="analytics_food_waste_saved">Food Waste Save</string>
+    <string name="analytics_change_this_week">%1$d%% this week</string>
+    <string name="analytics_change_vs_last_week">%1$d%% vs last week</string>
+    <string name="analytics_new_this_week">%1$d new this week</string>
+    <string name="analytics_co2_waste">CO₂ %1$.1fkg waste</string>
+    <string name="analytics_weekly_revenue_title">Weekly Revenue (RM)</string>
+    <string name="analytics_this_week">This Week</string>
+    <string name="analytics_meals_per_day_title">Meals Rescued per Day</string>
+
+    <!--========== Business Profile ===========-->
+    <string name="business_verified_merchant">Verified Merchant</string>
+    <string name="business_reviews_suffix">reviews</string>
+    <string name="business_info_title">Business Information</string>
+    <string name="business_address_label">Address</string>
+    <string name="business_phone_label">Phone</string>
+    <string name="business_category_label">Category</string>
+    <string name="business_operating_hours_title">Operating Hours</string>
+
 </resources>
