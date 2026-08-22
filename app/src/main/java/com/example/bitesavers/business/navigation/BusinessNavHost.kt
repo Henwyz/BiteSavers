@@ -6,10 +6,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.bitesavers.business.analytics.ui.AnalyticsScreen
+import com.example.bitesavers.business.inventory.logic.InventoryViewModel
+import com.example.bitesavers.business.inventory.ui.MyListingScreen
 import com.example.bitesavers.business.profile.ui.BusinessProfileScreen
 
 @Composable
@@ -31,7 +34,11 @@ fun BusinessNavHost(
 
         // 2. LISTINGS TAB — placeholder, same reason as above.
         composable(BusinessScreen.Listings.route) {
-            BusinessPlaceholderScreen("Listings Coming Soon")
+           val inventoryViewModel: InventoryViewModel = viewModel()
+            MyListingScreen(
+                viewModel = inventoryViewModel,
+                onNavigateToAddFood = {}
+            )
         }
 
         // 3. ANALYTICS TAB

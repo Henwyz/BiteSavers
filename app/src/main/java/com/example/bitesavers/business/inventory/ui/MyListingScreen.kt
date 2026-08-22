@@ -37,8 +37,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitesavers.R
 import com.example.bitesavers.business.inventory.data.ListingItem
 import com.example.bitesavers.business.inventory.logic.InventoryViewModel
@@ -63,6 +68,31 @@ fun MyListingScreen(
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                         )
+                        Text(
+                            text = "${listings.size} items · $activeCount active",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { /* TODO: Refresh */}) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .background(
+                                    MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f),
+                                    CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "⟳",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -141,15 +171,16 @@ fun ListingCard(item: ListingItem, onDelete: () -> Unit) {
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "RM $.2f".format(item.originalPrice),
+                            text = "RM %.2f".format(item.originalPrice),
                             fontSize = 12.sp,
+                            textDecoration = TextDecoration.LineThrough,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Box(
                             modifier = Modifier
                                 .background(
-                                    MaterialTheme.colorScheme.secondaryContainer,
+                                    MaterialTheme.colorScheme.tertiaryContainer,
                                     RoundedCornerShape(4.dp)
                                 )
                                 .padding(horizontal = 4.dp, vertical = 2.dp)
@@ -157,7 +188,8 @@ fun ListingCard(item: ListingItem, onDelete: () -> Unit) {
                             Text(
                                 text = "-${item.discountPercent}%",
                                 fontSize = 10.sp,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
                             )
                         }
                     }
@@ -168,13 +200,11 @@ fun ListingCard(item: ListingItem, onDelete: () -> Unit) {
                     )
                 }
 
-                val statusBg = if (item.status == "Active") MaterialTheme.colorScheme
-                    .primaryContainer
-                else MaterialTheme.colorScheme.errorContainer
-
-                val statusText = if (item.status == "Active") MaterialTheme.colorScheme
-                    .onPrimaryContainer
-                else MaterialTheme.colorScheme.onErrorContainer
+                val (statusBg, statusText) = when (item.status) {
+                    "Active" -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
+                    "Paused" -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
+                    else -> MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.errorContainer
+            }
 
                 Box(
                     modifier = Modifier
@@ -194,7 +224,11 @@ fun ListingCard(item: ListingItem, onDelete: () -> Unit) {
                 OutlinedButton(
                     onClick = { /* TODO: Not finished yet ah */ },
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
                 ) {
                     Text(
                         stringResource(R.string.btn_edit),
@@ -216,4 +250,6 @@ fun ListingCard(item: ListingItem, onDelete: () -> Unit) {
         }
     }
 }
+
+
 
