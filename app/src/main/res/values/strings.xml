@@ -284,6 +284,20 @@
     <string name="btn_delete">Delete</string>
     <string name="remaining_count">%1$d remaining</string>
 
+    <!--========== Inventory ===========-->
+    <string name="add_food_title">Add Surplus Food</string>
+    <string name="upload_photo_title">Upload Food Photo</string>
+    <string name="upload_photo_subtitle">Tap to take photo or pick from gallery</string>
+    <string name="hint_food_name">Food Name</string>
+    <string name="label_description">Description</string>
+    <string name="hint_description">Freshly baked, best by pickup time</string>
+    <string name="label_category">Category</string>
+    <string name="label_orihinal_price">Original Price</string>
+    <string name="label_discount_price">Discount price</string>
+    <string name="label_quantity">Quantity</string>
+    <string name="label_expiry_time">Expiry Time</string>
+    <string name="btn_publish_listing">Publish Listing</string>
+
     <!-- BUSINESS SIDE ADDITIONS — merge these into strings.xml too -->
 
     <string name="nav_listings">Listings</string>
