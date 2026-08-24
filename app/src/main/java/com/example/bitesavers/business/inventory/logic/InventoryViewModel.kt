@@ -21,4 +21,7 @@ class InventoryViewModel : ViewModel() {
     fun deleteListing(id: String) {
         _listings.value = _listings.value.filter { it.id != id }
     }
+    fun addListing(item: ListingItem) {
+        _listings.value = listOf(item) + _listings.value
+    }
 }
