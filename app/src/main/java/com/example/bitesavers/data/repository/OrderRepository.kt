@@ -54,7 +54,6 @@ class OrderRepository {
         }
     }
 
-    // 5. Orders Screen: Fetch all active customer orders (NEW!)
     suspend fun fetchCustomerOrders(): List<OrderDto> = withContext(Dispatchers.IO) {
         try {
             client.from("orders")

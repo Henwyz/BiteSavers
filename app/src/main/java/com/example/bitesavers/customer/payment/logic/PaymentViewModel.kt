@@ -1,9 +1,9 @@
-package com.example.bitesavers.customer.profile.logic
+package com.example.bitesavers.customer.payment.logic
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.bitesavers.customer.profile.data.PaymentMethodsUiState
-import com.example.bitesavers.customer.profile.ui.PaymentMethodsUiEvent
+import com.example.bitesavers.customer.payment.data.PaymentMethodsUiState
+import com.example.bitesavers.customer.payment.ui.PaymentMethodsUiEvent
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

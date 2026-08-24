@@ -1,4 +1,4 @@
-package com.example.bitesavers.customer.profile.ui
+package com.example.bitesavers.customer.payment.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -26,8 +26,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitesavers.R
-import com.example.bitesavers.customer.profile.data.PaymentMethodsUiState
-import com.example.bitesavers.customer.profile.logic.PaymentMethodsViewModel
+import com.example.bitesavers.customer.payment.data.PaymentMethodsUiState
+import com.example.bitesavers.customer.payment.logic.PaymentMethodsViewModel
 import com.example.bitesavers.customer.profile.ui.components.PaymentMethodCardItem
 import com.example.bitesavers.data.model.PaymentMethod
 

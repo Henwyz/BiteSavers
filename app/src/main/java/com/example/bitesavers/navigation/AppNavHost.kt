@@ -24,7 +24,7 @@ import com.example.bitesavers.customer.profile.ui.NgoDetailsScreen
 import com.example.bitesavers.customer.profile.ui.NgoDisableConfirmScreen
 import com.example.bitesavers.customer.profile.ui.NgoRegistrationScreen
 import com.example.bitesavers.customer.profile.ui.NgoUpdatePendingScreen
-import com.example.bitesavers.customer.profile.ui.PaymentMethodsRoute
+import com.example.bitesavers.customer.payment.ui.PaymentMethodsRoute
 import com.example.bitesavers.customer.profile.ui.ProfileScreen
 import com.example.bitesavers.customer.success.OrderSuccessScreen
 import com.example.bitesavers.customer.ticket.ui.TicketRoute

@@ -1,4 +1,4 @@
-package com.example.bitesavers.customer.profile.data
+package com.example.bitesavers.customer.payment.data
 
 import com.example.bitesavers.data.model.PaymentMethod
 

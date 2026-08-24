@@ -1,4 +1,4 @@
-package com.example.bitesavers.customer.profile.ui
+package com.example.bitesavers.customer.payment.ui
 
 sealed interface PaymentMethodsUiEvent {
     object OnToggleAddCard : PaymentMethodsUiEvent
