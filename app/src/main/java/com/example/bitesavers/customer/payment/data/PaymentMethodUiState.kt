@@ -1,14 +1,26 @@
 package com.example.bitesavers.customer.payment.data
 
-import com.example.bitesavers.data.model.PaymentMethod
-
 data class PaymentMethodsUiState(
+    // Wallet State
     val walletBalance: Double = 67.50,
-    val savedMethods: List<PaymentMethod> = listOf(
-        PaymentMethod.BITESAVER_PAY,
-        PaymentMethod.TNG_EWALLET,
-        PaymentMethod.CASH_ON_PICKUP
+    val isTopUpSheetVisible: Boolean = false,
+
+    // E-Wallet State
+    val isTngLinked: Boolean = true,
+    val tngPhone: String = "+60 12-*** 7890",
+
+    // Saved Bank Cards
+    val savedCards: List<SavedBankCard> = listOf(
+        SavedBankCard(
+            id = "card_default_1",
+            cardHolder = "Michelle Lim",
+            lastFourDigits = "4321",
+            expiryDate = "08/28",
+            isDefault = true
+        )
     ),
+
+    // Add Card Form State
     val isAddingCard: Boolean = false,
     val cardNumber: String = "",
     val cardHolder: String = "",
@@ -18,8 +30,16 @@ data class PaymentMethodsUiState(
     val isSavedSuccess: Boolean = false
 ) {
     val isFormValid: Boolean
-        get() = cardNumber.length >= 16 &&
+        get() = cardNumber.length == 16 &&
                 cardHolder.isNotBlank() &&
                 expiryDate.isNotBlank() &&
                 cvv.length == 3
 }
+
+data class SavedBankCard(
+    val id: String,
+    val cardHolder: String,
+    val lastFourDigits: String,
+    val expiryDate: String,
+    val isDefault: Boolean = false
+)
