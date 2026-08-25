@@ -3,6 +3,7 @@ package com.example.bitesavers.business.inventory.data
 data class ListingItem(
     val id: String,
     val name: String,
+    val description: String = "",
     val category: String,
     val originalPrice: Double,
     val discountPrice: Double,

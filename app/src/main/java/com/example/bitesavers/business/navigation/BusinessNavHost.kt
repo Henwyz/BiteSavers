@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -12,6 +13,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.bitesavers.business.analytics.ui.AnalyticsScreen
 import com.example.bitesavers.business.inventory.logic.InventoryViewModel
+import com.example.bitesavers.business.inventory.ui.AddFoodScreen
 import com.example.bitesavers.business.inventory.ui.MyListingScreen
 import com.example.bitesavers.business.profile.ui.BusinessProfileScreen
 
@@ -37,7 +39,7 @@ fun BusinessNavHost(
            val inventoryViewModel: InventoryViewModel = viewModel()
             MyListingScreen(
                 viewModel = inventoryViewModel,
-                onNavigateToAddFood = {}
+                onNavigateToAddFood = { navController.navigate("add_food") }
             )
         }
 
@@ -52,6 +54,17 @@ fun BusinessNavHost(
                 onSignOutClick = {
                     // TODO: wire to Member 3's login route once it exists
                 }
+            )
+        }
+
+        // 5. ADD FOOD SCREEN
+        composable("add_food") {
+            val parentEntry = remember(it) { navController.getBackStackEntry(BusinessScreen.Listings.route) }
+            val inventoryViewModel: InventoryViewModel = viewModel(parentEntry)
+
+            AddFoodScreen(
+                viewModel = inventoryViewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

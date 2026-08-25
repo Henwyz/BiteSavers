@@ -13,6 +13,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,6 +36,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -51,6 +54,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -60,6 +64,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.example.bitesavers.business.inventory.logic.InventoryViewModel
 import com.example.bitesavers.R
 import com.example.bitesavers.business.inventory.data.ListingItem
@@ -81,9 +86,20 @@ fun AddFoodScreen(
     var discountPrice by remember { mutableStateOf("") }
     var quantity by remember { mutableStateOf("") }
     var expiryTime by remember { mutableStateOf("06:00 PM")}
+    var pickupStartTime by remember { mutableStateOf("05:00 PM") }
+    var pickupEndTime by remember { mutableStateOf("07:00 PM") }
 
     var myFoodImage by remember { mutableStateOf<Bitmap?>(null) }
     var showImagePick by remember { mutableStateOf(false) }
+    var showFullImagePreview by remember { mutableStateOf(false) }
+
+    val isFormValid = foodName.isNotBlank() &&
+            category.isNotBlank() &&
+            (originalPrice.toDoubleOrNull() ?: 0.0) > 0.0 &&
+            (discountPrice.toDoubleOrNull() ?: 0.0) > 0.0 &&
+            ((discountPrice.toDoubleOrNull() ?: 0.0) <= (originalPrice.toDoubleOrNull() ?: 0.0)) &&
+            (quantity.toIntOrNull() ?: 0) > 0 &&
+            expiryTime.isNotBlank()
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -105,32 +121,114 @@ fun AddFoodScreen(
         bitmap?.let { myFoodImage = it }
     }
 
+    // show select picture from gallery or take photo at bottom
     if (showImagePick) {
-        AlertDialog(
+        ModalBottomSheet(
             onDismissRequest = { showImagePick = false },
-            title = { Text(text = stringResource(R.string.upload_photo_title)) },
-            text = { Text(text = stringResource(R.string.upload_photo_subtitle))},
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showImagePick = false
-                        cameraLauncher.launch()
-                    }
+            containerColor = MaterialTheme.colorScheme.surface,
+            shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 32.dp, top = 8.dp)
+            ) {
+                Text(
+                    text = "Choose Photo Source",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            showImagePick = false
+                            cameraLauncher.launch()
+                        }
+                        .padding(vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "Camera")
+                    Text(text = "\uD83D\uDCF7", fontSize = 20.sp)
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text(
+                        text = "Take Photo",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
                 }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        showImagePick = false
-                        galleryLauncher.launch("image/*")
-                    }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            showImagePick = false
+                            galleryLauncher.launch("image/*")
+                        }
+                        .padding(vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "Gallery")
+                    Text(text = "\uD83D\uDDBC\uFE0F", fontSize = 20.sp)
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text(
+                        text = "Choose from gallery",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
                 }
             }
-        )
+        }
+    }
+
+    // click the picture then zoom it
+    if (showFullImagePreview && myFoodImage != null) {
+        Dialog(onDismissRequest = { showFullImagePreview = false }) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                           MaterialTheme.colorScheme.surface,
+                           RoundedCornerShape(16.dp))
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Image(
+                        bitmap = myFoodImage!!.asImageBitmap(),
+                        contentDescription = "Full Image Preview",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(350.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        TextButton(
+                            onClick = {
+                                showFullImagePreview = false
+                                showImagePick = true
+                            }
+                        ) {
+                            Text(text = "Retake / Change",
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold)
+                        }
+                        TextButton(onClick = { showFullImagePreview = false }) {
+                            Text(text = "Close",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+        }
     }
 
     Scaffold(
@@ -141,7 +239,7 @@ fun AddFoodScreen(
                         text = stringResource(R.string.add_food_title),
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
-                        color = MaterialTheme.colorScheme.onPrimary
+                        color = MaterialTheme.colorScheme.onSecondary
                     )
                 },
                 navigationIcon = {
@@ -149,15 +247,18 @@ fun AddFoodScreen(
                         Box(
                             modifier = Modifier
                                 .size(32.dp)
-                                .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f),
+                                .background(MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.2f),
                                     CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = "<", color = MaterialTheme.colorScheme.onPrimary, fontSize = 14.sp)
+                            Text(text = "<", color = MaterialTheme.colorScheme.onSecondary, fontSize = 14.sp)
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor =MaterialTheme.colorScheme.onPrimary)
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor =MaterialTheme.colorScheme.secondary,
+                    titleContentColor = MaterialTheme.colorScheme.onSecondary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSecondary)
             )
         }
     ) { paddingValues ->
@@ -170,6 +271,7 @@ fun AddFoodScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
+            // place of upload picture or preview
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -182,7 +284,11 @@ fun AddFoodScreen(
                         shape = RoundedCornerShape(12.dp)
                     )
                     .clickable{
-                        showImagePick = true
+                        if (myFoodImage == null) {
+                            showImagePick = true
+                        } else {
+                            showFullImagePreview = true
+                        }
                     },
                 contentAlignment = Alignment.Center
             ) {
@@ -193,6 +299,21 @@ fun AddFoodScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
+                    IconButton(
+                        onClick = { myFoodImage = null },
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(8.dp)
+                            .size(30.dp)
+                            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f), CircleShape)
+                    ) {
+                        Text(
+                            text = "X",
+                            color = MaterialTheme.colorScheme.surface,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 } else {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Box(
@@ -240,8 +361,35 @@ fun AddFoodScreen(
                 onValueChange = { category = it }
             )
 
+            //original price and discount price
             Row(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(modifier = Modifier.weight(1f)) {
+                    FormField(
+                        label = "Original Price (RM)",
+                        value = originalPrice,
+                        placeholder = "4.50",
+                        keyboardType = KeyboardType.Decimal,
+                        onValueChange = { originalPrice = it }
+                    )
+                }
+
+                Box(modifier = Modifier.weight(1f)) {
+                    FormField(
+                        label = "Discount Price (RM)",
+                        value = discountPrice,
+                        placeholder = "1.50",
+                        keyboardType = KeyboardType.Decimal,
+                        onValueChange = { discountPrice = it }
+                    )
+                }
+            }
+
+            // quantity and expiry time
+            Row(
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Box(modifier = Modifier.weight(1f)) {
@@ -263,27 +411,86 @@ fun AddFoodScreen(
                 }
             }
 
+            // Pickup Window
+            Column{
+                Text(
+                    text = "Pickup Window",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(modifier = Modifier.weight(1f)) {
+                        OutlinedTextField(
+                            value = pickupStartTime,
+                            onValueChange = { pickupStartTime = it },
+                            placeholder = { Text("05:00 PM",
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                            singleLine = true,
+                            shape = RoundedCornerShape(10.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
+                    Text(
+                        text = "to",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Box(modifier = Modifier.weight(1f)) {
+                        OutlinedTextField(
+                            value = pickupEndTime,
+                            onValueChange = { pickupEndTime = it },
+                            placeholder = { Text("07:00 PM",
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                            singleLine = true,
+                            shape = RoundedCornerShape(10.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(10.dp))
 
             Button(
                 onClick = {
-                    val orig = originalPrice.toDoubleOrNull() ?: 0.0
-                    val disc = discountPrice.toDoubleOrNull() ?: 0.0
-                    val percent = if (orig > 0)
-                            (((orig - disc) / orig) * 100).toInt() else 0
                     val newItem = ListingItem(
                         id = System.currentTimeMillis().toString(),
-                        name = foodName.ifBlank { "Untitled Food" },
-                        category = category.ifBlank { "Bakery" },
-                        originalPrice = orig,
-                        discountPrice = disc,
+                        name = foodName.trim(),
+                        description = description.trim().ifBlank { "" },
+                        category = category.trim(),
+                        originalPrice = originalPrice.toDoubleOrNull() ?: 0.0,
+                        discountPrice = discountPrice.toDoubleOrNull() ?: 0.0,
                         quantity = quantity.toIntOrNull() ?:1,
-                        expiryTime = expiryTime,
+                        expiryTime = expiryTime.trim(),
                         status = "Active"
                     )
                     viewModel.addListing(newItem)
                     onNavigateBack()
                 },
+                enabled = isFormValid,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
@@ -316,21 +523,21 @@ fun FormField(
             text = label,
             fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onBackground
         )
         Spacer(modifier = Modifier.height(4.dp))
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            placeholder = { Text(text = placeholder, fontSize = 13.sp) },
+            placeholder = { Text(text = placeholder, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) },
             singleLine = true,
             shape = RoundedCornerShape(10.dp),
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                 focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
             ),
             modifier = Modifier.fillMaxWidth()
         )
