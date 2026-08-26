@@ -327,4 +327,36 @@
     <string name="business_category_label">Category</string>
     <string name="business_operating_hours_title">Operating Hours</string>
 
+    <!--========== Privacy & Security ===========-->
+    <string name="privacy_data_collected_title">Data We Collect</string>
+    <string name="privacy_data_collected_body">We collect your name, email, phone number, and pickup location to coordinate food reservations. Order history is used to calculate your personal impact stats.</string>
+    <string name="privacy_data_use_title">How We Use Your Data</string>
+    <string name="privacy_data_use_body">Your data helps match you with nearby surplus food, verify pickups with business partners, and calculate the money you\'ve saved and food you\'ve rescued.</string>
+    <string name="privacy_data_sharing_title">Data Sharing</string>
+    <string name="privacy_data_sharing_body">Business partners can see your name and order details only to confirm pickup. We don\'t sell your personal data to third parties.</string>
+    <string name="privacy_account_security_title">Account Security</string>
+    <string name="privacy_account_security_body">Use a strong, unique password for your account. You can sign out at any time from the top of your Profile page.</string>
+
+    <!--========== Help & Support ===========-->
+    <string name="help_faq_title">Frequently Asked Questions</string>
+    <string name="faq_q_reserve">How do I reserve a surprise bag?</string>
+    <string name="faq_a_reserve">Browse nearby deals on the Home tab, tap a listing, choose your quantity, and confirm your reservation. You\'ll get a pickup ticket with a collection PIN.</string>
+    <string name="faq_q_missed_pickup">What if I can\'t make my pickup window?</string>
+    <string name="faq_a_missed_pickup">Try to cancel as early as possible so the business can offer the food to someone else. Repeated no-shows may affect your account standing.</string>
+    <string name="faq_q_ngo">How does NGO registration work?</string>
+    <string name="faq_a_ngo">Go to Profile → Register as NGO, fill in your organization\'s details and registration number, and submit. Once approved, you can claim eligible food for free.</string>
+    <string name="faq_q_payment_safety">Is my payment secure?</string>
+    <string name="faq_a_payment_safety">Payments are processed through BiteSaver Pay using your in-app e-wallet balance. We don\'t store your card details on your device.</string>
+    <string name="help_contact_title">Contact Support</string>
+    <string name="help_contact_email">support@bitesaver.app</string>
+    <string name="help_contact_phone">+60 3-1234 5678</string>
+
+    <!--========== About BiteSaver ===========-->
+    <string name="about_tagline">Turning unsold food into saved value.</string>
+    <string name="about_mission_title">Our Mission</string>
+    <string name="about_mission_body">BiteSaver connects food businesses with surplus, unsold-but-safe food to nearby consumers at a discount, and to registered NGOs for free — reducing food waste while making meals more affordable.</string>
+    <string name="about_sdg_title">SDG Alignment</string>
+    <string name="about_sdg_body">This app supports UN Sustainable Development Goal 12 (Responsible Consumption and Production) and Goal 2 (Zero Hunger).</string>
+    <string name="about_version_label">Version 1.0.0 (MVP)</string>
+
 </resources>

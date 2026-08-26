@@ -25,6 +25,9 @@ import com.example.bitesavers.customer.profile.ui.NgoDisableConfirmScreen
 import com.example.bitesavers.customer.profile.ui.NgoRegistrationScreen
 import com.example.bitesavers.customer.profile.ui.NgoUpdatePendingScreen
 import com.example.bitesavers.customer.payment.ui.PaymentMethodsRoute
+import com.example.bitesavers.customer.profile.ui.AboutBiteSaverScreen
+import com.example.bitesavers.customer.profile.ui.HelpSupportScreen
+import com.example.bitesavers.customer.profile.ui.PrivacySecurityScreen
 import com.example.bitesavers.customer.profile.ui.ProfileScreen
 import com.example.bitesavers.customer.success.OrderSuccessScreen
 import com.example.bitesavers.customer.ticket.ui.TicketRoute
@@ -80,13 +83,26 @@ fun AppNavHost(
                 onViewNgoDetailsClick = {
                     navController.navigate(Screen.NgoDetails.route)
                 },
-                onPaymentMethodsClick = {
-                    navController.navigate(Screen.PaymentMethods.route)
-                },
                 onSignOutClick = {
                     // TODO: wire to Member 3's login route once it exists
-                }
+                },
+                onPrivacySecurityClick = { navController.navigate(Screen.PrivacySecurity.route) },
+                onHelpSupportClick = { navController.navigate(Screen.HelpSupport.route) },
+                onAboutClick = { navController.navigate(Screen.AboutBiteSaver.route) },
+                onPaymentMethodsClick = { navController.navigate(Screen.PaymentMethods.route)
+                },
             )
+        }
+
+        // PROFILE SUB-SCREENS — static/informational, no shared ViewModel needed
+        composable(Screen.PrivacySecurity.route) {
+            PrivacySecurityScreen(onBackClick = { navController.popBackStack() })
+        }
+        composable(Screen.HelpSupport.route) {
+            HelpSupportScreen(onBackClick = { navController.popBackStack() })
+        }
+        composable(Screen.AboutBiteSaver.route) {
+            AboutBiteSaverScreen(onBackClick = { navController.popBackStack() })
         }
 
         // PAYMENT METHODS SCREEN

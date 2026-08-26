@@ -33,6 +33,9 @@ fun ProfileScreen(
     onViewNgoDetailsClick: () -> Unit,
     onPaymentMethodsClick: () -> Unit, // <--- ADDED: Navigation callback for Payment Methods screen
     onSignOutClick: () -> Unit,
+    onPrivacySecurityClick: () -> Unit,
+    onHelpSupportClick: () -> Unit,
+    onAboutClick: () -> Unit,
     viewModel: ProfileViewModel = viewModel()
 ) {
     val profile by viewModel.profile.collectAsStateWithLifecycle()
@@ -223,17 +226,17 @@ fun ProfileScreen(
             ProfileMenuRow(
                 icon = { Icon(Icons.Filled.Lock, contentDescription = null, tint = menuIconTint, modifier = Modifier.size(16.dp)) },
                 labelResId = R.string.profile_privacy_security,
-                onClick = {}
+                onClick = onPrivacySecurityClick
             )
             ProfileMenuRow(
                 icon = { Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = null, tint = menuIconTint, modifier = Modifier.size(16.dp)) },
                 labelResId = R.string.profile_help_support,
-                onClick = {}
+                onClick = onHelpSupportClick
             )
             ProfileMenuRow(
                 icon = { Icon(Icons.Filled.Eco, contentDescription = null, tint = menuIconTint, modifier = Modifier.size(16.dp)) },
                 labelResId = R.string.profile_about,
-                onClick = {}
+                onClick = onAboutClick
             )
         }
 
