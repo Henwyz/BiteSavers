@@ -1,6 +1,7 @@
 package com.example.bitesavers.business.inventory.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -53,7 +54,8 @@ import com.example.bitesavers.business.inventory.logic.InventoryViewModel
 @Composable
 fun MyListingScreen(
     viewModel: InventoryViewModel,
-    onNavigateToAddFood: () -> Unit
+    onNavigateToAddFood: () -> Unit,
+    onNavigateToEditFood: (String)-> Unit = {}
 ) {
     val listings by viewModel.listings.collectAsState()
     val activeCount = listings.count { it.status == "Active" }
@@ -121,19 +123,24 @@ fun MyListingScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(listings ) { item ->
-                ListingCard(item = item, onDelete = { viewModel.deleteListing(item.id) })
+                ListingCard(item = item,
+                    onEditClick = { itemId -> onNavigateToEditFood(itemId) },
+                    onDelete = { viewModel.deleteListing(item.id) })
             }
         }
     }
 }
 
 @Composable
-fun ListingCard(item: ListingItem, onDelete: () -> Unit) {
+fun ListingCard(item: ListingItem,
+                onEditClick: (String) -> Unit,
+                onDelete: () -> Unit) {
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier.fillMaxSize()
+            .clickable { onEditClick(item.id) }
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -222,7 +229,9 @@ fun ListingCard(item: ListingItem, onDelete: () -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 OutlinedButton(
-                    onClick = { /* TODO: Not finished yet ah */ },
+                    onClick = {
+                        onEditClick(item.id)
+                    },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(

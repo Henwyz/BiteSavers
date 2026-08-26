@@ -39,7 +39,8 @@ fun BusinessNavHost(
            val inventoryViewModel: InventoryViewModel = viewModel()
             MyListingScreen(
                 viewModel = inventoryViewModel,
-                onNavigateToAddFood = { navController.navigate("add_food") }
+                onNavigateToAddFood = { navController.navigate("add_food") },
+                onNavigateToEditFood = { foodId -> navController.navigate("add_food")}
             )
         }
 
