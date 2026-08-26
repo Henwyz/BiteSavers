@@ -21,18 +21,16 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitesavers.R
 import com.example.bitesavers.customer.payment.data.PaymentMethodsUiState
-import com.example.bitesavers.customer.payment.data.SavedBankCard
 import com.example.bitesavers.customer.payment.logic.PaymentMethodsViewModel
+import com.example.bitesavers.customer.payment.ui.components.LinkWalletBottomSheet
 import com.example.bitesavers.customer.payment.ui.components.PaymentMethodCardItem
 import com.example.bitesavers.customer.payment.ui.components.TopUpBottomSheet
-import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @Composable
 fun PaymentMethodsRoute(
@@ -64,7 +62,7 @@ fun PaymentMethodsScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = if (state.isAddingCard) "Add Debit / Credit Card" else stringResource(R.string.payment_methods_title),
+                        text = if (state.isAddingCard) stringResource(R.string.payment_title_add_card) else stringResource(R.string.payment_methods_title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -102,7 +100,7 @@ fun PaymentMethodsScreen(
             if (!state.isAddingCard) {
                 // Section 1: In-App Balance Banner + Top Up Action
                 Text(
-                    text = "BiteSaver Balance",
+                    text = stringResource(R.string.payment_section_bitesaver_balance),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Bold
@@ -136,12 +134,12 @@ fun PaymentMethodsScreen(
                             Spacer(Modifier.width(12.dp))
                             Column {
                                 Text(
-                                    text = "BiteSaver Pay",
+                                    text = stringResource(R.string.payment_bitesaver_pay),
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                                 Text(
-                                    text = "Available: RM ${"%.2f".format(state.walletBalance)}",
+                                    text = stringResource(R.string.payment_available_balance, state.walletBalance),
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
@@ -158,14 +156,14 @@ fun PaymentMethodsScreen(
                             ),
                             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
                         ) {
-                            Text(text = "Top Up", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            Text(text = stringResource(R.string.action_top_up), fontWeight = FontWeight.Bold, fontSize = 13.sp)
                         }
                     }
                 }
 
                 // Section 2: Linked E-Wallets
                 Text(
-                    text = "Linked E-Wallets",
+                    text = stringResource(R.string.payment_section_linked_ewallets),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Bold
@@ -201,21 +199,27 @@ fun PaymentMethodsScreen(
                             Spacer(Modifier.width(12.dp))
                             Column {
                                 Text(
-                                    text = "Touch 'n Go eWallet",
+                                    text = stringResource(R.string.payment_tng_title),
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = if (state.isTngLinked) state.tngPhone else "Not linked",
+                                    text = if (state.isTngLinked) state.tngPhone else stringResource(R.string.payment_not_linked),
                                     fontSize = 12.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
 
-                        TextButton(onClick = { onEvent(PaymentMethodsUiEvent.OnToggleTngLink) }) {
+                        TextButton(onClick = {
+                            if (state.isTngLinked) {
+                                onEvent(PaymentMethodsUiEvent.OnUnlinkWallet)
+                            } else {
+                                onEvent(PaymentMethodsUiEvent.OnShowLinkWalletSheet)
+                            }
+                        }) {
                             Text(
-                                text = if (state.isTngLinked) "Unlink" else "Link",
+                                text = if (state.isTngLinked) stringResource(R.string.action_unlink) else stringResource(R.string.action_link),
                                 color = if (state.isTngLinked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Bold
                             )
@@ -225,7 +229,7 @@ fun PaymentMethodsScreen(
 
                 // Section 3: Saved Bank Cards
                 Text(
-                    text = "Debit / Credit Cards",
+                    text = stringResource(R.string.payment_section_cards),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Bold
@@ -233,7 +237,7 @@ fun PaymentMethodsScreen(
 
                 if (state.savedCards.isEmpty()) {
                     Text(
-                        text = "No cards saved yet.",
+                        text = stringResource(R.string.payment_no_cards),
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -257,7 +261,7 @@ fun PaymentMethodsScreen(
                 ) {
                     Icon(imageVector = Icons.Default.Add, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text(text = "Add New Card", fontWeight = FontWeight.Bold)
+                    Text(text = stringResource(R.string.action_add_new_card), fontWeight = FontWeight.Bold)
                 }
 
                 Row(
@@ -275,13 +279,13 @@ fun PaymentMethodsScreen(
                     )
                     Spacer(Modifier.width(6.dp))
                     Text(
-                        text = "Your payment credentials are encrypted & secure",
+                        text = stringResource(R.string.payment_security_notice),
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     )
                 }
             } else {
-                // Section 4: Add New Card Form
+                // Section 4: Add Card Form
                 Surface(
                     shape = RoundedCornerShape(16.dp),
                     color = MaterialTheme.colorScheme.surface,
@@ -294,8 +298,8 @@ fun PaymentMethodsScreen(
                         OutlinedTextField(
                             value = state.cardNumber,
                             onValueChange = { onEvent(PaymentMethodsUiEvent.OnCardNumberChange(it)) },
-                            label = { Text("Card Number") },
-                            placeholder = { Text("16 digits (e.g. 4123 4567 8901 2345)") },
+                            label = { Text(stringResource(R.string.field_card_number)) },
+                            placeholder = { Text(stringResource(R.string.hint_card_number)) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true
@@ -304,8 +308,8 @@ fun PaymentMethodsScreen(
                         OutlinedTextField(
                             value = state.cardHolder,
                             onValueChange = { onEvent(PaymentMethodsUiEvent.OnCardHolderChange(it)) },
-                            label = { Text("Cardholder Name") },
-                            placeholder = { Text("Name on card") },
+                            label = { Text(stringResource(R.string.field_card_holder)) },
+                            placeholder = { Text(stringResource(R.string.hint_card_holder)) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true
                         )
@@ -317,8 +321,8 @@ fun PaymentMethodsScreen(
                             OutlinedTextField(
                                 value = state.expiryDate,
                                 onValueChange = { onEvent(PaymentMethodsUiEvent.OnExpiryDateChange(it)) },
-                                label = { Text("Expiry") },
-                                placeholder = { Text("MM/YY") },
+                                label = { Text(stringResource(R.string.field_expiry_date)) },
+                                placeholder = { Text(stringResource(R.string.hint_expiry_date)) },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                 modifier = Modifier.weight(1f),
                                 singleLine = true
@@ -327,8 +331,8 @@ fun PaymentMethodsScreen(
                             OutlinedTextField(
                                 value = state.cvv,
                                 onValueChange = { onEvent(PaymentMethodsUiEvent.OnCvvChange(it)) },
-                                label = { Text("CVV") },
-                                placeholder = { Text("3 digits") },
+                                label = { Text(stringResource(R.string.field_cvv)) },
+                                placeholder = { Text(stringResource(R.string.hint_cvv)) },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                                 modifier = Modifier.weight(1f),
                                 singleLine = true
@@ -344,7 +348,7 @@ fun PaymentMethodsScreen(
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) {
-                            Text("Save Card", fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.action_save_card), fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -355,55 +359,28 @@ fun PaymentMethodsScreen(
         if (state.isTopUpSheetVisible) {
             TopUpBottomSheet(
                 currentBalance = state.walletBalance,
-                onConfirmTopUp = { amount ->
-                    onEvent(PaymentMethodsUiEvent.OnConfirmTopUp(amount))
+                isProcessing = state.isProcessingPayment,
+                onConfirmTopUp = { amount, source ->
+                    onEvent(PaymentMethodsUiEvent.OnConfirmTopUp(amount, source))
                 },
                 onDismiss = {
                     onEvent(PaymentMethodsUiEvent.OnDismissTopUpSheet)
                 }
             )
         }
-    }
-}
 
-@Preview(name = "Main Payment Methods Screen", showBackground = true)
-@Composable
-private fun PaymentMethodsScreenMainPreview() {
-    BiteSaversTheme {
-        PaymentMethodsScreen(
-            state = PaymentMethodsUiState(
-                walletBalance = 67.50,
-                isTngLinked = true,
-                tngPhone = "+60 12-*** 7890",
-                savedCards = listOf(
-                    SavedBankCard(
-                        id = "1",
-                        cardHolder = "Michelle Lim",
-                        lastFourDigits = "4321",
-                        expiryDate = "08/28",
-                        isDefault = true
-                    )
-                ),
-                isAddingCard = false
-            ),
-            onEvent = {}
-        )
-    }
-}
-
-@Preview(name = "Add New Card Mode", showBackground = true)
-@Composable
-private fun PaymentMethodsScreenAddCardPreview() {
-    BiteSaversTheme {
-        PaymentMethodsScreen(
-            state = PaymentMethodsUiState(
-                isAddingCard = true,
-                cardNumber = "4123456789012345",
-                cardHolder = "Michelle Lim",
-                expiryDate = "08/28",
-                cvv = "123"
-            ),
-            onEvent = {}
-        )
+        // Link E-Wallet Phone & OTP Sheet Modal
+        if (state.isLinkWalletSheetVisible) {
+            LinkWalletBottomSheet(
+                phoneNumber = state.linkWalletPhone,
+                otp = state.linkWalletOtp,
+                isOtpStep = state.isOtpStep,
+                onPhoneChange = { onEvent(PaymentMethodsUiEvent.OnLinkPhoneChange(it)) },
+                onOtpChange = { onEvent(PaymentMethodsUiEvent.OnLinkOtpChange(it)) },
+                onRequestOtp = { onEvent(PaymentMethodsUiEvent.OnRequestOtp) },
+                onConfirmLink = { onEvent(PaymentMethodsUiEvent.OnConfirmLinkWallet) },
+                onDismiss = { onEvent(PaymentMethodsUiEvent.OnDismissLinkWalletSheet) }
+            )
+        }
     }
 }

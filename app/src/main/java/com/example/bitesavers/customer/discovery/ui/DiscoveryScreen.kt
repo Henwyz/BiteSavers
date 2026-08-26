@@ -1,9 +1,7 @@
 package com.example.bitesavers.customer.discovery.ui
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
-import android.location.Location
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -34,6 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitesavers.R
@@ -44,39 +43,7 @@ import com.example.bitesavers.customer.discovery.ui.components.DiscoveryHeader
 import com.example.bitesavers.customer.discovery.ui.components.DiscoveryMapSection
 import com.example.bitesavers.customer.discovery.ui.components.DiscoveryOfferCard
 import com.example.bitesavers.customer.discovery.ui.components.DiscoverySearchBar
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
-import com.google.android.gms.tasks.CancellationTokenSource
-
-/**
- * Helper to fetch live GPS coordinates actively using getCurrentLocation
- * (falling back to lastLocation if cached).
- */
-private fun fetchDeviceCoordinates(
-    context: Context,
-    onLocationReceived: (Double, Double) -> Unit
-) {
-    val fusedClient = LocationServices.getFusedLocationProviderClient(context)
-    try {
-        val cancellationTokenSource = CancellationTokenSource()
-        fusedClient.getCurrentLocation(
-            Priority.PRIORITY_HIGH_ACCURACY,
-            cancellationTokenSource.token
-        ).addOnSuccessListener { location: Location? ->
-            if (location != null) {
-                onLocationReceived(location.latitude, location.longitude)
-            } else {
-                fusedClient.lastLocation.addOnSuccessListener { fallback: Location? ->
-                    if (fallback != null) {
-                        onLocationReceived(fallback.latitude, fallback.longitude)
-                    }
-                }
-            }
-        }
-    } catch (e: SecurityException) {
-        android.util.Log.e("DiscoveryRoute", "Location permission missing when fetching", e)
-    }
-}
+import com.example.bitesavers.customer.discovery.logic.LocationUtils.fetchDeviceCoordinates
 
 @Composable
 fun DiscoveryRoute(
@@ -85,6 +52,12 @@ fun DiscoveryRoute(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // 🔄 Automatically reload live inventory every time the user comes back to this screen
+    LifecycleResumeEffect(Unit) {
+        viewModel.loadOffers()
+        onPauseOrDispose { }
+    }
 
     // 🌐 GPS Location Launcher: Requests Fine and Coarse location permissions at runtime
     val permissionLauncher = rememberLauncherForActivityResult(

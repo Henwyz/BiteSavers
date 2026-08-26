@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue // Needed for by
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -15,6 +16,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState // Needed to tra
 import androidx.navigation.compose.rememberNavController
 import com.example.bitesavers.business.navigation.BusinessNavHost
 import com.example.bitesavers.business.sharedUI.BusinessBottomNavigationBar
+import com.example.bitesavers.data.remote.UserSession
 import com.example.bitesavers.navigation.AppNavHost
 import com.example.bitesavers.navigation.Screen // Import your Screen routes
 import com.example.bitesavers.sharedUI.CustomerBottomNavigationBar
@@ -49,6 +51,15 @@ class MainActivity : ComponentActivity() {
                 // check with Member 3 before merging this file, since
                 // they'll likely need to touch this exact spot too.
                 var isBusinessMode by remember { mutableStateOf(true) }
+
+                // Sync the active session ID when mode changes
+                LaunchedEffect(isBusinessMode) {
+                    if (isBusinessMode) {
+                        UserSession.setUserId("b1") // Merchant / Store owner user ID
+                    } else {
+                        UserSession.setUserId("u1") // Customer user ID
+                    }
+                }
 
                 if (isBusinessMode) {
                     val businessNavController = rememberNavController()

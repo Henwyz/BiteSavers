@@ -4,16 +4,23 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.filled.Money
+import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -29,19 +36,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.bitesavers.R
 import com.example.bitesavers.data.model.PaymentMethod
-import com.example.bitesavers.ui.theme.BiteSaverColors
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PaymentMethodSelectionSheet(
     selectedMethod: PaymentMethod,
+    walletBalance: Double,
     onMethodSelect: (PaymentMethod) -> Unit,
     onAddNewPaymentClick: () -> Unit, // 👈 Added parameter
     onDismiss: () -> Unit,
@@ -60,6 +68,7 @@ fun PaymentMethodSelectionSheet(
     ) {
         PaymentMethodSelectionContent(
             selectedMethod = selectedMethod,
+            walletBalance = walletBalance,
             onMethodSelect = onMethodSelect,
             onAddNewPaymentClick = onAddNewPaymentClick // 👈 Passed down
         )
@@ -69,6 +78,7 @@ fun PaymentMethodSelectionSheet(
 @Composable
 fun PaymentMethodSelectionContent(
     selectedMethod: PaymentMethod,
+    walletBalance: Double,
     onMethodSelect: (PaymentMethod) -> Unit,
     onAddNewPaymentClick: () -> Unit, // 👈 Added parameter
     modifier: Modifier = Modifier
@@ -91,7 +101,7 @@ fun PaymentMethodSelectionContent(
             val isSelected = method == selectedMethod
 
             val containerColor = if (isSelected) {
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
             } else {
                 MaterialTheme.colorScheme.surface
             }
@@ -99,7 +109,27 @@ fun PaymentMethodSelectionContent(
             val borderColor = if (isSelected) {
                 MaterialTheme.colorScheme.primary
             } else {
-                MaterialTheme.colorScheme.outline
+                MaterialTheme.colorScheme.outlineVariant
+            }
+
+            val icon: ImageVector = when (method) {
+                PaymentMethod.BITESAVER_PAY -> Icons.Default.AccountBalanceWallet
+                PaymentMethod.TNG_EWALLET -> Icons.Default.Payments
+                PaymentMethod.BANK_CARD -> Icons.Default.CreditCard
+                PaymentMethod.CASH_ON_PICKUP -> Icons.Default.Money
+            }
+
+            val titleText = when (method) {
+                PaymentMethod.BITESAVER_PAY -> stringResource(R.string.payment_method_bitesaver_pay)
+                PaymentMethod.TNG_EWALLET -> stringResource(R.string.payment_method_tng)
+                PaymentMethod.BANK_CARD -> stringResource(R.string.payment_method_bank_card)
+                PaymentMethod.CASH_ON_PICKUP -> stringResource(R.string.payment_method_cash_on_pickup)
+            }
+
+            val subtitleText = if (method == PaymentMethod.BITESAVER_PAY) {
+                stringResource(R.string.checkout_balance_format, walletBalance)
+            } else {
+                method.subtitle
             }
 
             Row(
@@ -113,20 +143,36 @@ fun PaymentMethodSelectionContent(
                         shape = RoundedCornerShape(14.dp)
                     )
                     .clickable { onMethodSelect(method) }
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = method.displayName,
+                        text = titleText,
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = method.subtitle,
+                        text = subtitleText,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -137,7 +183,7 @@ fun PaymentMethodSelectionContent(
                     onClick = { onMethodSelect(method) },
                     colors = RadioButtonDefaults.colors(
                         selectedColor = MaterialTheme.colorScheme.primary,
-                        unselectedColor = BiteSaverColors.InactiveIcon
+                        unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     )
                 )
             }
@@ -156,7 +202,7 @@ fun PaymentMethodSelectionContent(
             )
             Spacer(Modifier.width(8.dp))
             Text(
-                text = "Manage / Add Payment Methods",
+                text = stringResource(id = R.string.payment_sheet_manage_action),
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.SemiBold
             )
@@ -171,6 +217,7 @@ private fun PaymentMethodSelectionSheetPreview() {
         Surface {
             PaymentMethodSelectionContent(
                 selectedMethod = PaymentMethod.BITESAVER_PAY,
+                walletBalance = 43.50,
                 onMethodSelect = {},
                 onAddNewPaymentClick = {}
             )
