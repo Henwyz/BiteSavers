@@ -85,6 +85,14 @@
     <string name="detail_rating_dummy">⭐ 4.8 (120+ ratings)</string>
     <string name="detail_co2_saved_dummy">🌱 ~1.2kg CO₂ saved</string>
 
+    <!--========== Saved Foods Page ===========-->
+    <string name="saved_screen_title">Saved Items</string>
+    <string name="saved_empty_title">No saved items yet</string>
+    <string name="saved_empty_subtitle">Tap the heart/bookmark icon on any food item to save it for later.</string>
+    <string name="badge_sold_out">SOLD OUT</string>
+    <string name="action_remove_saved">Remove from Saved</string>
+    <string name="cd_bookmark_icon">Bookmark</string>
+
     <!-- ================================================================= -->
     <!-- CHECKOUT & PAYMENT SELECTION                                      -->
     <!-- ================================================================= -->

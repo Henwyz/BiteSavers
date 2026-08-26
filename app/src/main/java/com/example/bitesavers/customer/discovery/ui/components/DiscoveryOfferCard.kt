@@ -14,15 +14,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -41,8 +45,10 @@ import com.example.bitesavers.ui.theme.BiteSaversTheme
 @Composable
 fun DiscoveryOfferCard(
     offer: OfferUiModel,
+    isSaved: Boolean = false,
     userRole: UserRole = UserRole.CONSUMER, // Accepts current role
     onClick: (OfferUiModel) -> Unit,
+    onToggleBookmark: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     // Condition: NGO user + eligible item + closing within 1 hour
@@ -93,6 +99,25 @@ fun DiscoveryOfferCard(
                         MaterialTheme.colorScheme.onTertiary
                     },
                     fontWeight = FontWeight.Bold
+                )
+            }
+
+            // Bookmark / Favourite Toggle Button
+            IconButton(
+                onClick = { onToggleBookmark(offer.id) },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+                    .size(32.dp)
+                    .background(Color.Black.copy(alpha = 0.35f), CircleShape)
+            ) {
+                Icon(
+                    painter = painterResource(
+                        id = if (isSaved) R.drawable.ic_launcher_foreground else R.drawable.ic_launcher_foreground // Replace with your filled/outline bookmark drawables
+                    ),
+                    contentDescription = stringResource(id = R.string.cd_bookmark_icon),
+                    tint = if (isSaved) MaterialTheme.colorScheme.primary else Color.White,
+                    modifier = Modifier.size(18.dp)
                 )
             }
         }
@@ -282,8 +307,10 @@ private fun DiscoveryOfferCardConsumerPreview() {
                     storageType = "HOT",
                     description = "Extra portions of our signature Bolognese Spaghetti."
                 ),
+                isSaved = false,
                 userRole = UserRole.CONSUMER,
-                onClick = {}
+                onClick = {},
+                onToggleBookmark = {}
             )
         }
     }
@@ -312,8 +339,10 @@ private fun DiscoveryOfferCardNgoPreview() {
                     storageType = "ROOM_TEMP",
                     description = "Freshly baked croissants nearing store closing."
                 ),
+                isSaved = true,
                 userRole = UserRole.NGO,
-                onClick = {}
+                onClick = {},
+                onToggleBookmark = {}
             )
         }
     }

@@ -8,7 +8,9 @@ import com.example.bitesavers.customer.discovery.ui.DiscoveryUiEvent
 import com.example.bitesavers.data.model.DiscoveryCategory
 import com.example.bitesavers.data.model.OfferUiModel
 import com.example.bitesavers.data.model.UserRole
+import com.example.bitesavers.data.remote.UserSession
 import com.example.bitesavers.data.repository.OfferRepository
+import com.example.bitesavers.data.repository.SavedRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,6 +20,7 @@ import kotlinx.coroutines.launch
 class DiscoveryViewModel : ViewModel() {
 
     private val repository: OfferRepository = OfferRepository()
+    private val savedRepository: SavedRepository = SavedRepository()
 
     // Master list of all offers fetched from Supabase (kept private in memory)
     private var allOffers: List<OfferUiModel> = emptyList()
@@ -55,6 +58,16 @@ class DiscoveryViewModel : ViewModel() {
     init {
         // Automatically fetch live Supabase offers when ViewModel is created
         loadOffers()
+        loadInitialSavedOffers()
+    }
+
+    private fun loadInitialSavedOffers() {
+        val currentUserId = UserSession.currentUserId.value
+        viewModelScope.launch {
+            if (currentUserId.isNotBlank()) {
+                savedRepository.loadUserSavedOffers(currentUserId)
+            }
+        }
     }
 
     /**
@@ -239,7 +252,20 @@ class DiscoveryViewModel : ViewModel() {
             is DiscoveryUiEvent.OnCategorySelected -> onCategorySelected(event.category)
             is DiscoveryUiEvent.OnMapMarkerClicked -> onMapMarkerClicked(event.offerId)
             is DiscoveryUiEvent.OnResetFilters -> onResetFilters()
+            is DiscoveryUiEvent.OnToggleBookmark -> onToggleBookmark(event.offerId)
             else -> {}
+        }
+    }
+
+    private fun onToggleBookmark(offerId: String) {
+        val currentUserId = UserSession.currentUserId.value
+        if (currentUserId.isNotBlank()) {
+            viewModelScope.launch {
+                savedRepository.toggleSaveOffer(
+                    userId = currentUserId,
+                    offerId = offerId
+                )
+            }
         }
     }
 

@@ -29,6 +29,7 @@ import com.example.bitesavers.customer.profile.ui.AboutBiteSaverScreen
 import com.example.bitesavers.customer.profile.ui.HelpSupportScreen
 import com.example.bitesavers.customer.profile.ui.PrivacySecurityScreen
 import com.example.bitesavers.customer.profile.ui.ProfileScreen
+import com.example.bitesavers.customer.saved.ui.SavedRoute
 import com.example.bitesavers.customer.success.OrderSuccessScreen
 import com.example.bitesavers.customer.ticket.ui.TicketRoute
 
@@ -68,7 +69,11 @@ fun AppNavHost(
 
         // 3. SAVED TAB
         composable(Screen.Saved.route) {
-            PlaceholderScreen("Saved Items Coming Soon")
+            SavedRoute(
+                onNavigateToDetail = { offerId ->
+                    navController.navigate(Screen.FoodDetail.createRoute(offerId))
+                }
+            )
         }
 
         // 4. PROFILE TAB

@@ -74,7 +74,9 @@ fun FoodDetailScreen(
     Scaffold(
         topBar = {
             FoodDetailTopBar(
-                onBackClick = { onEvent(FoodDetailUiEvent.OnNavigateBack) }
+                isSaved = state.isSaved,
+                onBackClick = { onEvent(FoodDetailUiEvent.OnNavigateBack) },
+                onBookmarkClick = { onEvent(FoodDetailUiEvent.OnToggleBookmark) }
             )
         },
         bottomBar = {
