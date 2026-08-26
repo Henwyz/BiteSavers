@@ -33,7 +33,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -68,6 +71,7 @@ import androidx.compose.ui.window.Dialog
 import com.example.bitesavers.business.inventory.logic.InventoryViewModel
 import com.example.bitesavers.R
 import com.example.bitesavers.business.inventory.data.ListingItem
+import com.example.bitesavers.data.model.DiscoveryCategory
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 import kotlin.contracts.contract
 
@@ -82,6 +86,7 @@ fun AddFoodScreen(
     var foodName by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("Bakery") }
+    var isCategoryExpanded by remember { mutableStateOf(false) }
     var originalPrice by remember { mutableStateOf("") }
     var discountPrice by remember { mutableStateOf("") }
     var quantity by remember { mutableStateOf("") }
@@ -354,12 +359,63 @@ fun AddFoodScreen(
                 onValueChange = { description = it }
             )
 
-            FormField(
-                label = stringResource(R.string.label_category),
-                value = category,
-                placeholder = "Bakery",
-                onValueChange = { category = it }
-            )
+            Column {
+                Text(
+                    text = stringResource(R.string.label_category),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+
+                ExposedDropdownMenuBox(
+                    expanded = isCategoryExpanded,
+                    onExpandedChange = { isCategoryExpanded = !isCategoryExpanded }
+                ) {
+                    OutlinedTextField(
+                        value = category,
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isCategoryExpanded)},
+                        shape = RoundedCornerShape(10.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = isCategoryExpanded,
+                        onDismissRequest = { isCategoryExpanded = false },
+                        modifier = Modifier.background(MaterialTheme.colorScheme.surface)
+                    ) {
+                        DiscoveryCategory.entries
+                            .filter { it != DiscoveryCategory.ALL }
+                            .forEach { item ->
+                                val displayName = item.name.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }
+
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text = displayName,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    },
+                                    onClick = {
+                                        category = displayName
+                                        isCategoryExpanded = false
+                                    },
+                                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                                )
+                            }
+                    }
+                }
+            }
 
             //original price and discount price
             Row(
