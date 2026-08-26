@@ -89,7 +89,7 @@ fun CheckoutScreen(
     LaunchedEffect(state.errorResId) {
         state.errorResId?.let { resId ->
             snackbarHostState.showSnackbar(
-                message = context.getString(resId)
+                message = context.resources.getString(resId)
             )
         }
     }
