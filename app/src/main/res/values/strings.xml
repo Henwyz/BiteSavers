@@ -279,7 +279,7 @@
     <!--========== Inventory ===========-->
     <string name="my_listings_title">My Listing</string>
     <string name="my_listings_subtitle">%1$d items · %2$d active</string>
-    <string name="btn_add_food">+ Add Food</string>
+    <string name="btn_add_food">Add Food</string>
     <string name="btn_edit">Edit</string>
     <string name="btn_delete">Delete</string>
     <string name="remaining_count">%1$d remaining</string>
