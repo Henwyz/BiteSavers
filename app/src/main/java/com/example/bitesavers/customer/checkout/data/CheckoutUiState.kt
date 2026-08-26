@@ -1,5 +1,6 @@
 package com.example.bitesavers.customer.checkout.data
 
+import androidx.annotation.StringRes
 import com.example.bitesavers.data.model.PaymentMethod
 
 data class CheckoutUiState(
@@ -7,9 +8,9 @@ data class CheckoutUiState(
     val itemName: String = "",
     val quantity: Int = 1,
     val unitPrice: Double = 0.0,
-    val walletBalance: Double = 50.0, // Hardcoded initial wallet balance for testing
+    val walletBalance: Double = 0.0, // Live wallet balance
     val isLoading: Boolean = false,
-    val errorMessage: String? = null,
+    @StringRes val errorResId: Int? = null, // Using string resource ID instead of raw String
     val isPaymentSuccessful: Boolean = false,
     val placedOrderId: String? = null,
     val selectedPaymentMethod: PaymentMethod = PaymentMethod.BITESAVER_PAY,

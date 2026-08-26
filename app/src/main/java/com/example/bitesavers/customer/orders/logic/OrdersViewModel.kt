@@ -8,6 +8,8 @@ import com.example.bitesavers.customer.orders.data.OrderStatusType
 import com.example.bitesavers.customer.orders.ui.CustomerOrdersUiEvent
 import com.example.bitesavers.data.repository.OfferRepository
 import com.example.bitesavers.data.repository.OrderRepository
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -44,35 +46,36 @@ class OrdersViewModel : ViewModel() {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
             try {
-                // 1. Fetch raw orders from Supabase
+                // 1. Fetch raw orders from Supabase for current user
                 val rawOrders = orderRepository.fetchCustomerOrders()
 
-                // 2. Map and join with offer data
+                // 2. Fetch all matching offers in parallel
                 val mappedList = rawOrders.map { order ->
-                    val offer = offerRepository.fetchOfferById(order.offerId)
-                    val originalTotal = (offer?.originalPrice ?: 0.0) * order.quantity
-                    val saved = (originalTotal - order.totalPrice).coerceAtLeast(0.0)
+                    async {
+                        val offer = offerRepository.fetchOfferById(order.offerId)
+                        val originalTotal = (offer?.originalPrice ?: 0.0) * order.quantity
+                        val saved = (originalTotal - order.totalPrice).coerceAtLeast(0.0)
 
-                    val statusType = when (order.status.uppercase()) {
-                        "COMPLETED" -> OrderStatusType.COMPLETED
-                        "CANCELLED" -> OrderStatusType.CANCELLED
-                        else -> OrderStatusType.READY_FOR_PICKUP
+                        val statusType = when (order.status.uppercase()) {
+                            "COMPLETED" -> OrderStatusType.COMPLETED
+                            "CANCELLED" -> OrderStatusType.CANCELLED
+                            else -> OrderStatusType.READY_FOR_PICKUP
+                        }
+
+                        val displayDate = order.createdAt?.take(10) ?: "Today"
+
+                        CustomerOrderItemUiModel(
+                            orderId = order.id.orEmpty(),
+                            shortOrderId = "#BS-" + (order.id ?: "").takeLast(4).uppercase(),
+                            storeName = offer?.storeName ?: "Store",
+                            itemName = offer?.title ?: "Food Item",
+                            formattedDate = displayDate,
+                            totalPrice = order.totalPrice,
+                            moneySaved = saved,
+                            status = statusType
+                        )
                     }
-
-                    // Format createdAt if available, or fallback to current date
-                    val displayDate = order.createdAt?.take(10) ?: "Today"
-
-                    CustomerOrderItemUiModel(
-                        orderId = order.id.orEmpty(),
-                        shortOrderId = "#BS-" + (order.id ?: "").takeLast(4).uppercase(),
-                        storeName = offer?.storeName ?: "Store",
-                        itemName = offer?.title ?: "Food Item",
-                        formattedDate = displayDate,
-                        totalPrice = order.totalPrice,
-                        moneySaved = saved,
-                        status = statusType
-                    )
-                }
+                }.awaitAll()
 
                 // 3. Separate Active vs History orders
                 val active = mappedList.filter { it.status == OrderStatusType.READY_FOR_PICKUP }
@@ -91,7 +94,7 @@ class OrdersViewModel : ViewModel() {
                 }
             } catch (e: Exception) {
                 _uiState.update {
-                    it.copy(isLoading = false, errorMessage = e.message)
+                    it.copy(isLoading = false, errorMessage = e.message ?: "Failed to load orders")
                 }
             }
         }

@@ -66,7 +66,7 @@ fun AppNavHost(
             )
         }
 
-        // 3. SAVED TAB (Placeholder for now)
+        // 3. SAVED TAB
         composable(Screen.Saved.route) {
             PlaceholderScreen("Saved Items Coming Soon")
         }
@@ -83,18 +83,14 @@ fun AppNavHost(
                 onViewNgoDetailsClick = {
                     navController.navigate(Screen.NgoDetails.route)
                 },
-                onSignOutClick = {
-                    // TODO: wire to Member 3's login route once it exists
-                },
+                onSignOutClick = {},
                 onPrivacySecurityClick = { navController.navigate(Screen.PrivacySecurity.route) },
                 onHelpSupportClick = { navController.navigate(Screen.HelpSupport.route) },
                 onAboutClick = { navController.navigate(Screen.AboutBiteSaver.route) },
-                onPaymentMethodsClick = { navController.navigate(Screen.PaymentMethods.route)
-                },
+                onPaymentMethodsClick = { navController.navigate(Screen.PaymentMethods.route) }
             )
         }
 
-        // PROFILE SUB-SCREENS — static/informational, no shared ViewModel needed
         composable(Screen.PrivacySecurity.route) {
             PrivacySecurityScreen(onBackClick = { navController.popBackStack() })
         }
@@ -112,7 +108,7 @@ fun AppNavHost(
             )
         }
 
-        // NGO REGISTRATION SCREEN (brand-new application)
+        // NGO REGISTRATION SCREEN
         composable(Screen.NgoRegistration.route) {
             val profileEntry = remember(it) {
                 navController.getBackStackEntry(Screen.Profile.route)
@@ -126,7 +122,7 @@ fun AppNavHost(
             )
         }
 
-        // NGO DETAILS SCREEN (read-only, shown once NGO status is approved)
+        // NGO DETAILS SCREEN
         composable(Screen.NgoDetails.route) {
             val profileEntry = remember(it) {
                 navController.getBackStackEntry(Screen.Profile.route)
@@ -145,7 +141,7 @@ fun AppNavHost(
             )
         }
 
-        // NGO EDIT SCREEN (reuses the same form UI as registration, different mode)
+        // NGO EDIT SCREEN
         composable(Screen.NgoEdit.route) {
             val profileEntry = remember(it) {
                 navController.getBackStackEntry(Screen.Profile.route)
@@ -208,14 +204,19 @@ fun AppNavHost(
             route = Screen.Checkout.route,
             arguments = listOf(
                 navArgument("offerId") { type = NavType.StringType },
-                navArgument("quantity") { type = NavType.IntType }
+                navArgument("quantity") { type = NavType.IntType; defaultValue = 1 }
             )
-        ) {
+        ) { backStackEntry ->
+            val offerId = backStackEntry.arguments?.getString("offerId")
+            val quantity = backStackEntry.arguments?.getInt("quantity") ?: 1
+
             CheckoutRoute(
+                offerId = offerId,
+                quantity = quantity,
                 onNavigateBack = {
                     navController.popBackStack()
                 },
-                onNavigateToPaymentMethods = { // 👈 ADDED: Navigate from checkout sheet to payment methods
+                onNavigateToPaymentMethods = {
                     navController.navigate(Screen.PaymentMethods.route)
                 },
                 onCheckoutSuccess = { orderId ->
@@ -236,7 +237,7 @@ fun AppNavHost(
             OrderSuccessScreen(
                 onViewTicketClick = {
                     navController.navigate(Screen.Ticket.createRoute(orderId)) {
-                        popUpTo(Screen.Success.route) { inclusive = true }
+                        popUpTo(Screen.Discovery.route) { inclusive = false }
                     }
                 }
             )
@@ -249,10 +250,9 @@ fun AppNavHost(
         ) {
             TicketRoute(
                 onNavigateBack = {
-                    if (!navController.popBackStack()) {
-                        navController.navigate(Screen.Discovery.route) {
-                            popUpTo(Screen.Discovery.route) { inclusive = true }
-                        }
+                    navController.navigate(Screen.Discovery.route) {
+                        popUpTo(Screen.Discovery.route) { inclusive = false }
+                        launchSingleTop = true
                     }
                 }
             )

@@ -8,12 +8,17 @@ enum class PaymentMethod(
     BITESAVER_PAY(
         id = "BITESAVER_PAY",
         displayName = "BiteSaver Pay",
-        subtitle = "Balance: RM 43.50"
+        subtitle = "Available: RM 0.00"
     ),
     TNG_EWALLET(
         id = "TNG_EWALLET",
         displayName = "Touch 'n Go eWallet",
-        subtitle = "Linked: +60 12-*** 7890"
+        subtitle = "Not linked"
+    ),
+    BANK_CARD(
+        id = "BANK_CARD",
+        displayName = "Debit / Credit Card",
+        subtitle = "No cards saved yet"
     ),
     CASH_ON_PICKUP(
         id = "CASH_ON_PICKUP",
