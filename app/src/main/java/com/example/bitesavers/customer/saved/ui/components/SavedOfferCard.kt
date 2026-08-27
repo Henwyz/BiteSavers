@@ -10,11 +10,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -33,9 +34,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.bitesavers.R
+import com.example.bitesavers.data.model.DiscoveryCategory
 import com.example.bitesavers.data.model.OfferUiModel
+import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @Composable
 fun SavedOfferCard(
@@ -105,13 +109,38 @@ fun SavedOfferCard(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Text(
-                    text = offer.storeName,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                // Store Name & Star Rating
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = offer.storeName,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = stringResource(R.string.cd_store_rating),
+                            tint = Color(0xFFFFB800),
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Text(
+                            text = "%.1f".format(offer.storeRating),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
 
                 Text(
                     text = offer.title,
@@ -143,15 +172,28 @@ fun SavedOfferCard(
                     }
                 }
 
-                Text(
-                    text = if (isSoldOut) {
-                        stringResource(R.string.badge_sold_out)
-                    } else {
-                        stringResource(R.string.remaining_count, offer.quantityLeft)
-                    },
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (isSoldOut) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = if (isSoldOut) {
+                            stringResource(R.string.badge_sold_out)
+                        } else {
+                            stringResource(R.string.remaining_count, offer.quantityLeft)
+                        },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isSoldOut) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+
+                    // Formatted distance
+                    Text(
+                        text = "• %.1f km".format(offer.distanceKm),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
             // Remove/Bookmark toggle button
@@ -165,6 +207,60 @@ fun SavedOfferCard(
                     modifier = Modifier.size(24.dp)
                 )
             }
+        }
+    }
+}
+
+@Preview(showBackground = true, name = "Saved Card - In Stock")
+@Composable
+private fun SavedOfferCardInStockPreview() {
+    BiteSaversTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            SavedOfferCard(
+                offer = OfferUiModel(
+                    id = "1",
+                    title = "Butter Croissant Box",
+                    storeName = "Chulia Street Bakery",
+                    storeRating = 4.8,
+                    imageResId = R.drawable.food_spaghetti,
+                    discountPercent = 50,
+                    currentPrice = 7.00,
+                    originalPrice = 14.00,
+                    distanceKm = 1.2,
+                    quantityLeft = 5,
+                    hoursToClose = 3,
+                    category = DiscoveryCategory.BAKERY
+                ),
+                onOfferClick = {},
+                onRemoveClick = {}
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true, name = "Saved Card - Sold Out")
+@Composable
+private fun SavedOfferCardSoldOutPreview() {
+    BiteSaversTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            SavedOfferCard(
+                offer = OfferUiModel(
+                    id = "2",
+                    title = "Matcha Cream Scone",
+                    storeName = "Chulia Street Bakery",
+                    storeRating = 4.8,
+                    imageResId = R.drawable.food_spaghetti,
+                    discountPercent = 50,
+                    currentPrice = 4.50,
+                    originalPrice = 9.00,
+                    distanceKm = 1.2,
+                    quantityLeft = 0,
+                    hoursToClose = 3,
+                    category = DiscoveryCategory.BAKERY
+                ),
+                onOfferClick = {},
+                onRemoveClick = {}
+            )
         }
     }
 }

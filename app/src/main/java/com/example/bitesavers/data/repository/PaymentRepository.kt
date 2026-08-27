@@ -11,68 +11,71 @@ import kotlinx.coroutines.withContext
 
 class PaymentRepository {
     private val client = SupabaseClient.client
-    private val defaultUserId = "u1"
 
-    // 1. Fetch current wallet balance
+    // 1. Fetch current wallet balance for the actively logged in user
     suspend fun fetchWalletBalance(): Double = withContext(Dispatchers.IO) {
         val uid = UserSession.getUserId()
         try {
             val user = client.from("users")
                 .select { filter { eq("id", uid) } }
                 .decodeSingle<UserDto>()
-            user.walletBalance
+            user.walletBalance ?: 0.0
         } catch (e: Exception) {
+            Log.e("PaymentRepository", "fetchWalletBalance error for user $uid: ${e.message}", e)
             0.0
         }
     }
 
-    // 2. Perform Top-Up (increments wallet_balance in public.users)
+    // 2. Perform Top-Up (increments wallet_balance for the active user in public.users)
     suspend fun topUpWallet(amount: Double): Boolean = withContext(Dispatchers.IO) {
+        val uid = UserSession.getUserId()
         try {
             val currentBalance = fetchWalletBalance()
             val newBalance = currentBalance + amount
 
             client.from("users")
                 .update({ set("wallet_balance", newBalance) }) {
-                    filter { eq("id", defaultUserId) }
+                    filter { eq("id", uid) }
                 }
             true
         } catch (e: Exception) {
-            Log.e("PaymentRepository", "topUpWallet error: ${e.message}", e)
+            Log.e("PaymentRepository", "topUpWallet error for user $uid: ${e.message}", e)
             false
         }
     }
 
-    // 3. Fetch all saved payment methods
+    // 3. Fetch all saved payment methods for the active user
     suspend fun fetchPaymentMethods(): List<PaymentMethodDto> = withContext(Dispatchers.IO) {
+        val uid = UserSession.getUserId()
         try {
             client.from("user_payment_methods")
-                .select { filter { eq("user_id", defaultUserId) } }
+                .select { filter { eq("user_id", uid) } }
                 .decodeList<PaymentMethodDto>()
         } catch (e: Exception) {
-            Log.e("PaymentRepository", "fetchPaymentMethods error: ${e.message}", e)
+            Log.e("PaymentRepository", "fetchPaymentMethods error for user $uid: ${e.message}", e)
             emptyList()
         }
     }
 
-    // 4. Save a new Bank Card
+    // 4. Save a new Bank Card for the active user
     suspend fun saveBankCard(
         cardHolder: String,
         lastFourDigits: String,
         expiryDate: String,
         isDefault: Boolean
     ): PaymentMethodDto? = withContext(Dispatchers.IO) {
+        val uid = UserSession.getUserId()
         try {
             if (isDefault) {
                 // Clear any previous default card
                 client.from("user_payment_methods")
                     .update({ set("is_default", false) }) {
-                        filter { eq("user_id", defaultUserId) }
+                        filter { eq("user_id", uid) }
                     }
             }
 
             val card = PaymentMethodDto(
-                userId = defaultUserId,
+                userId = uid,
                 type = "BANK_CARD",
                 cardHolder = cardHolder,
                 lastFourDigits = lastFourDigits,
@@ -103,10 +106,11 @@ class PaymentRepository {
 
     // 6. Set a card as default
     suspend fun setDefaultCard(cardId: String): Boolean = withContext(Dispatchers.IO) {
+        val uid = UserSession.getUserId()
         try {
             client.from("user_payment_methods")
                 .update({ set("is_default", false) }) {
-                    filter { eq("user_id", defaultUserId) }
+                    filter { eq("user_id", uid) }
                 }
             client.from("user_payment_methods")
                 .update({ set("is_default", true) }) {
@@ -119,11 +123,12 @@ class PaymentRepository {
         }
     }
 
-    // 7. Link Touch 'n Go / eWallet
+    // 7. Link Touch 'n Go / eWallet for active user
     suspend fun linkEWallet(phoneNumber: String): Boolean = withContext(Dispatchers.IO) {
+        val uid = UserSession.getUserId()
         try {
             val newMethod = PaymentMethodDto(
-                userId = defaultUserId,
+                userId = uid,
                 type = "TNG_EWALLET",
                 linkedPhone = phoneNumber,
                 isDefault = false
@@ -137,13 +142,14 @@ class PaymentRepository {
         }
     }
 
-    // 8. Unlink eWallet
+    // 8. Unlink eWallet for active user
     suspend fun unlinkEWallet(): Boolean = withContext(Dispatchers.IO) {
+        val uid = UserSession.getUserId()
         try {
             client.from("user_payment_methods")
                 .delete {
                     filter {
-                        eq("user_id", defaultUserId)
+                        eq("user_id", uid)
                         eq("type", "TNG_EWALLET")
                     }
                 }

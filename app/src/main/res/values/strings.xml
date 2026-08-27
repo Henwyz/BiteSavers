@@ -56,6 +56,17 @@
     <string name="empty_state_message">We couldn\'t find any food deals matching your search or selected filter.</string>
     <string name="empty_state_clear_filters">Clear Filters</string>
 
+    <!-- Discovery Map & Rating Strings -->
+    <string name="cd_store_rating">Store Rating</string>
+    <string name="cd_map_recenter">Recenter to current location</string>
+    <string name="cd_map_expand">Expand Map</string>
+    <string name="cd_map_collapse">Collapse Map</string>
+    <string name="deals_count">%1$d DEALS</string>
+
+    <!-- Food Detail Dynamic Tags -->
+    <string name="detail_rating_format">⭐ %1$.1f Rating</string>
+    <string name="detail_co2_saved_format">🌱 %1$.1f kg CO₂ saved</string>
+
     <!-- ================================================================= -->
     <!-- FOOD DETAIL PAGE                                                  -->
     <!-- ================================================================= -->

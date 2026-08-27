@@ -49,21 +49,30 @@ class SavedViewModel(
 
     /**
      * Reactively observes the saved IDs StateFlow.
-     * Re-filters the offer list whenever an item is added or removed across any screen.
+     * Fetches offer details for saved IDs (including 0-quantity items to display as Sold Out).
      */
     private fun observeSavedOffers() {
         viewModelScope.launch {
             SavedRepository.savedOfferIds.collectLatest { savedIds ->
+                if (savedIds.isEmpty()) {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            savedOffers = emptyList()
+                        )
+                    }
+                    return@collectLatest
+                }
+
                 _uiState.update { it.copy(isLoading = true) }
 
-                // Fetch offers from inventory (includes 0 quantity items to display as Sold Out)
-                val allOffers = offerRepository.fetchOffers()
-                val filteredSaved = allOffers.filter { savedIds.contains(it.id) }
+                // Fetch offers by IDs without filtering out 0-quantity stock
+                val savedOffersList = offerRepository.fetchSavedOffersByIds(savedIds)
 
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        savedOffers = filteredSaved
+                        savedOffers = savedOffersList
                     )
                 }
             }

@@ -31,8 +31,9 @@ class OrderRepository {
                     .select { filter { eq("id", uid) } }
                     .decodeSingle<UserDto>()
 
-                if (user.walletBalance < totalPrice) {
-                    Log.e("OrderRepository", "Insufficient balance: ${user.walletBalance} < $totalPrice")
+                val currentBalance = user.walletBalance ?: 0.0
+                if (currentBalance < totalPrice) {
+                    Log.e("OrderRepository", "Insufficient balance: $currentBalance < $totalPrice")
                     return@withContext null
                 }
             }
@@ -42,13 +43,16 @@ class OrderRepository {
                 .select { filter { eq("id", offerId) } }
                 .decodeSingle<OfferDto>()
 
+            val weight = offer.weightKg ?: 0.3
+            val available = offer.quantityAvailable ?: 0
+
             val order = OrderDto(
                 userId = uid,
                 storeId = offer.storeId ?: "s1",
                 offerId = offerId,
                 quantity = quantity,
                 totalPrice = totalPrice,
-                totalWeightKg = offer.weightKg * quantity,
+                totalWeightKg = weight * quantity,
                 isNgoFreeClaim = userRole == "NGO" || totalPrice == 0.0,
                 paymentMethod = paymentMethod,
                 status = "READY_FOR_PICKUP"
@@ -60,21 +64,21 @@ class OrderRepository {
                 .decodeSingle<OrderDto>()
 
             // 4. Decrement offer inventory
-            val newQuantity = (offer.quantityAvailable - quantity).coerceAtLeast(0)
+            val newQuantity = (available - quantity).coerceAtLeast(0)
             client.from("offers")
                 .update({ set("quantity_available", newQuantity) }) {
                     filter { eq("id", offerId) }
                 }
 
-            // 5. Deduct wallet balance
+            // 5. Deduct wallet balance if paid via BiteSaver Pay
             if (isBiteSaverPay) {
                 val user = client.from("users")
                     .select { filter { eq("id", uid) } }
                     .decodeSingle<UserDto>()
 
-                val newBalance = user.walletBalance - totalPrice
+                val updatedBalance = (user.walletBalance ?: 0.0) - totalPrice
                 client.from("users")
-                    .update({ set("wallet_balance", newBalance) }) {
+                    .update({ set("wallet_balance", updatedBalance) }) {
                         filter { eq("id", uid) }
                     }
             }
@@ -97,14 +101,14 @@ class OrderRepository {
         }
     }
 
-    // In OrderRepository.kt
+    // Fetches orders strictly for the current active user session
     suspend fun fetchCustomerOrders(): List<OrderDto> = withContext(Dispatchers.IO) {
         val currentUserId = UserSession.getUserId()
         try {
             client.from("orders")
                 .select {
                     filter {
-                        eq("user_id", currentUserId) // 👈 Strictly fetches orders for u1
+                        eq("user_id", currentUserId)
                     }
                 }
                 .decodeList<OrderDto>()

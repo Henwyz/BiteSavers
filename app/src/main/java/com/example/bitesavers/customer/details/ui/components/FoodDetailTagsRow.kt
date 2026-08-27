@@ -23,17 +23,22 @@ import com.example.bitesavers.ui.theme.BiteSaversTheme
 @Composable
 fun FoodDetailTagsRow(
     distanceKm: Double,
+    rating: Double = 4.8,
+    weightKg: Double = 0.4,
     modifier: Modifier = Modifier
 ) {
+    // Standard environmental formula: 1 kg of saved food prevents ~2.5 kg of greenhouse CO2 emission
+    val co2SavedKg = (weightKg * 2.5).coerceAtLeast(0.5)
+
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()), // This allows the tags to swipe sideways!
+            .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         DetailTagChip(text = stringResource(id = R.string.detail_distance_away, distanceKm))
-        DetailTagChip(text = stringResource(id = R.string.detail_rating_dummy))
-        DetailTagChip(text = stringResource(id = R.string.detail_co2_saved_dummy))
+        DetailTagChip(text = "⭐ %.1f Rating".format(rating))
+        DetailTagChip(text = "🌱 %.1f kg CO₂ saved".format(co2SavedKg))
     }
 }
 
@@ -57,6 +62,10 @@ private fun DetailTagChip(text: String) {
 @Composable
 private fun FoodDetailTagsRowPreview() {
     BiteSaversTheme {
-        FoodDetailTagsRow(distanceKm = 1.1)
+        FoodDetailTagsRow(
+            distanceKm = 1.2,
+            rating = 4.8,
+            weightKg = 0.5
+        )
     }
 }

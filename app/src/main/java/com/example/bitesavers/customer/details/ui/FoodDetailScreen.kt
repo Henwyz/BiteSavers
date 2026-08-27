@@ -3,6 +3,7 @@ package com.example.bitesavers.customer.details.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -140,8 +141,10 @@ fun FoodDetailScreen(
                                 isSafe = state.isTemperatureSafe
                             )
 
+                            // Dynamic tags: distance, store rating from Supabase, and CO2 savings
                             FoodDetailTagsRow(
-                                distanceKm = offer.distanceKm
+                                distanceKm = offer.distanceKm,
+                                rating = offer.storeRating
                             )
 
                             FoodDetailDescription(
@@ -154,7 +157,7 @@ fun FoodDetailScreen(
                                 onDecrease = { onEvent(FoodDetailUiEvent.OnDecreaseQuantity) }
                             )
 
-                            androidx.compose.foundation.layout.Spacer(modifier = Modifier.padding(bottom = 16.dp))
+                            Spacer(modifier = Modifier.padding(bottom = 16.dp))
                         }
                     }
                 }

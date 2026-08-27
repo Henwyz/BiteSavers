@@ -2,23 +2,36 @@ package com.example.bitesavers.customer.discovery.ui.components
 
 import android.annotation.SuppressLint
 import android.view.MotionEvent
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Fullscreen
+import androidx.compose.material.icons.filled.FullscreenExit
+import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,7 +39,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -34,6 +46,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.example.bitesavers.R
 import com.example.bitesavers.customer.discovery.data.NearbyDealMarkerUiModel
+import com.example.bitesavers.data.model.DiscoveryCategory
 import com.example.bitesavers.data.model.OfferUiModel
 import com.example.bitesavers.data.model.UserRole
 import com.example.bitesavers.ui.theme.BiteSaversTheme
@@ -45,7 +58,6 @@ import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.annotations.MarkerOptions
-import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.location.LocationComponentActivationOptions
 import org.maplibre.android.location.modes.CameraMode
@@ -63,10 +75,17 @@ fun DiscoveryMapSection(
     onOfferNavigate: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isInPreview = LocalInspectionMode.current //For preview ppurpose only
+    val isInPreview = LocalInspectionMode.current
+    var isExpanded by remember { mutableStateOf(false) }
 
-    // The Box allows the Compose overlay card to float on top of the MapLibre AndroidView
-    Box(modifier = modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .animateContentSize()
+            .height(if (isExpanded) 420.dp else 210.dp)
+            .padding(horizontal = 16.dp)
+            .clip(RoundedCornerShape(16.dp))
+    ) {
         if (isInPreview) {
             DiscoveryMapPlaceholder(
                 markers = markers,
@@ -77,26 +96,52 @@ fun DiscoveryMapSection(
                 markers = markers,
                 userLatitude = userLatitude,
                 userLongitude = userLongitude,
+                isExpanded = isExpanded,
+                onToggleExpand = { isExpanded = !isExpanded },
                 onMarkerClick = onMarkerClick
             )
         }
 
-        // --- THE POPUP OVERLAY CARD ---
+        // --- THE POPUP OVERLAY CARD / MULTI-ITEM CAROUSEL ---
         if (selectedOfferId != null) {
-            val selectedOffer = offers.find { it.id == selectedOfferId }
+            val selectedMarker = markers.find { it.storeId == selectedOfferId }
+            val storeOffers = selectedMarker?.offers ?: offers.filter { it.id == selectedOfferId }
 
-            if (selectedOffer != null) {
+            if (storeOffers.isNotEmpty()) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .padding(bottom = 12.dp)
-                        .widthIn(max = 280.dp) // Limits the card width so it doesn't span the whole map width
+                        .padding(bottom = 10.dp)
+                        .fillMaxWidth()
                 ) {
-                    CompactDiscoveryOfferCard(
-                        offer = selectedOffer,
-                        userRole = userRole,
-                        onClick = { onOfferNavigate(selectedOffer.id) }
-                    )
+                    if (storeOffers.size == 1) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CompactDiscoveryOfferCard(
+                                offer = storeOffers.first(),
+                                userRole = userRole,
+                                onClick = { onOfferNavigate(it.id) }
+                            )
+                        }
+                    } else {
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp)
+                        ) {
+                            items(storeOffers, key = { it.id }) { offer ->
+                                CompactDiscoveryOfferCard(
+                                    offer = offer,
+                                    userRole = userRole,
+                                    modifier = Modifier.width(240.dp),
+                                    onClick = { onOfferNavigate(offer.id) }
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -109,11 +154,15 @@ private fun DiscoveryMapMapLibre(
     markers: List<NearbyDealMarkerUiModel>,
     userLatitude: Double?,
     userLongitude: Double?,
+    isExpanded: Boolean,
+    onToggleExpand: () -> Unit,
     onMarkerClick: (String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val styleUrl = "https://api.maptiler.com/maps/streets-v4/style.json?key=3OJ2B5f1qI0Cqbcpt5xf"
     val context = LocalContext.current
+
+    var mapInstance by remember { mutableStateOf<MapLibreMap?>(null) }
 
     val mapView = remember {
         MapLibre.getInstance(context)
@@ -138,108 +187,143 @@ private fun DiscoveryMapMapLibre(
         }
     }
 
-    AndroidView(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(190.dp) // Made it slightly taller so the popup fits nicely
-            .padding(horizontal = 16.dp)
-            .clip(RoundedCornerShape(16.dp)),
-        factory = {
-            mapView.apply {
-                setOnTouchListener { view, event ->
-                    when (event.action) {
-                        MotionEvent.ACTION_DOWN,
-                        MotionEvent.ACTION_MOVE -> {
-                            view.parent.requestDisallowInterceptTouchEvent(true)
+    Box(modifier = modifier.fillMaxWidth()) {
+        AndroidView(
+            modifier = Modifier.fillMaxWidth(),
+            factory = {
+                mapView.apply {
+                    setOnTouchListener { view, event ->
+                        when (event.action) {
+                            MotionEvent.ACTION_DOWN,
+                            MotionEvent.ACTION_MOVE -> {
+                                view.parent.requestDisallowInterceptTouchEvent(true)
+                            }
+                            MotionEvent.ACTION_UP,
+                            MotionEvent.ACTION_CANCEL -> {
+                                view.parent.requestDisallowInterceptTouchEvent(false)
+                            }
                         }
-                        MotionEvent.ACTION_UP,
-                        MotionEvent.ACTION_CANCEL -> {
-                            view.parent.requestDisallowInterceptTouchEvent(false)
-                        }
+                        false
                     }
-                    false
-                }
 
-                getMapAsync { map: MapLibreMap ->
-                    map.setStyle(Style.Builder().fromUri(styleUrl)) { style: Style ->
-                        try {
-                            // 📍 Enable the blue user location puck
-                            val locationComponent = map.locationComponent
-                            val options = LocationComponentActivationOptions
-                                .builder(context, style)
-                                .useDefaultLocationEngine(true)
-                                .build()
-                            locationComponent.activateLocationComponent(options)
-                            locationComponent.isLocationComponentEnabled = true
-                            locationComponent.cameraMode = CameraMode.TRACKING
-                            locationComponent.renderMode = RenderMode.COMPASS
-                            locationComponent.zoomWhileTracking(16.0) // 👈 Keeps camera zoomed into street level
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
+                    getMapAsync { map: MapLibreMap ->
+                        mapInstance = map
+                        map.setStyle(Style.Builder().fromUri(styleUrl)) { style: Style ->
+                            try {
+                                val locationComponent = map.locationComponent
+                                val options = LocationComponentActivationOptions
+                                    .builder(context, style)
+                                    .useDefaultLocationEngine(true)
+                                    .build()
+                                locationComponent.activateLocationComponent(options)
+                                locationComponent.isLocationComponentEnabled = true
+                                locationComponent.cameraMode = CameraMode.TRACKING
+                                locationComponent.renderMode = RenderMode.COMPASS
+                                locationComponent.zoomWhileTracking(15.5)
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
 
-                        // Listen for marker clicks
-                        map.setOnMarkerClickListener { marker ->
-                            val clickedId = marker.snippet
-                            if (clickedId != null) {
+                            // Center immediately on user position when style loads
+                            if (userLatitude != null && userLongitude != null) {
                                 map.animateCamera(
                                     CameraUpdateFactory.newLatLngZoom(
-                                        marker.position,
-                                        16.5 // Focused zoom on tapped pin
-                                    ),
-                                    400
+                                        LatLng(userLatitude, userLongitude),
+                                        15.5
+                                    )
                                 )
-                                onMarkerClick(clickedId)
-                                true
-                            } else {
+                            }
+
+                            map.setOnMarkerClickListener { marker ->
+                                val clickedStoreId = marker.snippet
+                                if (clickedStoreId != null) {
+                                    map.animateCamera(
+                                        CameraUpdateFactory.newLatLngZoom(
+                                            marker.position,
+                                            16.5
+                                        ),
+                                        400
+                                    )
+                                    onMarkerClick(clickedStoreId)
+                                    true
+                                } else {
+                                    false
+                                }
+                            }
+
+                            map.addOnMapClickListener {
+                                onMarkerClick(null)
                                 false
                             }
                         }
-
-                        // Dismiss the card if they click the empty map background
-                        map.addOnMapClickListener {
-                            onMarkerClick(null)
-                            false
+                    }
+                }
+            },
+            update = { view ->
+                view.getMapAsync { map ->
+                    if (map.style != null) {
+                        map.clear()
+                        markers.forEach { markerData ->
+                            map.addMarker(
+                                MarkerOptions()
+                                    .position(LatLng(markerData.latitude, markerData.longitude))
+                                    .title(markerData.labelText)
+                                    .snippet(markerData.storeId)
+                            )
                         }
                     }
                 }
             }
-        },
-        // 🔄 The `update` block is triggered whenever `markers` change!
-        update = { view ->
-            view.getMapAsync { map ->
-                if (map.style != null) {
-                    // Clear old pins and draw new closest 3 pins
-                    map.clear()
-                    markers.forEach { markerData ->
-                        map.addMarker(
-                            MarkerOptions()
-                                .position(LatLng(markerData.latitude, markerData.longitude))
-                                .title(markerData.labelPrice)
-                                .snippet(markerData.id)
-                        )
-                    }
+        )
 
-                    // 🎯 Center on user's exact coordinates if available; otherwise fallback to first marker
-                    val centerTarget = if (userLatitude != null && userLongitude != null) {
-                        LatLng(userLatitude, userLongitude)
-                    } else {
-                        markers.firstOrNull()?.let { LatLng(it.latitude, it.longitude) }
-                    }
-
-                    centerTarget?.let { target ->
-                        map.animateCamera(
+        // Floating Action Controls: Recenter & Expand Buttons
+        Row(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            // Recenter to user's live position
+            IconButton(
+                onClick = {
+                    if (userLatitude != null && userLongitude != null && mapInstance != null) {
+                        mapInstance?.animateCamera(
                             CameraUpdateFactory.newLatLngZoom(
-                                target,
-                                16.0 // 👈 Zoomed in to street level centered on you
+                                LatLng(userLatitude, userLongitude),
+                                15.5
                             ),
                             600
                         )
                     }
-                }
+                },
+                modifier = Modifier
+                    .size(36.dp)
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f), CircleShape)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MyLocation,
+                    contentDescription = "Recenter",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
+            // Expand / Collapse map toggle
+            IconButton(
+                onClick = onToggleExpand,
+                modifier = Modifier
+                    .size(36.dp)
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f), CircleShape)
+            ) {
+                Icon(
+                    imageVector = if (isExpanded) Icons.Default.FullscreenExit else Icons.Default.Fullscreen,
+                    contentDescription = "Expand Map",
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(18.dp)
+                )
             }
         }
-    )
+    }
 }
 
 @Composable
@@ -251,9 +335,6 @@ private fun DiscoveryMapPlaceholder(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(190.dp)
-            .padding(horizontal = 16.dp)
-            .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .clickable { onMarkerClick(null) }
     ) {
@@ -274,10 +355,10 @@ private fun DiscoveryMapPlaceholder(
         ) {
             markers.take(3).forEach {
                 Text(
-                    text = it.labelPrice,
+                    text = it.labelText,
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.clickable { onMarkerClick(it.id) }
+                    modifier = Modifier.clickable { onMarkerClick(it.storeId) }
                 )
             }
         }
@@ -290,11 +371,51 @@ private fun DiscoveryMapSectionPreview() {
     BiteSaversTheme {
         DiscoveryMapSection(
             markers = listOf(
-                NearbyDealMarkerUiModel("1", "RM 9", 3.1466, 101.6958),
-                NearbyDealMarkerUiModel("2", "RM 12", 3.1579, 101.7115),
-                NearbyDealMarkerUiModel("3", "RM 7", 3.1319, 101.6841)
+                NearbyDealMarkerUiModel(
+                    storeId = "s1",
+                    storeName = "Bakery Delights",
+                    labelText = "2 DEALS",
+                    latitude = 3.1466,
+                    longitude = 101.6958,
+                    offers = listOf(
+                        OfferUiModel(
+                            id = "1",
+                            title = "Butter Croissant",
+                            storeName = "Bakery Delights",
+                            imageResId = R.drawable.food_spaghetti,
+                            discountPercent = 30,
+                            currentPrice = 4.50,
+                            originalPrice = 6.50,
+                            distanceKm = 0.5,
+                            quantityLeft = 5,
+                            hoursToClose = 2,
+                            category = DiscoveryCategory.BAKERY,
+                            isEligibleForNgoFree = false,
+                            liveTemperature = 25.0,
+                            storageType = "ROOM_TEMP",
+                            description = "Freshly baked croissant."
+                        ),
+                        OfferUiModel(
+                            id = "2",
+                            title = "Sourdough Bread",
+                            storeName = "Bakery Delights",
+                            imageResId = R.drawable.food_spaghetti,
+                            discountPercent = 40,
+                            currentPrice = 7.00,
+                            originalPrice = 12.00,
+                            distanceKm = 0.5,
+                            quantityLeft = 3,
+                            hoursToClose = 2,
+                            category = DiscoveryCategory.BAKERY,
+                            isEligibleForNgoFree = false,
+                            liveTemperature = 25.0,
+                            storageType = "ROOM_TEMP",
+                            description = "Artisan sourdough."
+                        )
+                    )
+                )
             ),
-            selectedOfferId = "1", // Hardcoded to show the popup in preview
+            selectedOfferId = "s1",
             onMarkerClick = {},
             onOfferNavigate = {}
         )

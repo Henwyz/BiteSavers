@@ -72,4 +72,41 @@ class OfferRepository {
             null
         }
     }
+
+    // Fetches bookmarked items regardless of whether quantity is 0 (to display SOLD OUT state)
+    suspend fun fetchSavedOffersByIds(offerIds: Set<String>): List<OfferUiModel> = withContext(Dispatchers.IO) {
+        if (offerIds.isEmpty()) return@withContext emptyList()
+
+        try {
+            val offers = client.from("offers")
+                .select {
+                    filter {
+                        isIn("id", offerIds.toList())
+                    }
+                }
+                .decodeList<OfferDto>()
+
+            val storeIds = offers.mapNotNull { it.storeId }.distinct()
+            val storesMap = if (storeIds.isNotEmpty()) {
+                client.from("stores")
+                    .select {
+                        filter {
+                            isIn("id", storeIds)
+                        }
+                    }
+                    .decodeList<StoreDto>()
+                    .associateBy { it.id }
+            } else {
+                emptyMap()
+            }
+
+            offers.map { offer ->
+                val store = offer.storeId?.let { storesMap[it] }
+                offer.toUiModel(store)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
 }

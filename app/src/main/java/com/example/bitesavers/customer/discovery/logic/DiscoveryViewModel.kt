@@ -11,9 +11,11 @@ import com.example.bitesavers.data.model.UserRole
 import com.example.bitesavers.data.remote.UserSession
 import com.example.bitesavers.data.repository.OfferRepository
 import com.example.bitesavers.data.repository.SavedRepository
+import com.example.bitesavers.data.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -21,6 +23,7 @@ class DiscoveryViewModel : ViewModel() {
 
     private val repository: OfferRepository = OfferRepository()
     private val savedRepository: SavedRepository = SavedRepository()
+    private val userRepository: UserRepository = UserRepository()
 
     // Master list of all offers fetched from Supabase (kept private in memory)
     private var allOffers: List<OfferUiModel> = emptyList()
@@ -58,37 +61,42 @@ class DiscoveryViewModel : ViewModel() {
     init {
         // Automatically fetch live Supabase offers when ViewModel is created
         loadOffers()
-        loadInitialSavedOffers()
+        observeUserSessionChanges()
     }
 
-    private fun loadInitialSavedOffers() {
-        val currentUserId = UserSession.currentUserId.value
+    /**
+     * Listens to UserSession changes dynamically.
+     * Whenever MainActivity changes user (e.g., u1 -> u2), it automatically fetches the new name and bookmarks.
+     */
+    private fun observeUserSessionChanges() {
         viewModelScope.launch {
-            if (currentUserId.isNotBlank()) {
-                savedRepository.loadUserSavedOffers(currentUserId)
+            UserSession.currentUserId.collectLatest { userId ->
+                if (userId.isNotBlank()) {
+                    // 1. Fetch real username from Supabase for this user ID
+                    val profile = userRepository.fetchUserProfile(userId)
+                    if (profile != null) {
+                        _uiState.update { current ->
+                            current.copy(user = profile)
+                        }
+                    }
+
+                    // 2. Load bookmarks for this active user
+                    savedRepository.loadUserSavedOffers(userId)
+                }
             }
         }
     }
 
     /**
      * Called when GPS location is acquired from the UI/Device.
-     * Updates coordinates, sorts offers by closest distance, and picks the top 3 items.
+     * Updates coordinates, sorts offers by closest distance, and groups top items by store.
      */
     fun updateUserLocation(lat: Double, lng: Double) {
         userLatitude = lat
         userLongitude = lng
         _uiState.update { current ->
             val visibleOffers = applyFilters(current, allOffers)
-
-            // Generate map pins centered around user coordinates
-            val generatedMarkers = visibleOffers.mapIndexed { index, offer ->
-                NearbyDealMarkerUiModel(
-                    id = offer.id,
-                    labelPrice = "RM %.2f".format(offer.currentPrice),
-                    latitude = offer.latitude ?: (lat + (index * 0.002)),
-                    longitude = offer.longitude ?: (lng + (index * 0.002))
-                )
-            }
+            val generatedMarkers = groupOffersByStore(visibleOffers, lat, lng)
 
             current.copy(
                 userLatitude = lat,
@@ -113,19 +121,9 @@ class DiscoveryViewModel : ViewModel() {
                 // 2. Filter them and generate map markers
                 _uiState.update { current ->
                     val visibleOffers = applyFilters(current, allOffers)
-
                     val baseLat = userLatitude ?: 3.1390
                     val baseLng = userLongitude ?: 101.6869
-
-                    val generatedMarkers = visibleOffers.mapIndexed { index, offer ->
-                        NearbyDealMarkerUiModel(
-                            id = offer.id,
-                            labelPrice = "RM %.2f".format(offer.currentPrice),
-                            latitude = offer.latitude ?: (baseLat + (index * 0.003)),
-                            longitude = offer.longitude ?: (baseLng + (index * 0.003))
-                            //dummy data for now if offer coordinates are not set
-                        )
-                    }
+                    val generatedMarkers = groupOffersByStore(visibleOffers, baseLat, baseLng)
 
                     current.copy(
                         isLoading = false,
@@ -144,25 +142,71 @@ class DiscoveryViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Groups offers by store coordinates.
+     * If multiple deals are available at one store, groups them under a single pin marker.
+     */
+    private fun groupOffersByStore(
+        offers: List<OfferUiModel>,
+        fallbackLat: Double,
+        fallbackLng: Double
+    ): List<NearbyDealMarkerUiModel> {
+        val groupedByStore = offers.groupBy { it.storeName }
+
+        return groupedByStore.entries.mapIndexed { index, entry ->
+            val storeOffers = entry.value
+            val firstOffer = storeOffers.first()
+
+            val pinLat = firstOffer.latitude ?: (fallbackLat + (index * 0.003))
+            val pinLng = firstOffer.longitude ?: (fallbackLng + (index * 0.003))
+
+            val label = if (storeOffers.size > 1) {
+                "${storeOffers.size} DEALS"
+            } else {
+                "RM %.2f".format(firstOffer.currentPrice)
+            }
+
+            NearbyDealMarkerUiModel(
+                storeId = firstOffer.id, // Primary key identifier for pin selection
+                storeName = entry.key,
+                labelText = label,
+                latitude = pinLat,
+                longitude = pinLng,
+                offers = storeOffers
+            )
+        }
+    }
+
     // To Handle map pin clicked
-    fun onMapMarkerClicked(offerId: String?) {
+    fun onMapMarkerClicked(markerStoreId: String?) {
         _uiState.update { current ->
-            current.copy(selectedMapOfferId = offerId)
+            current.copy(selectedMapOfferId = markerStoreId)
         }
     }
 
     fun onSearchQueryChanged(query: String) {
-        _uiState.update { current -> //looks at the current state of the screen this second
-            val updated = current.copy(searchQuery = query) //use copy because cannot directly change data
-            updated.copy(offers = applyFilters(updated, allOffers))
-            //immediately recalculates which food cards should be visible, for each word type
+        _uiState.update { current ->
+            val updated = current.copy(searchQuery = query)
+            val filtered = applyFilters(updated, allOffers)
+            val baseLat = userLatitude ?: 3.1390
+            val baseLng = userLongitude ?: 101.6869
+            updated.copy(
+                offers = filtered,
+                nearbyMarkers = groupOffersByStore(filtered, baseLat, baseLng)
+            )
         }
     }
 
     fun onCategorySelected(category: DiscoveryCategory) {
         _uiState.update { current ->
             val updated = current.copy(selectedCategory = category)
-            updated.copy(offers = applyFilters(updated, allOffers))
+            val filtered = applyFilters(updated, allOffers)
+            val baseLat = userLatitude ?: 3.1390
+            val baseLng = userLongitude ?: 101.6869
+            updated.copy(
+                offers = filtered,
+                nearbyMarkers = groupOffersByStore(filtered, baseLat, baseLng)
+            )
         }
     }
 
@@ -185,13 +229,18 @@ class DiscoveryViewModel : ViewModel() {
                     role == UserRole.CONSUMER && current.selectedCategory == DiscoveryCategory.FREE
                 ) DiscoveryCategory.ALL else current.selectedCategory
             )
-            updated.copy(offers = applyFilters(updated, allOffers))
+            val filtered = applyFilters(updated, allOffers)
+            val baseLat = userLatitude ?: 3.1390
+            val baseLng = userLongitude ?: 101.6869
+            updated.copy(
+                offers = filtered,
+                nearbyMarkers = groupOffersByStore(filtered, baseLat, baseLng)
+            )
         }
     }
 
     private fun applyFilters(state: DiscoveryUiState, sourceList: List<OfferUiModel>): List<OfferUiModel> {
         val query = state.searchQuery.trim().lowercase()
-        //takes the query (in all form)
         val currentLat = userLatitude
         val currentLng = userLongitude
 
@@ -204,9 +253,8 @@ class DiscoveryViewModel : ViewModel() {
                     // NGOs can see all active items
                     true
                 }
-            } //process it as stream
+            }
             .filter { offer ->
-                // Matches app categories
                 when (state.selectedCategory) {
                     null, DiscoveryCategory.ALL -> true
                     DiscoveryCategory.BAKERY -> offer.category == DiscoveryCategory.BAKERY
@@ -226,8 +274,6 @@ class DiscoveryViewModel : ViewModel() {
                         offer.storeName.lowercase().contains(query)
             }
 
-        // If GPS is available, calculate distance with Haversine formula,
-        // sort closest to farthest, and take the top 3 closest items!
         return if (currentLat != null && currentLng != null) {
             filteredSequence
                 .map { offer ->
@@ -238,11 +284,11 @@ class DiscoveryViewModel : ViewModel() {
                 }
                 .sortedBy { it.distanceKm }
                 .take(3)
-                .toList() //bundles the surviving food cards back into a standard list
+                .toList()
         } else {
             filteredSequence
                 .take(3)
-                .toList() //bundles the surviving food cards back into a standard list
+                .toList()
         }
     }
 
@@ -275,7 +321,13 @@ class DiscoveryViewModel : ViewModel() {
                 searchQuery = "",
                 selectedCategory = DiscoveryCategory.ALL
             )
-            updated.copy(offers = applyFilters(updated, allOffers))
+            val filtered = applyFilters(updated, allOffers)
+            val baseLat = userLatitude ?: 3.1390
+            val baseLng = userLongitude ?: 101.6869
+            updated.copy(
+                offers = filtered,
+                nearbyMarkers = groupOffersByStore(filtered, baseLat, baseLng)
+            )
         }
     }
 }

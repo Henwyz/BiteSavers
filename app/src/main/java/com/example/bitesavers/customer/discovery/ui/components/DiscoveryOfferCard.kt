@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -113,7 +115,7 @@ fun DiscoveryOfferCard(
             ) {
                 Icon(
                     painter = painterResource(
-                        id = if (isSaved) R.drawable.ic_launcher_foreground else R.drawable.ic_launcher_foreground // Replace with your filled/outline bookmark drawables
+                        id = if (isSaved) R.drawable.ic_launcher_foreground else R.drawable.ic_launcher_foreground
                     ),
                     contentDescription = stringResource(id = R.string.cd_bookmark_icon),
                     tint = if (isSaved) MaterialTheme.colorScheme.primary else Color.White,
@@ -128,11 +130,40 @@ fun DiscoveryOfferCard(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
-            Text(
-                text = offer.storeName,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+
+            // Store Name & Real Dynamic Rating Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = offer.storeName,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false)
+                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Star,
+                        contentDescription = stringResource(R.string.cd_store_rating),
+                        tint = Color(0xFFFFB800),
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Text(
+                        text = "%.1f".format(offer.storeRating),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.size(8.dp))
 
@@ -197,7 +228,7 @@ fun CompactDiscoveryOfferCard(
 
     Card(
         modifier = modifier
-            .clickable { onClick(offer) }, // REMOVED fillMaxWidth() here!
+            .clickable { onClick(offer) },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -205,7 +236,7 @@ fun CompactDiscoveryOfferCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Row(
-            modifier = Modifier.padding(6.dp),
+            modifier = Modifier.padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Image Thumbnail
@@ -229,7 +260,7 @@ fun CompactDiscoveryOfferCard(
                             .align(Alignment.TopStart)
                     ) {
                         Text(
-                            text = "FREE",
+                            text = stringResource(id = R.string.price_free),
                             color = MaterialTheme.colorScheme.onPrimary,
                             fontSize = 8.sp,
                             fontWeight = FontWeight.Bold
@@ -242,7 +273,7 @@ fun CompactDiscoveryOfferCard(
 
             // Details Column
             Column(
-                modifier = Modifier.weight(1f, fill = false), // Allows flexible sizing without stretching
+                modifier = Modifier.weight(1f, fill = false),
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
@@ -253,13 +284,25 @@ fun CompactDiscoveryOfferCard(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                Text(
-                    text = offer.storeName,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = offer.storeName,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    Text(
+                        text = "★%.1f".format(offer.storeRating),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFFFFB800),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -274,7 +317,7 @@ fun CompactDiscoveryOfferCard(
                     )
 
                     Text(
-                        text = "• ${offer.distanceKm} km",
+                        text = "• %.1f km".format(offer.distanceKm),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -294,6 +337,7 @@ private fun DiscoveryOfferCardConsumerPreview() {
                     id = "1",
                     title = "Bolognese Spaghetti",
                     storeName = "Mr Lee Western Food",
+                    storeRating = 4.7,
                     imageResId = R.drawable.food_spaghetti,
                     discountPercent = 30,
                     currentPrice = 10.50,
@@ -326,13 +370,14 @@ private fun DiscoveryOfferCardNgoPreview() {
                     id = "2",
                     title = "Butter Croissant",
                     storeName = "Madam Lim Bakery",
-                    imageResId = R.drawable.food_spaghetti, // Swap with your bakery image resource
+                    storeRating = 4.9,
+                    imageResId = R.drawable.food_spaghetti,
                     discountPercent = 50,
                     currentPrice = 5.00,
                     originalPrice = 10.00,
                     distanceKm = 0.8,
                     quantityLeft = 4,
-                    hoursToClose = 1, // <= 1 hour remaining triggers NGO Free Claim
+                    hoursToClose = 1,
                     category = DiscoveryCategory.BAKERY,
                     isEligibleForNgoFree = true,
                     liveTemperature = 24.0,
@@ -358,6 +403,7 @@ private fun CompactDiscoveryOfferCardConsumerPreview() {
                     id = "o1",
                     title = "Bolognese Spaghetti",
                     storeName = "Mr Lee Western Food",
+                    storeRating = 4.8,
                     imageResId = R.drawable.food_spaghetti,
                     discountPercent = 30,
                     currentPrice = 10.50,
@@ -372,36 +418,6 @@ private fun CompactDiscoveryOfferCardConsumerPreview() {
                     description = "Signature spaghetti with minced beef."
                 ),
                 userRole = UserRole.CONSUMER,
-                onClick = {}
-            )
-        }
-    }
-}
-
-@Preview(showBackground = true, name = "Compact Card - NGO View")
-@Composable
-private fun CompactDiscoveryOfferCardNgoPreview() {
-    BiteSaversTheme {
-        Box(modifier = Modifier.padding(12.dp)) {
-            CompactDiscoveryOfferCard(
-                offer = OfferUiModel(
-                    id = "o2",
-                    title = "Nasi Goreng Ayam",
-                    storeName = "Nani Kafe",
-                    imageResId = R.drawable.food_nasi_goreng,
-                    discountPercent = 40,
-                    currentPrice = 9.00,
-                    originalPrice = 15.00,
-                    distanceKm = 3.2,
-                    quantityLeft = 6,
-                    hoursToClose = 1, // <= 1 hour triggers NGO Free Claim
-                    category = DiscoveryCategory.HOT_MEALS,
-                    isEligibleForNgoFree = true,
-                    liveTemperature = 62.0,
-                    storageType = "HOT",
-                    description = "Freshly made fried rice."
-                ),
-                userRole = UserRole.NGO,
                 onClick = {}
             )
         }

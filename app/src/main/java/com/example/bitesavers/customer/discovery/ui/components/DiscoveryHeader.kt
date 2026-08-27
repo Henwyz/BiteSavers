@@ -31,7 +31,7 @@ import com.example.bitesavers.ui.theme.BiteSaversTheme
 @Composable
 fun DiscoveryHeader(
     user: UserUiModel,
-    location: String, // <--- ADDED: It now takes location as its own variable!
+    location: String,
     onNotificationClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -59,7 +59,6 @@ fun DiscoveryHeader(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    // UPDATED: Now uses the standalone location variable
                     text = stringResource(id = R.string.location_format, location),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -70,6 +69,7 @@ fun DiscoveryHeader(
                 Icon(
                     painter = painterResource(id = R.drawable.ic_notification),
                     contentDescription = stringResource(id = R.string.cd_notifications),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier
                         .size(22.dp)
                         .clickable { onNotificationClick() }
@@ -97,11 +97,10 @@ private fun DiscoveryHeaderPreview() {
     BiteSaversTheme {
         DiscoveryHeader(
             user = UserUiModel(
-                greeting = stringResource(id = R.string.greeting_prefix),
+                greeting = "👋 Good Evening",
                 displayName = "Sarah Tan",
-                avatarInitials = stringResource(id = R.string.avatar_initials)
+                avatarInitials = "ST"
             ),
-            // You inject the preview location right here!
             location = "Tanjung Bungah, Penang",
             onNotificationClick = {}
         )
