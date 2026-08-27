@@ -39,6 +39,8 @@ fun ProfileScreen(
     viewModel: ProfileViewModel = viewModel()
 ) {
     val profile by viewModel.profile.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+    val loadError by viewModel.loadError.collectAsStateWithLifecycle()
     val impact = SustainabilityCalculator.calculateImpact(profile.mealsRescued)
     val menuIconTint = MaterialTheme.colorScheme.primary
 
@@ -48,6 +50,16 @@ fun ProfileScreen(
             .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
     ) {
+        if (isLoading) {
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+        }
+        if (loadError != null) {
+            Text(
+                loadError!!,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(12.dp)
+            )
+        }
         // ---------- Header ----------
         Column(
             modifier = Modifier

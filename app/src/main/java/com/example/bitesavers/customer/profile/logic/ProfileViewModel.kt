@@ -6,12 +6,15 @@ import androidx.lifecycle.viewModelScope
 import com.example.bitesavers.customer.profile.data.NgoApplicationUiModel
 import com.example.bitesavers.customer.profile.data.NgoCauseCategory
 import com.example.bitesavers.customer.profile.data.NgoRegistrationType
-import com.example.bitesavers.customer.profile.data.NgoStatus
 import com.example.bitesavers.customer.profile.data.UserProfileUiModel
-import kotlinx.coroutines.delay
+import com.example.bitesavers.data.mapper.toInsertDto
+import com.example.bitesavers.data.mapper.toUiModel
+import com.example.bitesavers.data.remote.UserSession
+import com.example.bitesavers.data.remote.repository.ProfileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -22,38 +25,45 @@ private val ALL_VALIDATED_FIELDS = setOf(
     "contactEmail", "contactPhone", "causeCategory", "address", "reasonForChange"
 )
 
+private val PLACEHOLDER_PROFILE = UserProfileUiModel(
+    id = "",
+    name = "Loading…",
+    email = "",
+    avatarInitials = "?",
+    memberSinceLabel = "",
+    walletBalance = 0.0,
+    mealsRescued = 0
+)
+
 /**
- * MVP-phase ViewModel: dummy in-memory state, per the team's "shared
- * ViewModel, real DB later" rule.
+ * Now backed by real Supabase data (users + ngo_applications tables) via
+ * ProfileRepository, keyed off UserSession.currentUserId. MainActivity's
+ * business/customer toggle updates UserSession, which this ViewModel
+ * observes and reloads from automatically.
  */
 class ProfileViewModel : ViewModel() {
 
-    private val _profile = MutableStateFlow(
-        UserProfileUiModel(
-            id = "u1",
-            name = "Michelle Lim",
-            email = "michellelim@gmail.com",
-            avatarInitials = "ML",
-            memberSinceLabel = "Member since 7 June 2026",
-            walletBalance = 67.50,
-            mealsRescued = 15
-        )
-    )
+    private val repository = ProfileRepository()
+
+    private val _profile = MutableStateFlow(PLACEHOLDER_PROFILE)
     val profile: StateFlow<UserProfileUiModel> = _profile.asStateFlow()
 
-    // Currently APPROVED, displayed NGO details. Only a REGISTER submission
-    // writes here. EDIT submissions deliberately never touch this — old
-    // details stay active until a real approval flow (not built in this
-    // MVP) would apply the change. Cleared entirely by disableNgoAccount().
+    // The currently APPROVED NGO application row for this user (most recent
+    // one with status = "APPROVED"), or null if never approved.
     private val _activeNgoDetails = MutableStateFlow<NgoApplicationUiModel?>(null)
     val activeNgoDetails: StateFlow<NgoApplicationUiModel?> = _activeNgoDetails.asStateFlow()
 
-    // True once an edit has been submitted and is (simulated) awaiting
-    // approval. MVP: nothing ever flips it back to false on its own — a
-    // real backend would clear it on approval/rejection. Also reset by
-    // disableNgoAccount().
+    // True if the single most recent ngo_applications row for this user has
+    // status = "PENDING" — i.e. an edit was submitted and hasn't been
+    // approved/rejected yet. Derived from real rows now, not a local flag.
     private val _hasPendingEdit = MutableStateFlow(false)
     val hasPendingEdit: StateFlow<Boolean> = _hasPendingEdit.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _loadError = MutableStateFlow<String?>(null)
+    val loadError: StateFlow<String?> = _loadError.asStateFlow()
 
     // The draft form currently being filled in — used by NgoRegistrationScreen
     // for both the register flow and the edit flow.
@@ -72,12 +82,40 @@ class ProfileViewModel : ViewModel() {
     private val _submissionState = MutableStateFlow<SubmissionState>(SubmissionState.Idle)
     val submissionState: StateFlow<SubmissionState> = _submissionState.asStateFlow()
 
-    // A field's error only ever displays once it's in this set. It's added
-    // either on blur (if the field has content — see onFieldBlur), on
-    // dropdown selection, or when the whole form is force-touched on submit.
     private val touchedFields = mutableSetOf<String>()
     private var currentMode = NgoFormMode.REGISTER
     private var pendingSubmitMode = NgoFormMode.REGISTER
+
+    init {
+        // Reload whenever the active user changes (e.g. MainActivity's
+        // Customer/Business toggle flips and calls UserSession.setUserId).
+        viewModelScope.launch {
+            UserSession.currentUserId.collectLatest { userId ->
+                loadProfileData(userId)
+            }
+        }
+    }
+
+    private suspend fun loadProfileData(userId: String) {
+        _isLoading.value = true
+        _loadError.value = null
+        try {
+            val userDto = repository.getUser(userId)
+            _profile.value = userDto.toUiModel()
+
+            val applications = repository.getNgoApplications(userId) // already newest-first
+            _activeNgoDetails.value = applications.firstOrNull { it.status == "APPROVED" }?.toUiModel()
+            _hasPendingEdit.value = applications.firstOrNull()?.status == "PENDING"
+        } catch (e: Exception) {
+            _loadError.value = "Couldn't load profile: ${e.message}"
+        } finally {
+            _isLoading.value = false
+        }
+    }
+
+    fun refresh() {
+        viewModelScope.launch { loadProfileData(UserSession.currentUserId.value) }
+    }
 
     // ---------- Screen setup ----------
 
@@ -91,10 +129,6 @@ class ProfileViewModel : ViewModel() {
 
     fun startNgoEdit() {
         currentMode = NgoFormMode.EDIT
-        // Prefill from the active (approved) details, but deliberately reset
-        // agreedToTerms to false and reasonForChange to blank — otherwise
-        // the checkbox would show pre-ticked just because the original
-        // registration had it ticked, and any old reason text would carry over.
         _ngoApplication.value = (_activeNgoDetails.value ?: NgoApplicationUiModel())
             .copy(agreedToTerms = false, reasonForChange = "")
         touchedFields.clear()
@@ -102,7 +136,7 @@ class ProfileViewModel : ViewModel() {
         _submissionState.value = SubmissionState.Idle
     }
 
-    // ---------- Field setters — update value + live-revalidate ONLY if already touched ----------
+    // ---------- Field setters ----------
 
     fun updateOrganizationName(value: String) {
         _ngoApplication.update { it.copy(organizationName = value) }
@@ -158,12 +192,6 @@ class ProfileViewModel : ViewModel() {
         _ngoApplication.update { it.copy(certificateUri = uri, certificateFileName = fileName) }
     }
 
-    /**
-     * Call when a field loses focus. Only marks it "touched" (and therefore
-     * eligible to show an error) if it actually has content — this avoids
-     * flashing "invalid" while the user is still mid-typing on their very
-     * first pass through the field, e.g. an email with no "@" yet.
-     */
     fun onFieldBlur(field: String, currentValue: String) {
         if (currentValue.isNotBlank()) {
             touchedFields.add(field)
@@ -190,10 +218,6 @@ class ProfileViewModel : ViewModel() {
     fun submitNgoApplication(mode: NgoFormMode) {
         currentMode = mode
 
-        // For an edit, check "did anything actually change" BEFORE running
-        // full field validation — otherwise pressing submit on an untouched
-        // edit form shows "reason is required" instead of the more useful
-        // "you haven't changed anything" message.
         if (mode == NgoFormMode.EDIT && isUnchangedFromActive()) {
             _showNoChangesDialog.value = true
             return
@@ -217,12 +241,6 @@ class ProfileViewModel : ViewModel() {
 
     private fun isUnchangedFromActive(): Boolean {
         val active = _activeNgoDetails.value ?: return false
-        // agreedToTerms is deliberately excluded: startNgoEdit() always resets
-        // the draft's agreedToTerms to false (see comment there), while the
-        // saved active details still has it as true from the original
-        // registration. Comparing it here would make every untouched edit
-        // form look "changed" just because of that reset, which broke the
-        // no-changes check entirely.
         val draft = _ngoApplication.value.trimmed().copy(reasonForChange = "", agreedToTerms = false)
         val activeComparable = active.trimmed().copy(reasonForChange = "", agreedToTerms = false)
         return draft == activeComparable
@@ -232,7 +250,6 @@ class ProfileViewModel : ViewModel() {
         _showNoChangesDialog.value = false
     }
 
-    /** Called from the "Agree & Submit" button in the TnC popup. */
     fun agreeToTermsAndSubmit() {
         _ngoApplication.update { it.copy(agreedToTerms = true) }
         _showTncDialog.value = false
@@ -245,27 +262,30 @@ class ProfileViewModel : ViewModel() {
 
     private fun proceedWithSubmission(mode: NgoFormMode) {
         val application = _ngoApplication.value.trimmed()
+        val userId = UserSession.currentUserId.value
+
         viewModelScope.launch {
             _submissionState.value = SubmissionState.Submitting
-            delay(600) // simulated network delay for the demo, per Practical 7
-
-            when (mode) {
-                NgoFormMode.REGISTER -> {
-                    // MVP: auto-approve, no admin review step for a brand-new registration.
-                    _activeNgoDetails.value = application
-                    _profile.update {
-                        it.copy(ngoStatus = NgoStatus.APPROVED, ngoOrgName = application.organizationName)
+            try {
+                when (mode) {
+                    NgoFormMode.REGISTER -> {
+                        // MVP: auto-approve, no admin review queue exists.
+                        repository.insertNgoApplication(application.toInsertDto(userId, status = "APPROVED"))
+                        repository.updateUserNgoStatus(userId, status = "APPROVED", orgName = application.organizationName)
+                    }
+                    NgoFormMode.EDIT -> {
+                        // Insert as PENDING — deliberately does NOT update
+                        // the users table, so the active/displayed details
+                        // stay whatever the latest APPROVED row says, per
+                        // the "changes apply only after approval" behavior.
+                        repository.insertNgoApplication(application.toInsertDto(userId, status = "PENDING"))
                     }
                 }
-                NgoFormMode.EDIT -> {
-                    // Deliberately do NOT update _activeNgoDetails — old
-                    // details remain active/displayed until a real approval
-                    // flow (not built in this MVP) would apply the change.
-                    _hasPendingEdit.value = true
-                }
+                loadProfileData(userId) // refresh from the real DB so the UI reflects what was actually saved
+                _submissionState.value = SubmissionState.Success
+            } catch (e: Exception) {
+                _submissionState.value = SubmissionState.Error("Submission failed: ${e.message}")
             }
-
-            _submissionState.value = SubmissionState.Success
         }
     }
 
@@ -276,9 +296,15 @@ class ProfileViewModel : ViewModel() {
     // ---------- Disable NGO account ----------
 
     fun disableNgoAccount() {
-        _activeNgoDetails.value = null
-        _hasPendingEdit.value = false
-        _profile.update { it.copy(ngoStatus = NgoStatus.NONE, ngoOrgName = null) }
+        val userId = UserSession.currentUserId.value
+        viewModelScope.launch {
+            try {
+                repository.updateUserNgoStatus(userId, status = "NONE", orgName = null)
+                loadProfileData(userId)
+            } catch (e: Exception) {
+                _loadError.value = "Couldn't disable NGO account: ${e.message}"
+            }
+        }
     }
 }
 
