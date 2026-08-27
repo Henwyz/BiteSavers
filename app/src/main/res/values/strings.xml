@@ -146,6 +146,13 @@
     <string name="error_bank_card_not_registered">Please add a valid Debit/Credit Card before paying.</string>
     <string name="error_order_failed_general">Payment failed. Please check your balance or try again.</string>
 
+    <!-- Card Form Validations -->
+    <string name="error_invalid_card_number">Card number must be 16 digits</string>
+    <string name="error_invalid_expiry">Enter a valid future MM/YY</string>
+    <string name="error_invalid_cvv">CVV must be 3 digits</string>
+    <string name="error_invalid_phone">Enter a valid 9–11 digit mobile number</string>
+    <string name="error_invalid_otp">Enter a complete 6-digit verification code</string>
+
     <!-- ================================================================= -->
     <!-- PAYMENT METHODS MANAGEMENT & TOP UP                               -->
     <!-- ================================================================= -->

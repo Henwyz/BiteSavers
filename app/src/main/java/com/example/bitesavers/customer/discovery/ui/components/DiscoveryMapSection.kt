@@ -1,6 +1,9 @@
 package com.example.bitesavers.customer.discovery.ui.components
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.location.Location
+import android.location.LocationManager
 import android.view.MotionEvent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
@@ -18,19 +21,17 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Fullscreen
-import androidx.compose.material.icons.filled.FullscreenExit
-import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -60,6 +62,8 @@ import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.annotations.MarkerOptions
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.location.LocationComponentActivationOptions
+import org.maplibre.android.location.LocationComponentOptions
+import org.maplibre.android.location.engine.LocationEngineRequest
 import org.maplibre.android.location.modes.CameraMode
 import org.maplibre.android.location.modes.RenderMode
 
@@ -76,7 +80,7 @@ fun DiscoveryMapSection(
     modifier: Modifier = Modifier
 ) {
     val isInPreview = LocalInspectionMode.current
-    var isExpanded by remember { mutableStateOf(false) }
+    var isExpanded by rememberSaveable { mutableStateOf(false) }
 
     Box(
         modifier = modifier
@@ -163,6 +167,7 @@ private fun DiscoveryMapMapLibre(
     val context = LocalContext.current
 
     var mapInstance by remember { mutableStateOf<MapLibreMap?>(null) }
+    var hasCenteredInitially by rememberSaveable { mutableStateOf(false) }
 
     val mapView = remember {
         MapLibre.getInstance(context)
@@ -184,6 +189,21 @@ private fun DiscoveryMapMapLibre(
         lifecycle.addObserver(lifecycleObserver)
         onDispose {
             lifecycle.removeObserver(lifecycleObserver)
+        }
+    }
+
+    // Automatically centers camera once on valid GPS lock without re-triggering during scroll
+    LaunchedEffect(userLatitude, userLongitude, mapInstance) {
+        val map = mapInstance
+        if (map != null && userLatitude != null && userLongitude != null && !hasCenteredInitially) {
+            map.animateCamera(
+                CameraUpdateFactory.newLatLngZoom(
+                    LatLng(userLatitude, userLongitude),
+                    15.5
+                ),
+                600
+            )
+            hasCenteredInitially = true
         }
     }
 
@@ -210,28 +230,52 @@ private fun DiscoveryMapMapLibre(
                         mapInstance = map
                         map.setStyle(Style.Builder().fromUri(styleUrl)) { style: Style ->
                             try {
-                                val locationComponent = map.locationComponent
-                                val options = LocationComponentActivationOptions
-                                    .builder(context, style)
-                                    .useDefaultLocationEngine(true)
+                                val locationComponentOptions = LocationComponentOptions.builder(context)
+                                    .pulseEnabled(true)
                                     .build()
-                                locationComponent.activateLocationComponent(options)
+
+                                val request = LocationEngineRequest.Builder(1000)
+                                    .setFastestInterval(1000)
+                                    .setPriority(LocationEngineRequest.PRIORITY_HIGH_ACCURACY)
+                                    .build()
+
+                                val activationOptions = LocationComponentActivationOptions
+                                    .builder(context, style)
+                                    .locationComponentOptions(locationComponentOptions)
+                                    .useDefaultLocationEngine(true)
+                                    .locationEngineRequest(request)
+                                    .build()
+
+                                val locationComponent = map.locationComponent
+                                locationComponent.activateLocationComponent(activationOptions)
                                 locationComponent.isLocationComponentEnabled = true
                                 locationComponent.cameraMode = CameraMode.TRACKING
                                 locationComponent.renderMode = RenderMode.COMPASS
                                 locationComponent.zoomWhileTracking(15.5)
+
+                                // Center map on initial load
+                                if (!hasCenteredInitially) {
+                                    val lastLoc = locationComponent.lastKnownLocation
+                                    if (lastLoc != null) {
+                                        map.animateCamera(
+                                            CameraUpdateFactory.newLatLngZoom(
+                                                LatLng(lastLoc.latitude, lastLoc.longitude),
+                                                15.5
+                                            )
+                                        )
+                                        hasCenteredInitially = true
+                                    } else if (userLatitude != null && userLongitude != null) {
+                                        map.animateCamera(
+                                            CameraUpdateFactory.newLatLngZoom(
+                                                LatLng(userLatitude, userLongitude),
+                                                15.5
+                                            )
+                                        )
+                                        hasCenteredInitially = true
+                                    }
+                                }
                             } catch (e: Exception) {
                                 e.printStackTrace()
-                            }
-
-                            // Center immediately on user position when style loads
-                            if (userLatitude != null && userLongitude != null) {
-                                map.animateCamera(
-                                    CameraUpdateFactory.newLatLngZoom(
-                                        LatLng(userLatitude, userLongitude),
-                                        15.5
-                                    )
-                                )
                             }
 
                             map.setOnMarkerClickListener { marker ->
@@ -286,14 +330,55 @@ private fun DiscoveryMapMapLibre(
             // Recenter to user's live position
             IconButton(
                 onClick = {
-                    if (userLatitude != null && userLongitude != null && mapInstance != null) {
-                        mapInstance?.animateCamera(
-                            CameraUpdateFactory.newLatLngZoom(
-                                LatLng(userLatitude, userLongitude),
-                                15.5
-                            ),
-                            600
-                        )
+                    val map = mapInstance
+                    if (map != null) {
+                        try {
+                            // 1. Try MapLibre LocationComponent
+                            val locComponent = map.locationComponent
+                            if (locComponent.isLocationComponentActivated) {
+                                locComponent.cameraMode = CameraMode.TRACKING
+                                val lastKnown = locComponent.lastKnownLocation
+                                if (lastKnown != null) {
+                                    map.animateCamera(
+                                        CameraUpdateFactory.newLatLngZoom(
+                                            LatLng(lastKnown.latitude, lastKnown.longitude),
+                                            15.5
+                                        ),
+                                        600
+                                    )
+                                    return@IconButton
+                                }
+                            }
+
+                            // 2. Direct Android LocationManager fallback
+                            val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
+                            val gpsLocation: Location? = locationManager?.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                                ?: locationManager?.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+
+                            if (gpsLocation != null) {
+                                map.animateCamera(
+                                    CameraUpdateFactory.newLatLngZoom(
+                                        LatLng(gpsLocation.latitude, gpsLocation.longitude),
+                                        15.5
+                                    ),
+                                    600
+                                )
+                                return@IconButton
+                            }
+
+                            // 3. ViewModel Coordinates fallback
+                            if (userLatitude != null && userLongitude != null) {
+                                map.animateCamera(
+                                    CameraUpdateFactory.newLatLngZoom(
+                                        LatLng(userLatitude, userLongitude),
+                                        15.5
+                                    ),
+                                    600
+                                )
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
                     }
                 },
                 modifier = Modifier
@@ -301,8 +386,8 @@ private fun DiscoveryMapMapLibre(
                     .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f), CircleShape)
             ) {
                 Icon(
-                    imageVector = Icons.Default.MyLocation,
-                    contentDescription = "Recenter",
+                    painter = painterResource(id = R.drawable.ic_my_location),
+                    contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(18.dp)
                 )
@@ -316,8 +401,10 @@ private fun DiscoveryMapMapLibre(
                     .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f), CircleShape)
             ) {
                 Icon(
-                    imageVector = if (isExpanded) Icons.Default.FullscreenExit else Icons.Default.Fullscreen,
-                    contentDescription = "Expand Map",
+                    painter = painterResource(
+                        id = if (isExpanded) R.drawable.ic_fullscreen_exit else R.drawable.ic_fullscreen
+                    ),
+                    contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.size(18.dp)
                 )
@@ -394,23 +481,6 @@ private fun DiscoveryMapSectionPreview() {
                             liveTemperature = 25.0,
                             storageType = "ROOM_TEMP",
                             description = "Freshly baked croissant."
-                        ),
-                        OfferUiModel(
-                            id = "2",
-                            title = "Sourdough Bread",
-                            storeName = "Bakery Delights",
-                            imageResId = R.drawable.food_spaghetti,
-                            discountPercent = 40,
-                            currentPrice = 7.00,
-                            originalPrice = 12.00,
-                            distanceKm = 0.5,
-                            quantityLeft = 3,
-                            hoursToClose = 2,
-                            category = DiscoveryCategory.BAKERY,
-                            isEligibleForNgoFree = false,
-                            liveTemperature = 25.0,
-                            storageType = "ROOM_TEMP",
-                            description = "Artisan sourdough."
                         )
                     )
                 )

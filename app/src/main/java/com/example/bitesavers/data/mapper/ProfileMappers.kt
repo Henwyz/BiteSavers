@@ -84,7 +84,7 @@ private fun computeInitials(name: String): String =
  * below, log the raw `createdAt` value once to see its real format and
  * adjust the patterns tried here.
  */
-private fun formatMemberSince(createdAt: String): String {
+private fun formatMemberSince(createdAt: String?): String {
     val patterns = listOf(
         "yyyy-MM-dd'T'HH:mm:ss",
         "yyyy-MM-dd HH:mm:ss"
@@ -96,7 +96,7 @@ private fun formatMemberSince(createdAt: String): String {
             }
             // Strip fractional seconds and timezone suffix before parsing —
             // both vary in length/format and aren't needed for a display label.
-            val cleaned = createdAt.substringBefore(".").substringBefore("+").trim()
+            val cleaned = createdAt?.substringBefore(".")?.substringBefore("+")?.trim()
             val date = parser.parse(cleaned) ?: continue
             val displayFormat = SimpleDateFormat("d MMMM yyyy", Locale.US)
             return "Member since ${displayFormat.format(date)}"

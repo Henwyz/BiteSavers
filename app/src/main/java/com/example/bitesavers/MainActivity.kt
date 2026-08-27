@@ -57,7 +57,7 @@ class MainActivity : ComponentActivity() {
                     if (isBusinessMode) {
                         UserSession.setUserId("b1") // Merchant / Store owner user ID
                     } else {
-                        UserSession.setUserId("u1") // Customer user ID
+                        UserSession.setUserId("u2") // Customer user ID
                     }
                 }
 

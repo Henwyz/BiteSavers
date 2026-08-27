@@ -2,20 +2,43 @@ package com.example.bitesavers.customer.payment.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalance
-import androidx.compose.material.icons.filled.CreditCard
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bitesavers.R
+import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,10 +55,10 @@ fun TopUpBottomSheet(
     var selectedSource by remember { mutableStateOf("Maybank2u (FPX)") }
 
     val paymentSources = listOf(
-        "Maybank2u (FPX)" to Icons.Default.AccountBalance,
-        "CIMB Clicks (FPX)" to Icons.Default.AccountBalance,
-        "Public Bank (FPX)" to Icons.Default.AccountBalance,
-        "Saved Debit Card (**** 4321)" to Icons.Default.CreditCard
+        "Maybank2u (FPX)" to R.drawable.ic_payment,
+        "CIMB Clicks (FPX)" to R.drawable.ic_payment,
+        "Public Bank (FPX)" to R.drawable.ic_payment,
+        "Saved Debit Card (**** 4321)" to R.drawable.ic_payment
     )
 
     ModalBottomSheet(
@@ -107,7 +130,7 @@ fun TopUpBottomSheet(
             )
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                paymentSources.forEach { (sourceName, icon) ->
+                paymentSources.forEach { (sourceName, iconRes) ->
                     val isChosen = selectedSource == sourceName
                     Surface(
                         shape = RoundedCornerShape(10.dp),
@@ -127,7 +150,7 @@ fun TopUpBottomSheet(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
-                                    imageVector = icon,
+                                    painter = painterResource(id = iconRes),
                                     contentDescription = null,
                                     tint = if (isChosen) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.size(20.dp)
@@ -175,5 +198,18 @@ fun TopUpBottomSheet(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun TopUpBottomSheetPreview() {
+    BiteSaversTheme {
+        TopUpBottomSheet(
+            currentBalance = 15.50,
+            isProcessing = false,
+            onConfirmTopUp = { _, _ -> },
+            onDismiss = {}
+        )
     }
 }

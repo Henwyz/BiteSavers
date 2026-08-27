@@ -2,21 +2,34 @@ package com.example.bitesavers.customer.payment.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CreditCard
-import androidx.compose.material.icons.filled.DeleteOutline
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.bitesavers.R
 import com.example.bitesavers.customer.payment.data.SavedBankCard
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 
@@ -53,7 +66,7 @@ fun PaymentMethodCardItem(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.CreditCard,
+                        painter = painterResource(id = R.drawable.ic_payment),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(20.dp)
@@ -74,7 +87,7 @@ fun PaymentMethodCardItem(
                                 color = MaterialTheme.colorScheme.primaryContainer
                             ) {
                                 Text(
-                                    text = "Default",
+                                    text = stringResource(R.string.badge_default),
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary,
@@ -94,8 +107,8 @@ fun PaymentMethodCardItem(
 
             IconButton(onClick = onDelete) {
                 Icon(
-                    imageVector = Icons.Default.DeleteOutline,
-                    contentDescription = "Delete card",
+                    painter = painterResource(id = R.drawable.ic_delete),
+                    contentDescription = stringResource(R.string.cd_delete_card),
                     tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
                     modifier = Modifier.size(20.dp)
                 )
@@ -110,27 +123,13 @@ private fun PaymentMethodCardItemPreview() {
     BiteSaversTheme {
         Surface(modifier = Modifier.padding(16.dp)) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                // Default Card Preview
                 PaymentMethodCardItem(
                     card = SavedBankCard(
                         id = "1",
-                        cardHolder = "Michelle Lim",
+                        cardHolder = "Sarah Tan",
                         lastFourDigits = "4321",
                         expiryDate = "08/28",
                         isDefault = true
-                    ),
-                    onSetDefault = {},
-                    onDelete = {}
-                )
-
-                // Secondary Card Preview
-                PaymentMethodCardItem(
-                    card = SavedBankCard(
-                        id = "2",
-                        cardHolder = "Michelle Lim",
-                        lastFourDigits = "8899",
-                        expiryDate = "12/29",
-                        isDefault = false
                     ),
                     onSetDefault = {},
                     onDelete = {}

@@ -1,17 +1,34 @@
 package com.example.bitesavers.customer.payment.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalanceWallet
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -20,17 +37,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitesavers.R
 import com.example.bitesavers.customer.payment.data.PaymentMethodsUiState
+import com.example.bitesavers.customer.payment.data.SavedBankCard
 import com.example.bitesavers.customer.payment.logic.PaymentMethodsViewModel
+import com.example.bitesavers.customer.payment.ui.components.AddCardForm
 import com.example.bitesavers.customer.payment.ui.components.LinkWalletBottomSheet
 import com.example.bitesavers.customer.payment.ui.components.PaymentMethodCardItem
 import com.example.bitesavers.customer.payment.ui.components.TopUpBottomSheet
+import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @Composable
 fun PaymentMethodsRoute(
@@ -125,7 +145,7 @@ fun PaymentMethodsScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.AccountBalanceWallet,
+                                    painter = painterResource(id = R.drawable.ic_payment),
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.onPrimary,
                                     modifier = Modifier.size(24.dp)
@@ -259,7 +279,10 @@ fun PaymentMethodsScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = null)
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_add),
+                        contentDescription = null
+                    )
                     Spacer(Modifier.width(8.dp))
                     Text(text = stringResource(R.string.action_add_new_card), fontWeight = FontWeight.Bold)
                 }
@@ -272,7 +295,7 @@ fun PaymentMethodsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Lock,
+                        painter = painterResource(id = R.drawable.ic_lock),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                         modifier = Modifier.size(14.dp)
@@ -285,73 +308,19 @@ fun PaymentMethodsScreen(
                     )
                 }
             } else {
-                // Section 4: Add Card Form
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                        OutlinedTextField(
-                            value = state.cardNumber,
-                            onValueChange = { onEvent(PaymentMethodsUiEvent.OnCardNumberChange(it)) },
-                            label = { Text(stringResource(R.string.field_card_number)) },
-                            placeholder = { Text(stringResource(R.string.hint_card_number)) },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
-                        )
-
-                        OutlinedTextField(
-                            value = state.cardHolder,
-                            onValueChange = { onEvent(PaymentMethodsUiEvent.OnCardHolderChange(it)) },
-                            label = { Text(stringResource(R.string.field_card_holder)) },
-                            placeholder = { Text(stringResource(R.string.hint_card_holder)) },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
-                        )
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            OutlinedTextField(
-                                value = state.expiryDate,
-                                onValueChange = { onEvent(PaymentMethodsUiEvent.OnExpiryDateChange(it)) },
-                                label = { Text(stringResource(R.string.field_expiry_date)) },
-                                placeholder = { Text(stringResource(R.string.hint_expiry_date)) },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.weight(1f),
-                                singleLine = true
-                            )
-
-                            OutlinedTextField(
-                                value = state.cvv,
-                                onValueChange = { onEvent(PaymentMethodsUiEvent.OnCvvChange(it)) },
-                                label = { Text(stringResource(R.string.field_cvv)) },
-                                placeholder = { Text(stringResource(R.string.hint_cvv)) },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-                                modifier = Modifier.weight(1f),
-                                singleLine = true
-                            )
-                        }
-
-                        Spacer(Modifier.height(8.dp))
-
-                        Button(
-                            onClick = { onEvent(PaymentMethodsUiEvent.OnSaveCard) },
-                            enabled = state.isFormValid,
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                        ) {
-                            Text(stringResource(R.string.action_save_card), fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
+                // Section 4: Add Card Form Component
+                AddCardForm(
+                    cardNumber = state.cardNumber,
+                    cardHolder = state.cardHolder,
+                    expiryDate = state.expiryDate,
+                    cvv = state.cvv,
+                    isFormValid = state.isFormValid,
+                    onCardNumberChange = { onEvent(PaymentMethodsUiEvent.OnCardNumberChange(it)) },
+                    onCardHolderChange = { onEvent(PaymentMethodsUiEvent.OnCardHolderChange(it)) },
+                    onExpiryDateChange = { onEvent(PaymentMethodsUiEvent.OnExpiryDateChange(it)) },
+                    onCvvChange = { onEvent(PaymentMethodsUiEvent.OnCvvChange(it)) },
+                    onSaveCard = { onEvent(PaymentMethodsUiEvent.OnSaveCard) }
+                )
             }
         }
 
@@ -382,5 +351,29 @@ fun PaymentMethodsScreen(
                 onDismiss = { onEvent(PaymentMethodsUiEvent.OnDismissLinkWalletSheet) }
             )
         }
+    }
+}
+
+@Preview(showBackground = true, name = "Main Payment Methods View")
+@Composable
+private fun PaymentMethodsScreenPreview() {
+    BiteSaversTheme {
+        PaymentMethodsScreen(
+            state = PaymentMethodsUiState(
+                walletBalance = 45.00,
+                isTngLinked = true,
+                tngPhone = "+60 12-345 6789",
+                savedCards = listOf(
+                    SavedBankCard(
+                        id = "1",
+                        cardHolder = "Sarah Tan",
+                        lastFourDigits = "4321",
+                        expiryDate = "08/28",
+                        isDefault = true
+                    )
+                )
+            ),
+            onEvent = {}
+        )
     }
 }
