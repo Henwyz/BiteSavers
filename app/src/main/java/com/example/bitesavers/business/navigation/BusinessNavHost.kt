@@ -53,7 +53,10 @@ fun BusinessNavHost(
         composable(BusinessScreen.Profile.route) {
             BusinessProfileScreen(
                 onSignOutClick = {
-                    // TODO: wire to Member 3's login route once it exists
+                    // Navigate back to your login route (replace "login_screen" with your actual login route name)
+                    navController.navigate("login_screen") {
+                        popUpTo("login_screen") { inclusive = true } // Clears the whole app history so they can't press back into the dashboard
+                    }
                 }
             )
         }
@@ -66,6 +69,18 @@ fun BusinessNavHost(
             AddFoodScreen(
                 viewModel = inventoryViewModel,
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // 6. REGISTER RESTAURANT SCREEN
+        composable(BusinessScreen.RegisterRestaurant.route) {
+            com.example.bitesavers.business.restaurant.ui.RegisterRestaurantScreen(
+                onRestaurantRegistered = {
+                    // Once saved, navigate back or forward to listings/home
+                    navController.navigate(BusinessScreen.Listings.route) {
+                        popUpTo(BusinessScreen.RegisterRestaurant.route) { inclusive = true }
+                    }
+                }
             )
         }
     }

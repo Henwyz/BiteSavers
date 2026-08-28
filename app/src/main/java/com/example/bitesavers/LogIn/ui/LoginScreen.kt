@@ -1,4 +1,4 @@
-package com.example.bitesavers.safety.ui
+package com.example.bitesavers.LogIn.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -36,43 +36,34 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
-import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitesavers.R
+import com.example.bitesavers.LogIn.logic.LoginViewModel
 import com.example.bitesavers.ui.theme.BiteSaverColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
+    viewModel: LoginViewModel = viewModel(),
     onLoginSuccess: (isBusiness: Boolean) -> Unit,
     onNavigateToSignUp: () -> Unit
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
-    var selectedRole by remember { mutableStateOf("Consumer") }
-    var isDropdownExpanded by remember { mutableStateOf(false) }
-
-    // Outer Column with top alignment & light background
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(BiteSaverColors.HeaderGreen),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top // Aligns content starting from the top
+        verticalArrangement = Arrangement.Top
     ) {
         Spacer(Modifier.height(20.dp))
         // Top Header Banner
@@ -90,7 +81,7 @@ fun LoginScreen(
                     .blur(1.dp)
             )
 
-            // Dark green overlay using BiteSaverColors.HeaderGreen
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -109,15 +100,19 @@ fun LoginScreen(
                         tint = BiteSaverColors.DiscountOrange,
                         modifier = Modifier.size(28.dp)
                     )
+
                     Spacer(modifier = Modifier.width(8.dp))
+
                     Text(
-                        text = "Bite Saver",
+                        text = stringResource(R.string.app_name),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = BiteSaverColors.TextOnDark
                     )
                 }
+
                 Spacer(modifier = Modifier.height(6.dp))
+
                 Text(
                     text = "Save food. Save money. Save Earth",
                     style = MaterialTheme.typography.bodyMedium,
@@ -140,22 +135,23 @@ fun LoginScreen(
                 colors = CardDefaults.cardColors(containerColor = BiteSaverColors.OffWhite),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
-                // Inner Column to stack items vertically with shared padding
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(20.dp)
                 ) {
                     Text(
-                        text = "Welcome Back \uD83D\uDC4B",     // the \UD83D blabla that one is 👋
+                        text = stringResource(R.string.welcome_back),
                         fontSize = 26.sp,
                         fontWeight = FontWeight.Bold,
                         color = BiteSaverColors.HeaderGreen,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
 
+                    //Email
                     Text(
-                        text = "Email Address",
+                        text = stringResource(R.string.login_email_label),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = BiteSaverColors.HeaderGreen,
@@ -163,8 +159,8 @@ fun LoginScreen(
                     )
 
                     OutlinedTextField(
-                        value = email,
-                        onValueChange = { email = it },
+                        value = viewModel.email,
+                        onValueChange = { viewModel.updateEmail(it) },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Mail,
@@ -175,18 +171,19 @@ fun LoginScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(50),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = BiteSaverColors.SoftGreen,      //Inside background color when clicked/typing
-                            unfocusedContainerColor = BiteSaverColors.SoftGreen,    //Inside background color when not selected
-                            focusedBorderColor = BiteSaverColors.PrimaryGreen,      //Borderline color when clicked/typing
-                            unfocusedBorderColor = BiteSaverColors.PrimaryGreen     //Borderline color when not selected
+                            focusedContainerColor = BiteSaverColors.SoftGreen,
+                            unfocusedContainerColor = BiteSaverColors.SoftGreen,
+                            focusedBorderColor = BiteSaverColors.PrimaryGreen,
+                            unfocusedBorderColor = BiteSaverColors.PrimaryGreen
                         ),
                         singleLine = true
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
 
+                    //Password
                     Text(
-                        text = "Password",
+                        text = stringResource(R.string.login_password_label),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = BiteSaverColors.HeaderGreen,
@@ -194,8 +191,8 @@ fun LoginScreen(
                     )
 
                     OutlinedTextField(
-                        value = password,
-                        onValueChange = { password = it },
+                        value = viewModel.password,
+                        onValueChange = { viewModel.updatePassword(it) },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Lock,
@@ -203,10 +200,10 @@ fun LoginScreen(
                                 tint = BiteSaverColors.HeaderGreen
                             )
                         },
-                        trailingIcon = {        // for the eyes icon
-                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        trailingIcon = {
+                            IconButton(onClick = { viewModel.togglePasswordVisibility() }) {
                                 Icon(
-                                    imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    imageVector = if (viewModel.passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                                     contentDescription = null,
                                     tint = BiteSaverColors.TextSecondary
                                 )
@@ -221,14 +218,13 @@ fun LoginScreen(
                             unfocusedBorderColor = BiteSaverColors.PrimaryGreen
                         ),
                         singleLine = true
-
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Field 3: Account Type Dropdown Label
+                    // Account Type
                     Text(
-                        text = "Account Type",
+                        text = stringResource(R.string.account_type_label),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = BiteSaverColors.HeaderGreen,
@@ -236,12 +232,12 @@ fun LoginScreen(
                     )
 
                     ExposedDropdownMenuBox(
-                        expanded = isDropdownExpanded,
-                        onExpandedChange = { isDropdownExpanded = !isDropdownExpanded },
+                        expanded = viewModel.isDropdownExpanded,
+                        onExpandedChange = { viewModel.toggleDropdown(it) },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         OutlinedTextField(
-                            value = selectedRole,
+                            value = viewModel.selectedRole,
                             onValueChange = {},
                             readOnly = true,
                             leadingIcon = {
@@ -252,11 +248,10 @@ fun LoginScreen(
                                 )
                             },
                             trailingIcon = {
-                                // Standard animated dropdown arrow icon
-                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = isDropdownExpanded)
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = viewModel.isDropdownExpanded)
                             },
                             modifier = Modifier
-                                .menuAnchor() // Crucial: Anchors the menu directly to this text field
+                                .menuAnchor()
                                 .fillMaxWidth(),
                             shape = RoundedCornerShape(50),
                             colors = OutlinedTextFieldDefaults.colors(
@@ -268,22 +263,22 @@ fun LoginScreen(
                         )
 
                         ExposedDropdownMenu(
-                            expanded = isDropdownExpanded,
-                            onDismissRequest = { isDropdownExpanded = false }
+                            expanded = viewModel.isDropdownExpanded,
+                            onDismissRequest = { viewModel.toggleDropdown(false) }
                         ) {
                             DropdownMenuItem(
-                                text = { Text("Consumer") },
+                                text = { Text(stringResource(R.string.role_consumer)) },
                                 onClick = {
-                                    selectedRole = "Consumer"
-                                    isDropdownExpanded = false
+                                    viewModel.updateSelectedRole("Consumer")
+                                    viewModel.toggleDropdown(false)
                                 },
                                 contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
                             )
                             DropdownMenuItem(
-                                text = { Text("Business") },
+                                text = { Text(stringResource(R.string.role_business)) },
                                 onClick = {
-                                    selectedRole = "Business"
-                                    isDropdownExpanded = false
+                                    viewModel.updateSelectedRole("Business")
+                                    viewModel.toggleDropdown(false)
                                 },
                                 contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
                             )
@@ -296,7 +291,7 @@ fun LoginScreen(
                         contentAlignment = Alignment.CenterEnd
                     ) {
                         Text(
-                            text = "Forgot password ?",
+                            text = stringResource(R.string.forgot_password),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = BiteSaverColors.PrimaryGreen,
@@ -305,7 +300,11 @@ fun LoginScreen(
                     }
 
                     Button(
-                        onClick = { onLoginSuccess(selectedRole == "Business") },
+                        onClick = {
+                            viewModel.login { isBusiness ->
+                                onLoginSuccess(isBusiness)
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
@@ -315,7 +314,7 @@ fun LoginScreen(
                         )
                     ) {
                         Text(
-                            text = "Log In",
+                            text = stringResource(R.string.log_in_button),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = BiteSaverColors.White
@@ -324,19 +323,19 @@ fun LoginScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Sign Up Footer Link
+                    // let the user to sign up
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "No account yet? ",
+                            text = stringResource(R.string.no_account_yet),
                             fontSize = 13.sp,
                             color = BiteSaverColors.TextSecondary
                         )
                         Text(
-                            text = "Sign up free",
+                            text = stringResource(R.string.sign_up_free),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             color = BiteSaverColors.PrimaryGreen,
@@ -348,9 +347,6 @@ fun LoginScreen(
                 }
             }
         }
-
-
-
     }
 }
 
