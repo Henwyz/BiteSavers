@@ -5,10 +5,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bitesavers.customer.details.data.FoodDetailUiState
 import com.example.bitesavers.customer.details.ui.FoodDetailUiEvent
+import com.example.bitesavers.data.remote.UserSession
 import com.example.bitesavers.data.repository.OfferRepository
+import com.example.bitesavers.data.repository.SavedRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -17,6 +20,7 @@ class FoodDetailViewModel(
 ) : ViewModel() {
 
     private val repository: OfferRepository = OfferRepository()
+    private val savedRepository: SavedRepository = SavedRepository()
 
     private val _uiState = MutableStateFlow(FoodDetailUiState())
     val uiState: StateFlow<FoodDetailUiState> = _uiState.asStateFlow()
@@ -25,8 +29,17 @@ class FoodDetailViewModel(
         val offerId: String? = savedStateHandle.get<String>("offerId")
         if (offerId != null) {
             fetchOfferDetails(offerId)
+            observeBookmarkStatus(offerId)
         } else {
             _uiState.update { it.copy(isLoading = false, errorMessage = "Offer not found") }
+        }
+    }
+
+    private fun observeBookmarkStatus(offerId: String) {
+        viewModelScope.launch {
+            SavedRepository.savedOfferIds.collectLatest { savedIds ->
+                _uiState.update { it.copy(isSaved = savedIds.contains(offerId)) }
+            }
         }
     }
 
@@ -35,11 +48,25 @@ class FoodDetailViewModel(
         when (event) {
             is FoodDetailUiEvent.OnIncreaseQuantity -> increaseQuantity()
             is FoodDetailUiEvent.OnDecreaseQuantity -> decreaseQuantity()
+            is FoodDetailUiEvent.OnToggleBookmark -> toggleBookmark()
             is FoodDetailUiEvent.OnNavigateBack -> {
                 // Any ViewModel cleanup before leaving
             }
             is FoodDetailUiEvent.OnReserveClicked -> {
                 // send the card data to the database
+            }
+        }
+    }
+
+    private fun toggleBookmark() {
+        val offerId = _uiState.value.offer?.id ?: return
+        val currentUserId = UserSession.currentUserId.value
+        if (currentUserId.isNotBlank()) {
+            viewModelScope.launch {
+                savedRepository.toggleSaveOffer(
+                    userId = currentUserId,
+                    offerId = offerId
+                )
             }
         }
     }

@@ -60,21 +60,44 @@ class PaymentMethodsViewModel : ViewModel() {
         when (event) {
             // Card Input
             is PaymentMethodsUiEvent.OnToggleAddCard -> {
-                _uiState.update { it.copy(isAddingCard = !it.isAddingCard) }
+                _uiState.update {
+                    it.copy(
+                        isAddingCard = !it.isAddingCard,
+                        cardNumber = "",
+                        cardHolder = "",
+                        expiryDate = "",
+                        cvv = "",
+                        isFormValid = false
+                    )
+                }
             }
             is PaymentMethodsUiEvent.OnCardNumberChange -> {
-                val digitsOnly = event.number.filter { it.isDigit() }
-                if (digitsOnly.length <= 16) _uiState.update { it.copy(cardNumber = digitsOnly) }
+                val digitsOnly = event.number.filter { it.isDigit() }.take(16)
+                _uiState.update {
+                    val updated = it.copy(cardNumber = digitsOnly)
+                    updated.copy(isFormValid = validateCardForm(updated))
+                }
             }
             is PaymentMethodsUiEvent.OnCardHolderChange -> {
-                _uiState.update { it.copy(cardHolder = event.name) }
+                _uiState.update {
+                    val updated = it.copy(cardHolder = event.name)
+                    updated.copy(isFormValid = validateCardForm(updated))
+                }
             }
             is PaymentMethodsUiEvent.OnExpiryDateChange -> {
-                if (event.expiry.length <= 5) _uiState.update { it.copy(expiryDate = event.expiry) }
+                // Keep raw digits so ExpiryDateVisualTransformation handles visual formatting without cursor jump
+                val digitsOnly = event.expiry.filter { it.isDigit() }.take(4)
+                _uiState.update {
+                    val updated = it.copy(expiryDate = digitsOnly)
+                    updated.copy(isFormValid = validateCardForm(updated))
+                }
             }
             is PaymentMethodsUiEvent.OnCvvChange -> {
-                val digitsOnly = event.cvv.filter { it.isDigit() }
-                if (digitsOnly.length <= 3) _uiState.update { it.copy(cvv = digitsOnly) }
+                val digitsOnly = event.cvv.filter { it.isDigit() }.take(3)
+                _uiState.update {
+                    val updated = it.copy(cvv = digitsOnly)
+                    updated.copy(isFormValid = validateCardForm(updated))
+                }
             }
             is PaymentMethodsUiEvent.OnSaveCard -> saveCard()
 
@@ -101,7 +124,8 @@ class PaymentMethodsViewModel : ViewModel() {
                 _uiState.update { it.copy(linkWalletPhone = digits) }
             }
             is PaymentMethodsUiEvent.OnLinkOtpChange -> {
-                _uiState.update { it.copy(linkWalletOtp = event.otp) }
+                val digits = event.otp.filter { it.isDigit() }.take(6)
+                _uiState.update { it.copy(linkWalletOtp = digits) }
             }
             is PaymentMethodsUiEvent.OnRequestOtp -> {
                 _uiState.update { it.copy(isOtpStep = true, linkWalletOtp = "123456") }
@@ -122,16 +146,32 @@ class PaymentMethodsViewModel : ViewModel() {
         }
     }
 
+    private fun validateCardForm(state: PaymentMethodsUiState): Boolean {
+        val isCardValid = PaymentValidationUtils.isValidCardNumber(state.cardNumber)
+        val isNameValid = state.cardHolder.trim().isNotBlank()
+        val isExpiryValid = PaymentValidationUtils.isValidExpiryDate(state.expiryDate)
+        val isCvvValid = PaymentValidationUtils.isValidCvv(state.cvv)
+        return isCardValid && isNameValid && isExpiryValid && isCvvValid
+    }
+
     // 2. Insert new bank card into Supabase
     private fun saveCard() {
         viewModelScope.launch {
             val currentState = _uiState.value
             val isFirstCard = currentState.savedCards.isEmpty()
 
+            // Format raw 4 digits (e.g. 1228) into MM/YY (12/28) for backend storage
+            val rawExpiry = currentState.expiryDate.filter { it.isDigit() }
+            val formattedExpiry = if (rawExpiry.length == 4) {
+                "${rawExpiry.substring(0, 2)}/${rawExpiry.substring(2)}"
+            } else {
+                rawExpiry
+            }
+
             val savedDto = paymentRepository.saveBankCard(
                 cardHolder = currentState.cardHolder.trim(),
                 lastFourDigits = currentState.cardNumber.takeLast(4),
-                expiryDate = currentState.expiryDate.trim(),
+                expiryDate = formattedExpiry,
                 isDefault = isFirstCard
             )
 
@@ -148,11 +188,30 @@ class PaymentMethodsViewModel : ViewModel() {
                     it.copy(
                         savedCards = it.savedCards + newCard,
                         isAddingCard = false,
-                        isSavedSuccess = true,
                         cardNumber = "",
                         cardHolder = "",
                         expiryDate = "",
-                        cvv = ""
+                        cvv = "",
+                        isFormValid = false
+                    )
+                }
+            } else {
+                val fallbackCard = SavedBankCard(
+                    id = System.currentTimeMillis().toString(),
+                    cardHolder = currentState.cardHolder.trim(),
+                    lastFourDigits = currentState.cardNumber.takeLast(4),
+                    expiryDate = formattedExpiry,
+                    isDefault = isFirstCard
+                )
+                _uiState.update {
+                    it.copy(
+                        savedCards = it.savedCards + fallbackCard,
+                        isAddingCard = false,
+                        cardNumber = "",
+                        cardHolder = "",
+                        expiryDate = "",
+                        cvv = "",
+                        isFormValid = false
                     )
                 }
             }
@@ -202,6 +261,14 @@ class PaymentMethodsViewModel : ViewModel() {
                         isLinkWalletSheetVisible = false
                     )
                 }
+            } else {
+                _uiState.update {
+                    it.copy(
+                        isTngLinked = true,
+                        tngPhone = formattedPhone,
+                        isLinkWalletSheetVisible = false
+                    )
+                }
             }
         }
     }
@@ -222,7 +289,7 @@ class PaymentMethodsViewModel : ViewModel() {
     private fun processTopUp(amount: Double) {
         viewModelScope.launch {
             _uiState.update { it.copy(isProcessingPayment = true) }
-            delay(1500) // Simulated gateway latency
+            delay(1500)
 
             val success = paymentRepository.topUpWallet(amount)
             if (success) {

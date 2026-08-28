@@ -38,12 +38,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitesavers.R
 import com.example.bitesavers.customer.discovery.data.DiscoveryUiState
 import com.example.bitesavers.customer.discovery.logic.DiscoveryViewModel
+import com.example.bitesavers.customer.discovery.logic.LocationUtils.fetchDeviceCoordinates
 import com.example.bitesavers.customer.discovery.ui.components.DiscoveryFilterRow
 import com.example.bitesavers.customer.discovery.ui.components.DiscoveryHeader
 import com.example.bitesavers.customer.discovery.ui.components.DiscoveryMapSection
 import com.example.bitesavers.customer.discovery.ui.components.DiscoveryOfferCard
 import com.example.bitesavers.customer.discovery.ui.components.DiscoverySearchBar
-import com.example.bitesavers.customer.discovery.logic.LocationUtils.fetchDeviceCoordinates
+import com.example.bitesavers.data.repository.SavedRepository
 
 @Composable
 fun DiscoveryRoute(
@@ -124,6 +125,9 @@ fun DiscoveryRoute(
 
                 is DiscoveryUiEvent.OnResetFilters ->
                     viewModel.onResetFilters()
+
+                is DiscoveryUiEvent.OnToggleBookmark ->
+                    viewModel.onEvent(event)
             }
         }
     )
@@ -135,6 +139,7 @@ fun DiscoveryScreen(
     onEvent: (DiscoveryUiEvent) -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+    val savedOfferIds by SavedRepository.savedOfferIds.collectAsStateWithLifecycle()
 
     Box(modifier = Modifier.fillMaxSize()) {
 
@@ -225,9 +230,14 @@ fun DiscoveryScreen(
 
                         DiscoveryOfferCard(
                             offer = offer,
+                            isSaved = savedOfferIds.contains(offer.id),
+                            userRole = state.userRole,
                             modifier = Modifier.padding(start = startPadding, end = endPadding),
                             onClick = { clicked ->
                                 onEvent(DiscoveryUiEvent.OnOfferClicked(clicked))
+                            },
+                            onToggleBookmark = { offerId ->
+                                onEvent(DiscoveryUiEvent.OnToggleBookmark(offerId))
                             }
                         )
                     }

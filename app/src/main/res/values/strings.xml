@@ -56,6 +56,17 @@
     <string name="empty_state_message">We couldn\'t find any food deals matching your search or selected filter.</string>
     <string name="empty_state_clear_filters">Clear Filters</string>
 
+    <!-- Discovery Map & Rating Strings -->
+    <string name="cd_store_rating">Store Rating</string>
+    <string name="cd_map_recenter">Recenter to current location</string>
+    <string name="cd_map_expand">Expand Map</string>
+    <string name="cd_map_collapse">Collapse Map</string>
+    <string name="deals_count">%1$d DEALS</string>
+
+    <!-- Food Detail Dynamic Tags -->
+    <string name="detail_rating_format">⭐ %1$.1f Rating</string>
+    <string name="detail_co2_saved_format">🌱 %1$.1f kg CO₂ saved</string>
+
     <!-- ================================================================= -->
     <!-- FOOD DETAIL PAGE                                                  -->
     <!-- ================================================================= -->
@@ -84,6 +95,14 @@
     <string name="detail_distance_away">📍 %1$.1f km away</string>
     <string name="detail_rating_dummy">⭐ 4.8 (120+ ratings)</string>
     <string name="detail_co2_saved_dummy">🌱 ~1.2kg CO₂ saved</string>
+
+    <!--========== Saved Foods Page ===========-->
+    <string name="saved_screen_title">Saved Items</string>
+    <string name="saved_empty_title">No saved items yet</string>
+    <string name="saved_empty_subtitle">Tap the heart/bookmark icon on any food item to save it for later.</string>
+    <string name="badge_sold_out">SOLD OUT</string>
+    <string name="action_remove_saved">Remove from Saved</string>
+    <string name="cd_bookmark_icon">Bookmark</string>
 
     <!-- ================================================================= -->
     <!-- CHECKOUT & PAYMENT SELECTION                                      -->
@@ -126,6 +145,13 @@
     <string name="error_tng_not_linked">Please link your Touch \'n Go eWallet before paying.</string>
     <string name="error_bank_card_not_registered">Please add a valid Debit/Credit Card before paying.</string>
     <string name="error_order_failed_general">Payment failed. Please check your balance or try again.</string>
+
+    <!-- Card Form Validations -->
+    <string name="error_invalid_card_number">Card number must be 16 digits</string>
+    <string name="error_invalid_expiry">Enter a valid future MM/YY</string>
+    <string name="error_invalid_cvv">CVV must be 3 digits</string>
+    <string name="error_invalid_phone">Enter a valid 9–11 digit mobile number</string>
+    <string name="error_invalid_otp">Enter a complete 6-digit verification code</string>
 
     <!-- ================================================================= -->
     <!-- PAYMENT METHODS MANAGEMENT & TOP UP                               -->
@@ -415,4 +441,42 @@
     <string name="about_sdg_title">SDG Alignment</string>
     <string name="about_sdg_body">This app supports UN Sustainable Development Goal 12 (Responsible Consumption and Production) and Goal 2 (Zero Hunger).</string>
     <string name="about_version_label">Version 1.0.0 (MVP)</string>
+
+    <!-- ================================================================= -->
+    <!--                         Sign Up Page                              -->
+    <!-- ================================================================= -->
+
+    <string name="create_account">Create Account</string>
+    <string name="full_name">Full Name</string>
+    <string name="business_name">Business Name</string>
+    <string name="email_address">Email Address</string>
+    <string name="contact_number">Contact Number</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="passwords_do_not_match">Passwords do not match!</string>
+    <string name="terms_agreement">I agree to the </string>
+    <string name="terms_policy">Terms of Service &amp; Privacy Policy</string>
+    <string name="already_have_account">Already have an account? </string>
+    <string name="sign_in">Sign in.</string>
+
+
+    <!-- Login Page Strings -->
+    <string name="welcome_back">Welcome Back 👋</string>
+    <string name="login_email_label">Email Address</string>
+    <string name="login_password_label">Password</string>
+    <string name="account_type_label">Account Type</string>
+    <string name="role_consumer">Consumer</string>
+    <string name="role_business">Business</string>
+    <string name="forgot_password">Forgot password ?</string>
+    <string name="log_in_button">Log In</string>
+    <string name="no_account_yet">No account yet? </string>
+    <string name="sign_up_free">Sign up free</string>
+
+    <!-- Register Restaurant Page Strings -->
+    <string name="register_restaurant_title">Register Your Restaurant 🏪</string>
+    <string name="restaurant_name">Restaurant Name</string>
+    <string name="address">Address</string>
+    <string name="opening_time">Opening Time</string>
+    <string name="closing_time">Closing Time</string>
+    <string name="save_and_continue">Save &amp; Continue</string>
 </resources>

@@ -9,7 +9,7 @@ data class SavedBankCard(
 )
 
 data class PaymentMethodsUiState(
-    val walletBalance: Double = 67.50,
+    val walletBalance: Double = 0.0,
     val savedCards: List<SavedBankCard> = emptyList(),
     val isTngLinked: Boolean = false,
     val tngPhone: String = "",
@@ -20,6 +20,7 @@ data class PaymentMethodsUiState(
     val cardHolder: String = "",
     val expiryDate: String = "",
     val cvv: String = "",
+    val isFormValid: Boolean = false, // Form validation flag
 
     // Top-Up State
     val isTopUpSheetVisible: Boolean = false,
@@ -33,10 +34,4 @@ data class PaymentMethodsUiState(
 
     val isLoading: Boolean = false,
     val isSavedSuccess: Boolean = false
-) {
-    val isFormValid: Boolean
-        get() = cardNumber.length == 16 &&
-                cardHolder.isNotBlank() &&
-                expiryDate.length == 5 &&
-                cvv.length == 3
-}
+)

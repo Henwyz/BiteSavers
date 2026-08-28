@@ -4,6 +4,7 @@ import com.example.bitesavers.data.model.OfferUiModel
 
 data class FoodDetailUiState(
     val isLoading: Boolean = true,
+    val isSaved: Boolean = false,
     val offer: OfferUiModel? = null,
     val quantity: Int = 1,
     val totalPrice: Double = 0.0,

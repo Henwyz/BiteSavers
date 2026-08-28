@@ -11,10 +11,12 @@ data class UserUiModel(
 )
 
 data class NearbyDealMarkerUiModel(
-    val id: String,
-    val labelPrice: String,
+    val storeId: String,
+    val storeName: String,
+    val labelText: String,
     val latitude: Double,
-    val longitude: Double
+    val longitude: Double,
+    val offers: List<OfferUiModel> = emptyList()
 )
 
 data class DiscoveryUiState(

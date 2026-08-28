@@ -50,14 +50,14 @@ class MainActivity : ComponentActivity() {
                 // logged-in user's role instead of a hardcoded toggle —
                 // check with Member 3 before merging this file, since
                 // they'll likely need to touch this exact spot too.
-                var isBusinessMode by remember { mutableStateOf(true) }
+                var isBusinessMode by remember { mutableStateOf(false) }
 
                 // Sync the active session ID when mode changes
                 LaunchedEffect(isBusinessMode) {
                     if (isBusinessMode) {
                         UserSession.setUserId("b1") // Merchant / Store owner user ID
                     } else {
-                        UserSession.setUserId("u1") // Customer user ID
+                        UserSession.setUserId("u2") // Customer user ID
                     }
                 }
 

@@ -1,17 +1,31 @@
 package com.example.bitesavers.customer.payment.ui.components
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bitesavers.R
+import com.example.bitesavers.customer.payment.logic.PaymentValidationUtils
+import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,6 +40,10 @@ fun LinkWalletBottomSheet(
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val isPhoneValid = PaymentValidationUtils.isValidMalaysianPhone(phoneNumber)
+    val isPhoneError = phoneNumber.isNotEmpty() && !isPhoneValid
+    val isOtpValid = otp.trim().length == 6
+    val isOtpError = otp.isNotEmpty() && !isOtpValid
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -64,6 +82,15 @@ fun LinkWalletBottomSheet(
                     label = { Text(stringResource(R.string.link_wallet_mobile_label)) },
                     placeholder = { Text(stringResource(R.string.link_wallet_mobile_placeholder)) },
                     prefix = { Text("+60 ") },
+                    isError = isPhoneError,
+                    supportingText = {
+                        if (isPhoneError) {
+                            Text(
+                                text = stringResource(R.string.error_invalid_phone),
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -71,7 +98,7 @@ fun LinkWalletBottomSheet(
 
                 Button(
                     onClick = onRequestOtp,
-                    enabled = phoneNumber.trim().length >= 8,
+                    enabled = isPhoneValid,
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     modifier = Modifier.fillMaxWidth().height(48.dp)
@@ -84,6 +111,15 @@ fun LinkWalletBottomSheet(
                     onValueChange = { if (it.length <= 6) onOtpChange(it) },
                     label = { Text(stringResource(R.string.link_wallet_otp_label)) },
                     placeholder = { Text(stringResource(R.string.link_wallet_otp_placeholder)) },
+                    isError = isOtpError,
+                    supportingText = {
+                        if (isOtpError) {
+                            Text(
+                                text = stringResource(R.string.error_invalid_otp),
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -91,7 +127,7 @@ fun LinkWalletBottomSheet(
 
                 Button(
                     onClick = onConfirmLink,
-                    enabled = otp.trim().length == 6,
+                    enabled = isOtpValid,
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     modifier = Modifier.fillMaxWidth().height(48.dp)
@@ -100,5 +136,22 @@ fun LinkWalletBottomSheet(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun LinkWalletBottomSheetPreview() {
+    BiteSaversTheme {
+        LinkWalletBottomSheet(
+            phoneNumber = "123456789",
+            otp = "",
+            isOtpStep = false,
+            onPhoneChange = {},
+            onOtpChange = {},
+            onRequestOtp = {},
+            onConfirmLink = {},
+            onDismiss = {}
+        )
     }
 }
