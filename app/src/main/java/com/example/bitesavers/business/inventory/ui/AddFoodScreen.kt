@@ -48,6 +48,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -68,11 +69,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.core.content.FileProvider
 import com.example.bitesavers.business.inventory.logic.InventoryViewModel
 import com.example.bitesavers.R
 import com.example.bitesavers.business.inventory.data.ListingItem
 import com.example.bitesavers.data.model.DiscoveryCategory
 import com.example.bitesavers.ui.theme.BiteSaversTheme
+import java.io.File
 import kotlin.contracts.contract
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -82,6 +85,7 @@ fun AddFoodScreen(
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
+    val editingItem = viewModel.selectedItemForEdit
 
     var foodName by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
@@ -97,6 +101,17 @@ fun AddFoodScreen(
     var myFoodImage by remember { mutableStateOf<Bitmap?>(null) }
     var showImagePick by remember { mutableStateOf(false) }
     var showFullImagePreview by remember { mutableStateOf(false) }
+
+    LaunchedEffect(editingItem) {
+        foodName = editingItem?.name ?: ""
+        description = editingItem?.description ?: ""
+        category = editingItem?.category ?: "Bakery"
+        originalPrice = editingItem?.originalPrice?.toString() ?: ""
+        discountPrice = editingItem?.discountPrice?.toString() ?: ""
+        quantity = editingItem?.quantity?.toString() ?: ""
+        expiryTime = editingItem?.expiryTime ?: "06:00 PM"
+        myFoodImage = editingItem?.imageBitmap
+    }
 
     val isFormValid = foodName.isNotBlank() &&
             category.isNotBlank() &&
@@ -120,10 +135,20 @@ fun AddFoodScreen(
         }
     }
 
+    var tempImageUri by remember { mutableStateOf<Uri?>(null) }
+
     val cameraLauncher = rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.TakePicturePreview()
-            ) { bitmap: Bitmap? ->
-        bitmap?.let { myFoodImage = it }
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && tempImageUri != null) {
+            myFoodImage = if (Build.VERSION.SDK_INT < 28) {
+                @Suppress("DEPRECATION")
+                MediaStore.Images.Media.getBitmap(context.contentResolver, tempImageUri)
+            } else {
+                val source = ImageDecoder.createSource(context.contentResolver, tempImageUri!!)
+                ImageDecoder.decodeBitmap(source)
+            }
+        }
     }
 
     // show select picture from gallery or take photo at bottom
@@ -152,7 +177,9 @@ fun AddFoodScreen(
                         .fillMaxWidth()
                         .clickable {
                             showImagePick = false
-                            cameraLauncher.launch()
+                            val uri = getTmpFileUri(context)
+                            tempImageUri = uri
+                            cameraLauncher.launch(uri)
                         }
                         .padding(vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -248,7 +275,10 @@ fun AddFoodScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = {
+                        viewModel.selectedItemForEdit = null
+                        onNavigateBack()
+                    }) {
                         Box(
                             modifier = Modifier
                                 .size(32.dp)
@@ -532,18 +562,35 @@ fun AddFoodScreen(
 
             Button(
                 onClick = {
-                    val newItem = ListingItem(
-                        id = System.currentTimeMillis().toString(),
-                        name = foodName.trim(),
-                        description = description.trim().ifBlank { "" },
-                        category = category.trim(),
-                        originalPrice = originalPrice.toDoubleOrNull() ?: 0.0,
-                        discountPrice = discountPrice.toDoubleOrNull() ?: 0.0,
-                        quantity = quantity.toIntOrNull() ?:1,
-                        expiryTime = expiryTime.trim(),
-                        status = "Active"
-                    )
-                    viewModel.addListing(newItem)
+                    if (editingItem != null) {
+                        // update existing item (edit mode)
+                        val updated = editingItem.copy(
+                            name = foodName.trim(),
+                            description = description.trim(),
+                            category = category.trim(),
+                            originalPrice = originalPrice.toDoubleOrNull() ?: editingItem.originalPrice,
+                            discountPrice = discountPrice.toDoubleOrNull() ?: editingItem.discountPrice,
+                            quantity = quantity.toIntOrNull() ?: editingItem.quantity,
+                            expiryTime = expiryTime.trim(),
+                            imageBitmap = myFoodImage
+                        )
+                        viewModel.updateListing(updated)
+                    } else {
+                        val newItem = ListingItem(
+                            id = System.currentTimeMillis().toString(),
+                            name = foodName.trim(),
+                            description = description.trim().ifBlank { "" },
+                            category = category.trim(),
+                            originalPrice = originalPrice.toDoubleOrNull() ?: 0.0,
+                            discountPrice = discountPrice.toDoubleOrNull() ?: 0.0,
+                            quantity = quantity.toIntOrNull() ?: 1,
+                            expiryTime = expiryTime.trim(),
+                            status = "Active",
+                            imageBitmap = myFoodImage
+                        )
+                        viewModel.addListing(newItem)
+                    }
+                    viewModel.selectedItemForEdit = null
                     onNavigateBack()
                 },
                 enabled = isFormValid,
@@ -566,6 +613,17 @@ fun AddFoodScreen(
     }
 }
 
+fun getTmpFileUri(context: android.content.Context): Uri {
+    val tmpFile = File.createTempFile("tmp_food_image", ".jpg", context.cacheDir).apply {
+        createNewFile()
+        deleteOnExit()
+    }
+    return FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.provider",
+        tmpFile
+    )
+}
 @Composable
 fun FormField(
     label: String,

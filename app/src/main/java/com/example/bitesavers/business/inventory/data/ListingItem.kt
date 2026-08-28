@@ -9,7 +9,8 @@ data class ListingItem(
     val discountPrice: Double,
     val quantity: Int,
     val expiryTime: String,
-    val status: String = "Active"
+    val status: String = "Active",
+    val imageBitmap: android.graphics.Bitmap? = null
 ) {
     val discountPercent: Int
         get() = if (originalPrice > 0) {

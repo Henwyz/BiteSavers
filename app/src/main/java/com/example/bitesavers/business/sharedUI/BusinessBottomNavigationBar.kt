@@ -1,5 +1,7 @@
 package com.example.bitesavers.business.sharedUI
 
+import android.net.http.SslCertificate.restoreState
+import android.net.http.SslCertificate.saveState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Inventory2
@@ -37,12 +39,17 @@ fun BusinessBottomNavigationBar(navController: NavHostController) {
 
     NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
         items.forEach { item ->
+            val isSelected = currentRoute == item.route ||
+                    (item.route == BusinessScreen.Listings.route && currentRoute == BusinessScreen.AddFood.route)
+
             NavigationBarItem(
-                selected = currentRoute == item.route,
-                onClick = {
-                    if (currentRoute != item.route) {
+                selected = isSelected,
+                onClick = { //Fix Issue reset to the root listing screen when switching tabs
+                    if (currentRoute != item.route || currentRoute == BusinessScreen.AddFood.route) {
                         navController.navigate(item.route) {
-                            popUpTo(navController.graph.startDestinationId) { saveState = true }
+                            popUpTo(navController.graph.startDestinationId) {
+                                saveState = true
+                            }
                             launchSingleTop = true
                             restoreState = true
                         }

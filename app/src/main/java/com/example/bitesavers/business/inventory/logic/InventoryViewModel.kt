@@ -18,10 +18,20 @@ class InventoryViewModel : ViewModel() {
     )
     val listings: StateFlow<List<ListingItem>> = _listings.asStateFlow()
 
+    // Holds the item being edited (null means creating new food)
+    var selectedItemForEdit: ListingItem? = null
+
     fun deleteListing(id: String) {
         _listings.value = _listings.value.filter { it.id != id }
     }
     fun addListing(item: ListingItem) {
         _listings.value = listOf(item) + _listings.value
+    }
+
+    // update existing item in the list
+    fun updateListing(updateItem: ListingItem) {
+        _listings.value = _listings.value.map { item ->
+            if (item.id == updateItem.id) updateItem else item
+        }
     }
 }

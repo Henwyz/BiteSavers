@@ -1,5 +1,6 @@
 package com.example.bitesavers.business.inventory.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -42,6 +43,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.IconButton
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -71,30 +75,10 @@ fun MyListingScreen(
                             color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                         )
                         Text(
-                            text = "${listings.size} items · $activeCount active",
+                            text = stringResource(R.string.my_listings_subtitle, listings.size, activeCount),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                         )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { /* TODO: Refresh */}) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .background(
-                                    MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f),
-                                    CircleShape
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "⟳",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
-                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -104,7 +88,10 @@ fun MyListingScreen(
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                onClick = onNavigateToAddFood,
+                onClick = {
+                  viewModel.selectedItemForEdit = null
+                  onNavigateToAddFood()
+                },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
@@ -123,8 +110,12 @@ fun MyListingScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(listings ) { item ->
-                ListingCard(item = item,
-                    onEditClick = { itemId -> onNavigateToEditFood(itemId) },
+                ListingCard(
+                    item = item,
+                    onEditClick = {
+                        viewModel.selectedItemForEdit = item
+                        onNavigateToEditFood(item.id)
+                    },
                     onDelete = { viewModel.deleteListing(item.id) })
             }
         }
@@ -153,7 +144,18 @@ fun ListingCard(item: ListingItem,
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("\uD83E\uDD50", fontSize = 24.sp)
+                    if (item.imageBitmap != null){
+                        Image(
+                            bitmap = item.imageBitmap.asImageBitmap(),
+                            contentDescription = item.name,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(8.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Text("\uD83E\uDD50", fontSize = 24.sp)
+                    }
                 }
 
                 Spacer(modifier = Modifier.width(12.dp))

@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -12,6 +14,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.bitesavers.business.analytics.ui.AnalyticsScreen
+import com.example.bitesavers.business.dashboard.logic.DashboardViewModel
+import com.example.bitesavers.business.dashboard.ui.BusinessHomeScreen
 import com.example.bitesavers.business.inventory.logic.InventoryViewModel
 import com.example.bitesavers.business.inventory.ui.AddFoodScreen
 import com.example.bitesavers.business.inventory.ui.MyListingScreen
@@ -22,6 +26,9 @@ fun BusinessNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
+    val inventoryViewModel: InventoryViewModel = viewModel()
+    val dashboardViewModel: DashboardViewModel = viewModel()
+
     NavHost(
         navController = navController,
         startDestination = BusinessScreen.Home.route,
@@ -31,16 +38,33 @@ fun BusinessNavHost(
         // System" territory (per the team brief); check with them before
         // building this out further, to avoid duplicating work.
         composable(BusinessScreen.Home.route) {
-            BusinessPlaceholderScreen("Business Home Coming Soon")
+            val inventoryViewModel: InventoryViewModel = viewModel()
+            val dashboardViewModel: DashboardViewModel = viewModel()
+
+            val dynamicMetrics by dashboardViewModel
+                .getDynamicMetrics(inventoryViewModel.listings)
+                .collectAsState()
+
+            BusinessHomeScreen(
+                metrics = dynamicMetrics,
+                viewModel = dashboardViewModel,
+                onNavigateToAddFood = { navController.navigate(BusinessScreen.AddFood.route) },
+                onNavigateToListings = { navController.navigate(BusinessScreen.Listings.route) },
+                onNavigateToAnalytics = { navController.navigate(BusinessScreen.Analytics.route) }
+            )
         }
 
         // 2. LISTINGS TAB — placeholder, same reason as above.
-        composable(BusinessScreen.Listings.route) {
-           val inventoryViewModel: InventoryViewModel = viewModel()
+        composable(BusinessScreen.Listings.route){
             MyListingScreen(
-                viewModel = inventoryViewModel,
-                onNavigateToAddFood = { navController.navigate("add_food") },
-                onNavigateToEditFood = { foodId -> navController.navigate("add_food")}
+            viewModel = inventoryViewModel,
+            onNavigateToAddFood = {
+             inventoryViewModel.selectedItemForEdit = null
+             navController.navigate(BusinessScreen.AddFood.route)
+            },
+            onNavigateToEditFood = { foodId ->
+                navController.navigate(BusinessScreen.AddFood.route)
+                }
             )
         }
 
@@ -59,10 +83,7 @@ fun BusinessNavHost(
         }
 
         // 5. ADD FOOD SCREEN
-        composable("add_food") {
-            val parentEntry = remember(it) { navController.getBackStackEntry(BusinessScreen.Listings.route) }
-            val inventoryViewModel: InventoryViewModel = viewModel(parentEntry)
-
+        composable(BusinessScreen.AddFood.route) {
             AddFoodScreen(
                 viewModel = inventoryViewModel,
                 onNavigateBack = { navController.popBackStack() }
