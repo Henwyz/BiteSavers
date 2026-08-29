@@ -1,4 +1,4 @@
-package com.example.bitesavers.LogIn.ui
+package com.example.bitesavers.login.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -15,16 +15,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Mail
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -39,17 +34,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitesavers.R
-import com.example.bitesavers.LogIn.logic.LoginViewModel
+import com.example.bitesavers.login.logic.LoginViewModel
 import com.example.bitesavers.ui.theme.BiteSaverColors
+import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,7 +79,6 @@ fun LoginScreen(
                     .fillMaxSize()
                     .blur(1.dp)
             )
-
 
             Box(
                 modifier = Modifier
@@ -114,13 +112,12 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    text = "Save food. Save money. Save Earth",
+                    text = stringResource(R.string.login_tagline),
                     style = MaterialTheme.typography.bodyMedium,
                     color = BiteSaverColors.TextOnDark.copy(alpha = 0.9f)
                 )
             }
         }
-
 
         Column(
             modifier = Modifier
@@ -149,7 +146,7 @@ fun LoginScreen(
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
 
-                    //Email
+                    // Email
                     Text(
                         text = stringResource(R.string.login_email_label),
                         fontSize = 14.sp,
@@ -163,9 +160,10 @@ fun LoginScreen(
                         onValueChange = { viewModel.updateEmail(it) },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Default.Mail,
-                                contentDescription = "Email",
-                                tint = BiteSaverColors.HeaderGreen
+                                painter = painterResource(id = R.drawable.ic_profile),
+                                contentDescription = stringResource(R.string.cd_email_icon),
+                                tint = BiteSaverColors.HeaderGreen,
+                                modifier = Modifier.size(20.dp)
                             )
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -181,7 +179,7 @@ fun LoginScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    //Password
+                    // Password
                     Text(
                         text = stringResource(R.string.login_password_label),
                         fontSize = 14.sp,
@@ -195,20 +193,25 @@ fun LoginScreen(
                         onValueChange = { viewModel.updatePassword(it) },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Default.Lock,
-                                contentDescription = null,
-                                tint = BiteSaverColors.HeaderGreen
+                                painter = painterResource(id = R.drawable.ic_orders),
+                                contentDescription = stringResource(R.string.cd_password_icon),
+                                tint = BiteSaverColors.HeaderGreen,
+                                modifier = Modifier.size(20.dp)
                             )
                         },
                         trailingIcon = {
                             IconButton(onClick = { viewModel.togglePasswordVisibility() }) {
                                 Icon(
-                                    imageVector = if (viewModel.passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                    contentDescription = null,
-                                    tint = BiteSaverColors.TextSecondary
+                                    painter = painterResource(
+                                        id = if (viewModel.passwordVisible) R.drawable.ic_fullscreen_exit else R.drawable.ic_fullscreen
+                                    ),
+                                    contentDescription = stringResource(R.string.cd_toggle_password),
+                                    tint = BiteSaverColors.TextSecondary,
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
                         },
+                        visualTransformation = if (viewModel.passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(50),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -242,9 +245,10 @@ fun LoginScreen(
                             readOnly = true,
                             leadingIcon = {
                                 Icon(
-                                    imageVector = Icons.Default.Person,
-                                    contentDescription = null,
-                                    tint = BiteSaverColors.HeaderGreen
+                                    painter = painterResource(id = R.drawable.ic_profile),
+                                    contentDescription = stringResource(R.string.cd_account_icon),
+                                    tint = BiteSaverColors.HeaderGreen,
+                                    modifier = Modifier.size(20.dp)
                                 )
                             },
                             trailingIcon = {
@@ -284,6 +288,17 @@ fun LoginScreen(
                             )
                         }
                     }
+
+                    if (viewModel.errorMessage != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = viewModel.errorMessage.orEmpty(),
+                            color = Color.Red,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        )
+                    }
+
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -305,6 +320,7 @@ fun LoginScreen(
                                 onLoginSuccess(isBusiness)
                             }
                         },
+                        enabled = !viewModel.isLoading,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
@@ -313,17 +329,25 @@ fun LoginScreen(
                             containerColor = BiteSaverColors.PrimaryGreen
                         )
                     ) {
-                        Text(
-                            text = stringResource(R.string.log_in_button),
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = BiteSaverColors.White
-                        )
+                        if (viewModel.isLoading) {
+                            CircularProgressIndicator(
+                                color = BiteSaverColors.White,
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text(
+                                text = stringResource(R.string.log_in_button),
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = BiteSaverColors.White
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // let the user to sign up
+                    // Let user sign up
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center,
@@ -334,6 +358,7 @@ fun LoginScreen(
                             fontSize = 13.sp,
                             color = BiteSaverColors.TextSecondary
                         )
+                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = stringResource(R.string.sign_up_free),
                             fontSize = 13.sp,
@@ -353,7 +378,7 @@ fun LoginScreen(
 @Preview(showBackground = true)
 @Composable
 fun LoginScreenPreview() {
-    com.example.bitesavers.ui.theme.BiteSaversTheme {
+    BiteSaversTheme {
         LoginScreen(
             onLoginSuccess = {},
             onNavigateToSignUp = {}

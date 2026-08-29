@@ -1,4 +1,4 @@
-package com.example.bitesavers.LogIn.logic
+package com.example.bitesavers.login.logic
 
 object SignUpValidation {
 
@@ -19,42 +19,31 @@ object SignUpValidation {
         val phoneTrimmed = phone.trim()
 
         return SignUpFormErrors(
-            // Validation for teh name
             fullName = when {
                 nameTrimmed.isBlank() -> "Full name is required"
                 !NAME_REGEX.matches(nameTrimmed) -> "Name cannot contain numbers"
                 else -> null
             },
-
-            // Validation for the email address
             email = when {
                 emailTrimmed.isBlank() -> "Email address is required"
                 !EMAIL_REGEX.matches(emailTrimmed) -> "Enter a valid email address"
                 else -> null
             },
-
-            // Validation for the contact number
             phone = when {
                 phoneTrimmed.isBlank() -> "Phone number is required"
                 !PHONE_REGEX.matches(phoneTrimmed) -> "Enter a valid phone number"
                 else -> null
             },
-
-            // Validation for the password
             password = when {
                 pass.isBlank() -> "Password is required"
                 pass.length < 8 -> "Password must be at least 8 characters"
                 else -> null
             },
-
-            // Validation for the confirm password
             confirmPassword = when {
                 confirmPass.isBlank() -> "Please confirm your password"
                 pass != confirmPass -> "Passwords do not match"
                 else -> null
             },
-
-            // Validation for need tick the checkBox
             terms = if (!termsAccepted) "You must accept the terms and conditions" else null
         )
     }

@@ -1,4 +1,4 @@
-package com.example.bitesavers.LogIn.logic
+package com.example.bitesavers.login.logic
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -8,9 +8,10 @@ import androidx.lifecycle.viewModelScope
 import com.example.bitesavers.data.remote.SupabaseClient
 import com.example.bitesavers.data.remote.UserSession
 import com.example.bitesavers.data.remote.dto.UserDto
+import io.github.jan.supabase.gotrue.auth
+import io.github.jan.supabase.gotrue.providers.builtin.Email
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.launch
-import java.util.UUID
 
 class SignUpViewModel : ViewModel() {
     var isBusiness by mutableStateOf(true)
@@ -28,7 +29,6 @@ class SignUpViewModel : ViewModel() {
     var termsAccepted by mutableStateOf(false)
         private set
 
-    // Below this 5 variable is about the error state
     var fullNameError by mutableStateOf<String?>(null)
         private set
     var emailError by mutableStateOf<String?>(null)
@@ -38,6 +38,11 @@ class SignUpViewModel : ViewModel() {
     var passwordError by mutableStateOf<String?>(null)
         private set
     var confirmPasswordError by mutableStateOf<String?>(null)
+        private set
+
+    var generalError by mutableStateOf<String?>(null)
+        private set
+    var isLoading by mutableStateOf(false)
         private set
 
     fun updateIsBusiness(value: Boolean) { isBusiness = value }
@@ -64,7 +69,6 @@ class SignUpViewModel : ViewModel() {
     fun updateTermsAccepted(value: Boolean) { termsAccepted = value }
 
     fun validateAndRegister(onSuccess: () -> Unit) {
-        // Run validation using our SignUpValidation object
         val errors = SignUpValidation.validate(
             fullName = fullName,
             email = email,
@@ -74,8 +78,6 @@ class SignUpViewModel : ViewModel() {
             termsAccepted = termsAccepted
         )
 
-        // Assign errors to each specific variable
-        // so the UI for each textfields will turn red and show error text
         fullNameError = errors.fullName
         emailError = errors.email
         phoneError = errors.phone
@@ -84,40 +86,52 @@ class SignUpViewModel : ViewModel() {
 
         if (!errors.hasErrors) {
             viewModelScope.launch {
-                //Count how many users are already in the table
-                val existingUsers = SupabaseClient.client
-                    .from("users")
-                    .select()
-                    .decodeList<UserDto>() // fetches all users from the database into a list
+                isLoading = true
+                generalError = null
+                try {
+                    // Registers the account with Supabase Auth to securely hash the password
+                    val authResult = SupabaseClient.client.auth.signUpWith(Email) {
+                        this.email = this@SignUpViewModel.email.trim()
+                        this.password = this@SignUpViewModel.password
+                    }
 
-                // Make the new ID like if there are 3 users, this makes U4
-                val nextNumber = existingUsers.size + 1
-                val newUserId = "U$nextNumber" // format the number such as U1 or U2
+                    // Obtains the generated UUID from Auth or the active session
+                    val registeredUserId = authResult?.id
+                        ?: SupabaseClient.client.auth.currentUserOrNull()?.id
 
-                val userRole = if (isBusiness) "BUSINESS" else "CONSUMER"
+                    if (registeredUserId != null) {
+                        val userRole = if (isBusiness) "BUSINESS" else "CONSUMER"
 
-                // Create user DTO matching your teammate's schema
-                val newUser = UserDto(
-                    id = newUserId,
-                    name = fullName.trim(),
-                    email = email.trim(),
-                    role = userRole,
-                    walletBalance = 0.0,
-                    ngoStatus = "NONE",
-                    ngoOrgName = null,
-                    mealsRescued = 0
-                )
+                        // Matches the accompanying public user profile to the newly registered auth user ID
+                        val newUser = UserDto(
+                            id = registeredUserId,
+                            name = fullName.trim(),
+                            email = email.trim(),
+                            role = userRole,
+                            walletBalance = 0.0,
+                            ngoStatus = "NONE",
+                            ngoOrgName = null,
+                            mealsRescued = 0
+                        )
 
-                // this is use for insert into Supabase users table
-                SupabaseClient.client
-                    .from("users")
-                    .insert(newUser)
+                        // Inserts into Supabase users table
+                        SupabaseClient.client
+                            .from("users")
+                            .insert(newUser)
 
-                // Set active global user session
-                UserSession.setUserId(newUserId)
+                        // Set active global user session
+                        UserSession.setUserId(registeredUserId)
 
-                onSuccess()
-             }
+                        onSuccess()
+                    } else {
+                        generalError = "Registration succeeded. Please confirm your email before signing in."
+                    }
+                } catch (e: Exception) {
+                    generalError = e.localizedMessage ?: "Registration failed. Please try again."
+                } finally {
+                    isLoading = false
+                }
+            }
         }
     }
 }

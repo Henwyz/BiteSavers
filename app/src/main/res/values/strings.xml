@@ -18,6 +18,21 @@
     <string name="cd_search">Search</string>
     <string name="currency_rm">RM %1$.2f</string>
 
+    <!-- Login & SignUp Resources -->
+    <string name="login_tagline">Save food. Save money. Save Earth</string>
+    <string name="signup_placeholder_name_consumer">Sarah Tan</string>
+    <string name="signup_placeholder_name_business">BiteSaver Cafe</string>
+    <string name="signup_placeholder_email">sarah@gmail.com</string>
+    <string name="signup_placeholder_phone">012-3456789</string>
+    <string name="signup_placeholder_password">min 8 characters</string>
+    <string name="role_toggle_consumer">🛒 Consumer</string>
+    <string name="role_toggle_business">🏪 Business</string>
+    <string name="cd_email_icon">Email Icon</string>
+    <string name="cd_password_icon">Password Icon</string>
+    <string name="cd_account_icon">Account Icon</string>
+    <string name="cd_toggle_password">Toggle Password Visibility</string>
+    <string name="cd_back_button">Back</string>
+
     <!-- ================================================================= -->
     <!-- DISCOVERY PAGE                                                    -->
     <!-- ================================================================= -->

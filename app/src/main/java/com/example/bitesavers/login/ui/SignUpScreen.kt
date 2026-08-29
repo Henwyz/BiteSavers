@@ -1,19 +1,41 @@
-package com.example.bitesavers.LogIn.ui
+package com.example.bitesavers.login.ui
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,8 +51,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitesavers.R
-import com.example.bitesavers.LogIn.logic.SignUpViewModel
+import com.example.bitesavers.login.logic.SignUpViewModel
 import com.example.bitesavers.ui.theme.BiteSaverColors
+import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @Composable
 fun SignUpScreen(
@@ -61,7 +84,7 @@ fun SignUpScreen(
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_arrow_back),
-                    contentDescription = "Back",
+                    contentDescription = stringResource(R.string.cd_back_button),
                     tint = BiteSaverColors.HeaderGreen
                 )
             }
@@ -116,7 +139,15 @@ fun SignUpScreen(
                     OutlinedTextField(
                         value = viewModel.fullName,
                         onValueChange = { viewModel.updateFullName(it) },
-                        placeholder = { Text(if (viewModel.isBusiness) "BiteSaver Cafe" else "Sarah Tan") },
+                        placeholder = {
+                            Text(
+                                if (viewModel.isBusiness) {
+                                    stringResource(R.string.signup_placeholder_name_business)
+                                } else {
+                                    stringResource(R.string.signup_placeholder_name_consumer)
+                                }
+                            )
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(50),
                         isError = viewModel.fullNameError != null,
@@ -135,7 +166,7 @@ fun SignUpScreen(
 
                     Spacer(Modifier.height(15.dp))
 
-                    // Email ADdress
+                    // Email Address
                     Text(
                         text = stringResource(R.string.email_address),
                         fontSize = 15.sp,
@@ -148,7 +179,7 @@ fun SignUpScreen(
                         value = viewModel.email,
                         onValueChange = { viewModel.updateEmail(it) },
                         singleLine = true,
-                        placeholder = { Text("sarah@gmail.com") },
+                        placeholder = { Text(stringResource(R.string.signup_placeholder_email)) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(50),
                         isError = viewModel.emailError != null,
@@ -179,8 +210,8 @@ fun SignUpScreen(
                         value = viewModel.phoneNumber,
                         onValueChange = { viewModel.updatePhoneNumber(it) },
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        placeholder = { Text("012-3456789") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        placeholder = { Text(stringResource(R.string.signup_placeholder_phone)) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(50),
                         isError = viewModel.phoneError != null,
@@ -210,14 +241,17 @@ fun SignUpScreen(
                     OutlinedTextField(
                         value = viewModel.password,
                         onValueChange = { viewModel.updatePassword(it) },
-                        placeholder = { Text("min 8 characters") },
+                        placeholder = { Text(stringResource(R.string.signup_placeholder_password)) },
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         trailingIcon = {
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
                                 Icon(
-                                    imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                    contentDescription = null,
-                                    tint = BiteSaverColors.HeaderGreen
+                                    painter = painterResource(
+                                        id = if (passwordVisible) R.drawable.ic_fullscreen_exit else R.drawable.ic_fullscreen
+                                    ),
+                                    contentDescription = stringResource(R.string.cd_toggle_password),
+                                    tint = BiteSaverColors.HeaderGreen,
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
                         },
@@ -239,7 +273,7 @@ fun SignUpScreen(
 
                     Spacer(Modifier.height(15.dp))
 
-                    // Password that confirm
+                    // Confirm Password
                     Text(
                         text = stringResource(R.string.confirm_password),
                         fontSize = 15.sp,
@@ -251,7 +285,7 @@ fun SignUpScreen(
                     OutlinedTextField(
                         value = viewModel.confirmPassword,
                         onValueChange = { viewModel.updateConfirmPassword(it) },
-                        placeholder = { Text("min 8 characters") },
+                        placeholder = { Text(stringResource(R.string.signup_placeholder_password)) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(50),
                         isError = viewModel.confirmPasswordError != null,
@@ -259,9 +293,12 @@ fun SignUpScreen(
                         trailingIcon = {
                             IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
                                 Icon(
-                                    imageVector = if (confirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                    contentDescription = null,
-                                    tint = BiteSaverColors.HeaderGreen
+                                    painter = painterResource(
+                                        id = if (confirmPasswordVisible) R.drawable.ic_fullscreen_exit else R.drawable.ic_fullscreen
+                                    ),
+                                    contentDescription = stringResource(R.string.cd_toggle_password),
+                                    tint = BiteSaverColors.HeaderGreen,
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
                         },
@@ -290,18 +327,30 @@ fun SignUpScreen(
                         )
 
                         Text(
-                            stringResource(R.string.terms_agreement),
+                            text = stringResource(R.string.terms_agreement),
                             style = MaterialTheme.typography.bodySmall
                         )
 
+                        Spacer(modifier = Modifier.width(4.dp))
+
                         Text(
-                            stringResource(R.string.terms_policy),
+                            text = stringResource(R.string.terms_policy),
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.bodySmall,
                             color = BiteSaverColors.HeaderGreen,
                             modifier = Modifier.clickable {
                                 onNavigateToTerms()
                             }
+                        )
+                    }
+
+                    if (viewModel.generalError != null) {
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = viewModel.generalError.orEmpty(),
+                            color = Color.Red,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(start = 16.dp)
                         )
                     }
 
@@ -313,6 +362,7 @@ fun SignUpScreen(
                                 onSignUpSuccess()
                             }
                         },
+                        enabled = viewModel.termsAccepted && !viewModel.isLoading,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
@@ -321,11 +371,19 @@ fun SignUpScreen(
                             containerColor = BiteSaverColors.PrimaryGreen,
                         )
                     ) {
-                        Text(
-                            text = stringResource(R.string.create_account),
-                            fontSize = 18.sp,
-                            color = BiteSaverColors.White
-                        )
+                        if (viewModel.isLoading) {
+                            CircularProgressIndicator(
+                                color = BiteSaverColors.White,
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text(
+                                text = stringResource(R.string.create_account),
+                                fontSize = 18.sp,
+                                color = BiteSaverColors.White
+                            )
+                        }
                     }
 
                     Spacer(Modifier.height(16.dp))
@@ -380,7 +438,7 @@ private fun RoleSegmentedToggle(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "🛒 Consumer",
+                text = stringResource(R.string.role_toggle_consumer),
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp,
                 color = BiteSaverColors.HeaderGreen
@@ -399,7 +457,7 @@ private fun RoleSegmentedToggle(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "🏪 Business",
+                text = stringResource(R.string.role_toggle_business),
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp,
                 color = BiteSaverColors.HeaderGreen
@@ -411,7 +469,7 @@ private fun RoleSegmentedToggle(
 @Preview(showBackground = true)
 @Composable
 fun SignUpScreenPreview() {
-    com.example.bitesavers.ui.theme.BiteSaversTheme {
+    BiteSaversTheme {
         SignUpScreen(
             onSignUpSuccess = {},
             onNavigateToLogin = {},

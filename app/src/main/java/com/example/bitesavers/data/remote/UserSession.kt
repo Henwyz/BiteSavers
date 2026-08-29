@@ -5,8 +5,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 object UserSession {
-    // Default starting user ID in Supabase
-    private val _currentUserId = MutableStateFlow("u1")
+    // Tracks the authenticated user's Supabase UUID (empty when logged out)
+    private val _currentUserId = MutableStateFlow("")
     val currentUserId: StateFlow<String> = _currentUserId.asStateFlow()
 
     fun setUserId(userId: String) {
@@ -14,4 +14,9 @@ object UserSession {
     }
 
     fun getUserId(): String = _currentUserId.value
+
+    // Clears the session on sign out
+    fun clear() {
+        _currentUserId.value = ""
+    }
 }
