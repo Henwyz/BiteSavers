@@ -27,25 +27,62 @@ class SignUpViewModel : ViewModel() {
         private set
     var termsAccepted by mutableStateOf(false)
         private set
-    var passwordError by mutableStateOf(false)
+
+    // Below this 5 variable is about the error state
+    var fullNameError by mutableStateOf<String?>(null)
+        private set
+    var emailError by mutableStateOf<String?>(null)
+        private set
+    var phoneError by mutableStateOf<String?>(null)
+        private set
+    var passwordError by mutableStateOf<String?>(null)
+        private set
+    var confirmPasswordError by mutableStateOf<String?>(null)
         private set
 
     fun updateIsBusiness(value: Boolean) { isBusiness = value }
-    fun updateFullName(value: String) { fullName = value }
-    fun updateEmail(value: String) { email = value }
-    fun updatePhoneNumber(value: String) { phoneNumber = value }
-    fun updatePassword(value: String) { password = value }
+    fun updateFullName(value: String) {
+        fullName = value
+        fullNameError = null
+    }
+    fun updateEmail(value: String) {
+        email = value
+        emailError = null
+    }
+    fun updatePhoneNumber(value: String) {
+        phoneNumber = value
+        phoneError = null
+    }
+    fun updatePassword(value: String) {
+        password = value
+        passwordError = null
+    }
     fun updateConfirmPassword(value: String) {
         confirmPassword = value
-        passwordError = false
+        confirmPasswordError = null
     }
     fun updateTermsAccepted(value: Boolean) { termsAccepted = value }
 
     fun validateAndRegister(onSuccess: () -> Unit) {
-        if (password != confirmPassword) {
-            passwordError = true
-        } else {
-            passwordError = false
+        // Run validation using our SignUpValidation object
+        val errors = SignUpValidation.validate(
+            fullName = fullName,
+            email = email,
+            phone = phoneNumber,
+            pass = password,
+            confirmPass = confirmPassword,
+            termsAccepted = termsAccepted
+        )
+
+        // Assign errors to each specific variable
+        // so the UI for each textfields will turn red and show error text
+        fullNameError = errors.fullName
+        emailError = errors.email
+        phoneError = errors.phone
+        passwordError = errors.password
+        confirmPasswordError = errors.confirmPassword
+
+        if (!errors.hasErrors) {
             viewModelScope.launch {
                 //Count how many users are already in the table
                 val existingUsers = SupabaseClient.client
@@ -53,9 +90,9 @@ class SignUpViewModel : ViewModel() {
                     .select()
                     .decodeList<UserDto>() // fetches all users from the database into a list
 
-                // Make the new ID like if there are 3 users, this makes "U004"
+                // Make the new ID like if there are 3 users, this makes U4
                 val nextNumber = existingUsers.size + 1
-                val newUserId = String.format("U%03d", nextNumber) // formats the number into U001
+                val newUserId = "U$nextNumber" // format the number such as U1 or U2
 
                 val userRole = if (isBusiness) "BUSINESS" else "CONSUMER"
 
@@ -71,7 +108,7 @@ class SignUpViewModel : ViewModel() {
                     mealsRescued = 0
                 )
 
-                // Insert into Supabase users table
+                // this is use for insert into Supabase users table
                 SupabaseClient.client
                     .from("users")
                     .insert(newUser)
@@ -80,7 +117,7 @@ class SignUpViewModel : ViewModel() {
                 UserSession.setUserId(newUserId)
 
                 onSuccess()
-            }
+             }
         }
     }
 }
