@@ -10,7 +10,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.bitesavers.R
-import com.example.bitesavers.navigation.Screen
+import com.example.bitesavers.customer.navigation.CustomerScreen
 
 @Composable
 fun CustomerBottomNavigationBar(navController: NavController) {
@@ -21,10 +21,10 @@ fun CustomerBottomNavigationBar(navController: NavController) {
     NavigationBar {
         // HOME TAB
         NavigationBarItem(
-            selected = currentRoute == Screen.Discovery.route,
+            selected = currentRoute == CustomerScreen.Discovery.route,
             onClick = {
-                navController.navigate(Screen.Discovery.route) {
-                    popUpTo(Screen.Discovery.route) { inclusive = false } // Prevents building a huge backstack
+                navController.navigate(CustomerScreen.Discovery.route) {
+                    popUpTo(CustomerScreen.Discovery.route) { inclusive = false } // Prevents building a huge backstack
                     launchSingleTop = true
                 }
             },
@@ -34,10 +34,10 @@ fun CustomerBottomNavigationBar(navController: NavController) {
 
         // ORDERS TAB
         NavigationBarItem(
-            selected = currentRoute == Screen.Orders.route,
+            selected = currentRoute == CustomerScreen.Orders.route,
             onClick = {
-                navController.navigate(Screen.Orders.route) {
-                    popUpTo(Screen.Discovery.route) { inclusive = false }
+                navController.navigate(CustomerScreen.Orders.route) {
+                    popUpTo(CustomerScreen.Discovery.route) { inclusive = false }
                     launchSingleTop = true
                 }
             },
@@ -47,27 +47,27 @@ fun CustomerBottomNavigationBar(navController: NavController) {
 
         // SAVED TAB
         NavigationBarItem(
-            selected = currentRoute == Screen.Saved.route,
+            selected = currentRoute == CustomerScreen.Saved.route,
             onClick = {
-                navController.navigate(Screen.Saved.route) {
-                    popUpTo(Screen.Saved.route) { inclusive = false }
+                navController.navigate(CustomerScreen.Saved.route) {
+                    popUpTo(CustomerScreen.Discovery.route) { inclusive = false }
                     launchSingleTop = true
                 }
             },
-            icon = { Icon(painterResource(id = R.drawable.ic_saved), contentDescription = "Orders") },
+            icon = { Icon(painterResource(id = R.drawable.ic_saved), contentDescription = "Saved") },
             label = { Text("Saved") }
         )
 
         // PROFILE TAB
         NavigationBarItem(
-            selected = currentRoute == Screen.Profile.route,
+            selected = currentRoute == CustomerScreen.Profile.route,
             onClick = {
-                navController.navigate(Screen.Profile.route) {
-                    popUpTo(Screen.Profile.route) { inclusive = false }
+                navController.navigate(CustomerScreen.Profile.route) {
+                    popUpTo(CustomerScreen.Discovery.route) { inclusive = false }
                     launchSingleTop = true
                 }
             },
-            icon = { Icon(painterResource(id = R.drawable.ic_profile), contentDescription = "Orders") },
+            icon = { Icon(painterResource(id = R.drawable.ic_profile), contentDescription = "Profile") },
             label = { Text("Profile") }
         )
     }

@@ -18,7 +18,6 @@ import com.example.bitesavers.business.navigation.BusinessNavHost
 import com.example.bitesavers.business.sharedUI.BusinessBottomNavigationBar
 import com.example.bitesavers.data.remote.UserSession
 import com.example.bitesavers.navigation.AppNavHost
-import com.example.bitesavers.navigation.Screen // Import your Screen routes
 import com.example.bitesavers.sharedUI.CustomerBottomNavigationBar
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 
@@ -27,6 +26,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             BiteSaversTheme {
+                AppNavHost()
                 //dead code, refined in the below version
                 /*
                 val navController = rememberNavController()
@@ -50,55 +50,54 @@ class MainActivity : ComponentActivity() {
                 // logged-in user's role instead of a hardcoded toggle —
                 // check with Member 3 before merging this file, since
                 // they'll likely need to touch this exact spot too.
-                var isBusinessMode by remember { mutableStateOf(false) }
-
-                // Sync the active session ID when mode changes
-                LaunchedEffect(isBusinessMode) {
-                    if (isBusinessMode) {
-                        UserSession.setUserId("b1") // Merchant / Store owner user ID
-                    } else {
-                        UserSession.setUserId("u2") // Customer user ID
-                    }
-                }
-
-                if (isBusinessMode) {
-                    val businessNavController = rememberNavController()
-                    Scaffold(
-                        modifier = Modifier.fillMaxSize(),
-                        bottomBar = { BusinessBottomNavigationBar(navController = businessNavController) }
-                    ) { innerPadding ->
-                        BusinessNavHost(
-                            navController = businessNavController,
-                            modifier = Modifier.padding(innerPadding)
-                        )
-                    }
-                } else {
-                    val navController = rememberNavController()
-                    val navBackStackEntry by navController.currentBackStackEntryAsState()
-                    val currentRoute = navBackStackEntry?.destination?.route
-                    val bottomBarRoutes = listOf(
-                        Screen.Discovery.route,
-                        Screen.Orders.route,
-                        Screen.Saved.route,
-                        Screen.Profile.route
-                    )
-//end of temp add
-
-                    Scaffold(
-                        modifier = Modifier.fillMaxSize(),
-                        bottomBar = {
-                            // 3. Only draw the bottom bar if the current screen is in our list!
-                            if (currentRoute in bottomBarRoutes) {
-                                CustomerBottomNavigationBar(navController = navController)
-                            }
-                        }
-                    ) { innerPadding ->
-                        AppNavHost(
-                            navController = navController,
-                            modifier = Modifier.padding(innerPadding)
-                        )
-                    }
-                }
+//                var isBusinessMode by remember { mutableStateOf(false) }
+//
+//                // Sync the active session ID when mode changes
+//                LaunchedEffect(isBusinessMode) {
+//                    if (isBusinessMode) {
+//                        UserSession.setUserId("b1") // Merchant / Store owner user ID
+//                    } else {
+//                        UserSession.setUserId("u2") // Customer user ID
+//                    }
+//                }
+//
+//                if (isBusinessMode) {
+//                    val businessNavController = rememberNavController()
+//                    Scaffold(
+//                        modifier = Modifier.fillMaxSize(),
+//                        bottomBar = { BusinessBottomNavigationBar(navController = businessNavController) }
+//                    ) { innerPadding ->
+//                        BusinessNavHost(
+//                            navController = businessNavController,
+//                            modifier = Modifier.padding(innerPadding)
+//                        )
+//                    }
+//                } else {
+//                    val navController = rememberNavController()
+//                    val navBackStackEntry by navController.currentBackStackEntryAsState()
+//                    val currentRoute = navBackStackEntry?.destination?.route
+//                    val bottomBarRoutes = listOf(
+//                        Screen.Discovery.route,
+//                        Screen.Orders.route,
+//                        Screen.Saved.route,
+//                        Screen.Profile.route
+//                    )
+////end of temp add
+//
+//                    Scaffold(
+//                        modifier = Modifier.fillMaxSize(),
+//                        bottomBar = {
+//                            // 3. Only draw the bottom bar if the current screen is in our list!
+//                            if (currentRoute in bottomBarRoutes) {
+//                                CustomerBottomNavigationBar(navController = navController)
+//                            }
+//                        }
+//                    ) { innerPadding ->
+//                        AppNavHost(
+//                            navController = navController,
+//                            modifier = Modifier.padding(innerPadding)
+//                        )
+//                    }
             }
         }
     }

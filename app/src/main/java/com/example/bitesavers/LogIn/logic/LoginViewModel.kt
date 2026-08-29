@@ -22,36 +22,57 @@ class LoginViewModel : ViewModel() {
         private set
     var passwordVisible by mutableStateOf(false)
         private set
+    var isLoading by mutableStateOf(false)
+        private set
+    var errorMessage by mutableStateOf<String?>(null)
+        private set
 
-    fun updateEmail(value: String) { email = value }
-    fun updatePassword(value: String) { password = value }
+    fun updateEmail(value: String) {
+        email = value
+        errorMessage = null
+    }
+    fun updatePassword(value: String) {
+        password = value
+        errorMessage = null
+    }
     fun updateSelectedRole(value: String) { selectedRole = value }
     fun toggleDropdown(expanded: Boolean) { isDropdownExpanded = expanded }
     fun togglePasswordVisibility() { passwordVisible = !passwordVisible }
 
     fun login(onSuccess: (isBusiness: Boolean) -> Unit) {
+        if (email.isBlank() || password.isBlank()) {
+            errorMessage = "Please enter both email and password"
+            return
+        }
+
         viewModelScope.launch {
-            // Query Supabase users table matching the entered email
-            val users = SupabaseClient.client
-                .from("users")
-                .select {
-                    filter {
-                        eq("email", email.trim())
+            isLoading = true
+            errorMessage = null
+            try {
+                // Query Supabase users table matching the entered email
+                val users = SupabaseClient.client
+                    .from("users")
+                    .select {
+                        filter {
+                            eq("email", email.trim())
+                        }
                     }
+                    .decodeList<UserDto>()
+
+                if (users.isNotEmpty()) {
+                    val user = users.first()
+                    // Update global session with the real user ID from Supabase
+                    UserSession.setUserId(user.id)
+
+                    val isBusiness = user.role.equals("BUSINESS", ignoreCase = true) || selectedRole == "Business"
+                    onSuccess(isBusiness)
+                } else {
+                    errorMessage = "No account found with this email"
                 }
-                .decodeList<UserDto>()
-
-            if (users.isNotEmpty()) {
-                val user = users.first()
-                // Update global session with the real user ID from Supabase
-                UserSession.setUserId(user.id)
-
-                val isBusiness = user.role.equals("BUSINESS", ignoreCase = true) || selectedRole == "Business"
-                onSuccess(isBusiness)
-            } else {
-                // Fallback based on user selection if not found in database
-                val isBusiness = selectedRole == "Business"
-                onSuccess(isBusiness)
+            } catch (e: Exception) {
+                errorMessage = "Login failed: ${e.localizedMessage ?: "Unknown error"}"
+            } finally {
+                isLoading = false
             }
         }
     }
