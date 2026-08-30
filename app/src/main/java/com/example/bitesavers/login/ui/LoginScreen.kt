@@ -65,6 +65,7 @@ fun LoginScreen(
         verticalArrangement = Arrangement.Top
     ) {
         Spacer(Modifier.height(20.dp))
+
         // Top Header Banner
         Box(
             modifier = Modifier
@@ -146,7 +147,7 @@ fun LoginScreen(
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
 
-                    // Email
+                    // Email Field
                     Text(
                         text = stringResource(R.string.login_email_label),
                         fontSize = 14.sp,
@@ -160,7 +161,7 @@ fun LoginScreen(
                         onValueChange = { viewModel.updateEmail(it) },
                         leadingIcon = {
                             Icon(
-                                painter = painterResource(id = R.drawable.ic_profile),
+                                painter = painterResource(id = R.drawable.ic_mail),
                                 contentDescription = stringResource(R.string.cd_email_icon),
                                 tint = BiteSaverColors.HeaderGreen,
                                 modifier = Modifier.size(20.dp)
@@ -168,18 +169,29 @@ fun LoginScreen(
                         },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(50),
+                        isError = viewModel.emailError != null,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = BiteSaverColors.SoftGreen,
                             unfocusedContainerColor = BiteSaverColors.SoftGreen,
-                            focusedBorderColor = BiteSaverColors.PrimaryGreen,
-                            unfocusedBorderColor = BiteSaverColors.PrimaryGreen
+                            focusedBorderColor = if (viewModel.emailError != null) Color.Red else BiteSaverColors.PrimaryGreen,
+                            unfocusedBorderColor = if (viewModel.emailError != null) Color.Red else BiteSaverColors.PrimaryGreen
                         ),
                         singleLine = true
                     )
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    if (viewModel.emailError != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = viewModel.emailError!!,
+                            color = Color.Red,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(start = 16.dp)
+                        )
+                    }
 
-                    // Password
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Password Field
                     Text(
                         text = stringResource(R.string.login_password_label),
                         fontSize = 14.sp,
@@ -193,7 +205,7 @@ fun LoginScreen(
                         onValueChange = { viewModel.updatePassword(it) },
                         leadingIcon = {
                             Icon(
-                                painter = painterResource(id = R.drawable.ic_orders),
+                                painter = painterResource(id = R.drawable.ic_password),
                                 contentDescription = stringResource(R.string.cd_password_icon),
                                 tint = BiteSaverColors.HeaderGreen,
                                 modifier = Modifier.size(20.dp)
@@ -203,7 +215,7 @@ fun LoginScreen(
                             IconButton(onClick = { viewModel.togglePasswordVisibility() }) {
                                 Icon(
                                     painter = painterResource(
-                                        id = if (viewModel.passwordVisible) R.drawable.ic_fullscreen_exit else R.drawable.ic_fullscreen
+                                        id = if (viewModel.passwordVisible) R.drawable.ic_show else R.drawable.ic_hide
                                     ),
                                     contentDescription = stringResource(R.string.cd_toggle_password),
                                     tint = BiteSaverColors.TextSecondary,
@@ -214,18 +226,29 @@ fun LoginScreen(
                         visualTransformation = if (viewModel.passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(50),
+                        isError = viewModel.passwordError != null,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = BiteSaverColors.SoftGreen,
                             unfocusedContainerColor = BiteSaverColors.SoftGreen,
-                            focusedBorderColor = BiteSaverColors.PrimaryGreen,
-                            unfocusedBorderColor = BiteSaverColors.PrimaryGreen
+                            focusedBorderColor = if (viewModel.passwordError != null) Color.Red else BiteSaverColors.PrimaryGreen,
+                            unfocusedBorderColor = if (viewModel.passwordError != null) Color.Red else BiteSaverColors.PrimaryGreen
                         ),
                         singleLine = true
                     )
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    if (viewModel.passwordError != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = viewModel.passwordError!!,
+                            color = Color.Red,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(start = 16.dp)
+                        )
+                    }
 
-                    // Account Type
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Account Type Dropdown
                     Text(
                         text = stringResource(R.string.account_type_label),
                         fontSize = 14.sp,
@@ -245,7 +268,7 @@ fun LoginScreen(
                             readOnly = true,
                             leadingIcon = {
                                 Icon(
-                                    painter = painterResource(id = R.drawable.ic_profile),
+                                    painter = painterResource(id = R.drawable.ic_home),
                                     contentDescription = stringResource(R.string.cd_account_icon),
                                     tint = BiteSaverColors.HeaderGreen,
                                     modifier = Modifier.size(20.dp)
@@ -289,16 +312,6 @@ fun LoginScreen(
                         }
                     }
 
-                    if (viewModel.errorMessage != null) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = viewModel.errorMessage.orEmpty(),
-                            color = Color.Red,
-                            fontSize = 12.sp,
-                            modifier = Modifier.padding(horizontal = 4.dp)
-                        )
-                    }
-
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -314,6 +327,7 @@ fun LoginScreen(
                         )
                     }
 
+                    // Login Button
                     Button(
                         onClick = {
                             viewModel.login { isBusiness ->
@@ -347,7 +361,7 @@ fun LoginScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Let user sign up
+                    // Navigate to Sign Up Row
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center,

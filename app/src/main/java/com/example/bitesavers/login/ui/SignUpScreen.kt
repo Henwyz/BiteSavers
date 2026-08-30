@@ -247,7 +247,7 @@ fun SignUpScreen(
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
                                 Icon(
                                     painter = painterResource(
-                                        id = if (passwordVisible) R.drawable.ic_fullscreen_exit else R.drawable.ic_fullscreen
+                                        id = if (passwordVisible) R.drawable.ic_show else R.drawable.ic_hide
                                     ),
                                     contentDescription = stringResource(R.string.cd_toggle_password),
                                     tint = BiteSaverColors.HeaderGreen,
@@ -294,7 +294,7 @@ fun SignUpScreen(
                             IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
                                 Icon(
                                     painter = painterResource(
-                                        id = if (confirmPasswordVisible) R.drawable.ic_fullscreen_exit else R.drawable.ic_fullscreen
+                                        id = if (confirmPasswordVisible) R.drawable.ic_show else R.drawable.ic_hide
                                     ),
                                     contentDescription = stringResource(R.string.cd_toggle_password),
                                     tint = BiteSaverColors.HeaderGreen,

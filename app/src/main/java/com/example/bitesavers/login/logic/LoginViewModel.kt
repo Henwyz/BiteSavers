@@ -26,45 +26,53 @@ class LoginViewModel : ViewModel() {
         private set
     var isLoading by mutableStateOf(false)
         private set
-    var errorMessage by mutableStateOf<String?>(null)
+
+    // for the error state
+    var emailError by mutableStateOf<String?>(null)
+        private set
+    var passwordError by mutableStateOf<String?>(null)
         private set
 
     fun updateEmail(value: String) {
         email = value
-        errorMessage = null
+        emailError = null // Clear error when typing
     }
+
     fun updatePassword(value: String) {
         password = value
-        errorMessage = null
+        passwordError = null // Clear error when typing
     }
+
     fun updateSelectedRole(value: String) { selectedRole = value }
     fun toggleDropdown(expanded: Boolean) { isDropdownExpanded = expanded }
     fun togglePasswordVisibility() { passwordVisible = !passwordVisible }
 
     fun login(onSuccess: (isBusiness: Boolean) -> Unit) {
-        if (email.isBlank() || password.isBlank()) {
-            errorMessage = "Please enter both email and password"
+        // this is use for reset previous errors
+        emailError = null
+        passwordError = null
+
+        val validationResult = LoginValidation.validate(email, password)
+        if (validationResult.hasErrors) {
+            emailError = validationResult.emailError
+            passwordError = validationResult.passwordError
             return
         }
 
         viewModelScope.launch {
             isLoading = true
-            errorMessage = null
             try {
-                // Sends credentials to Supabase Auth to decrypt and verify the password hash
                 SupabaseClient.client.auth.signInWith(Email) {
                     this.email = this@LoginViewModel.email.trim()
                     this.password = this@LoginViewModel.password
                 }
 
-                // Retrieves the verified user credentials from the current auth session
                 val currentAuthUser = SupabaseClient.client.auth.currentUserOrNull()
 
                 if (currentAuthUser != null) {
                     val authId = currentAuthUser.id
                     UserSession.setUserId(authId)
 
-                    // Fetches user profile data and designated role from the public users table
                     val profiles = SupabaseClient.client
                         .from("users")
                         .select {
@@ -80,16 +88,21 @@ class LoginViewModel : ViewModel() {
 
                     onSuccess(isBusiness)
                 } else {
-                    errorMessage = "Authentication failed. Please check your credentials."
+                    emailError = "Authentication failed."
                 }
             } catch (e: Exception) {
                 val raw = e.localizedMessage.orEmpty()
-                errorMessage = when {
-                    raw.contains("Invalid login credentials", ignoreCase = true) ->
-                        "Invalid email or password"
-                    raw.contains("Email not confirmed", ignoreCase = true) ->
-                        "Please verify your email before logging in"
-                    else -> "Login failed: ${raw.ifBlank { "Unknown error" }}"
+                when {
+                    raw.contains("Invalid login credentials", ignoreCase = true) -> {
+                        emailError = "Email might not be registered or password is wrong"
+                        passwordError = "Check your password"
+                    }
+                    raw.contains("Email not confirmed", ignoreCase = true) -> {
+                        emailError = "Please verify your email first"
+                    }
+                    else -> {
+                        emailError = "Login failed: ${raw.ifBlank { "Unknown error" }}"
+                    }
                 }
             } finally {
                 isLoading = false
