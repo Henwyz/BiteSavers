@@ -64,9 +64,6 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
-        Spacer(Modifier.height(20.dp))
-
-        // Top Header Banner
         Box(
             modifier = Modifier
                 .fillMaxWidth()
