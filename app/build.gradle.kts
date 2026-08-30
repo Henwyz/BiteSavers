@@ -81,4 +81,8 @@ dependencies {
 
     //Location services
     implementation("com.google.android.gms:play-services-location:21.3.0")
+
+    // Coil for Jetpack Compose image loading
+    implementation("io.coil-kt:coil-compose:2.6.0")
+
 }

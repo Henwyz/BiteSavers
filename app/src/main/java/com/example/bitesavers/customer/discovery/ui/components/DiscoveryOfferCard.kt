@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -20,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -38,6 +41,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.SubcomposeAsyncImage
+import coil.request.ImageRequest
 import com.example.bitesavers.R
 import com.example.bitesavers.data.model.DiscoveryCategory
 import com.example.bitesavers.data.model.OfferUiModel
@@ -66,21 +71,47 @@ fun DiscoveryOfferCard(
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Box {
-            Image(
-                painter = painterResource(id = offer.imageResId),
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(150.dp)
+        ) {
+            // Asynchronous network image loading with Coil, falling back to local food drawable
+            SubcomposeAsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(offer.imageUrl)
+                    .crossfade(true)
+                    .build(),
                 contentDescription = offer.title,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(160.dp),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+                loading = {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                },
+                error = {
+                    Image(
+                        painter = painterResource(id = R.drawable.food_spaghetti),
+                        contentDescription = offer.title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             )
 
             // Badge Display: Shows FREE CLAIM for NGOs, or standard Discount % for Consumers
             Box(
                 modifier = Modifier
                     .padding(10.dp)
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(RoundedCornerShape(8.dp))
                     .background(
                         if (isNgoFree) MaterialTheme.colorScheme.primary
                         else MaterialTheme.colorScheme.tertiary
@@ -93,8 +124,8 @@ fun DiscoveryOfferCard(
                     } else {
                         stringResource(id = R.string.discount_tag, offer.discountPercent)
                     },
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    style = MaterialTheme.typography.labelMedium,
                     color = if (isNgoFree) {
                         MaterialTheme.colorScheme.onPrimary
                     } else {
@@ -104,20 +135,20 @@ fun DiscoveryOfferCard(
                 )
             }
 
-            // Bookmark / Favourite Toggle Button
+            // Bookmark / Favourite Toggle Button with ic_saved and clean inset margins
             IconButton(
                 onClick = { onToggleBookmark(offer.id) },
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(8.dp)
-                    .size(32.dp)
-                    .background(Color.Black.copy(alpha = 0.35f), CircleShape)
+                    .padding(10.dp)
+                    .size(34.dp)
+                    .background(Color.Black.copy(alpha = 0.45f), CircleShape)
             ) {
                 Icon(
-                    painter = painterResource(
-                        id = if (isSaved) R.drawable.ic_launcher_foreground else R.drawable.ic_launcher_foreground
+                    painter = painterResource(id = R.drawable.ic_saved),
+                    contentDescription = stringResource(
+                        id = if (isSaved) R.string.cd_bookmark_saved else R.string.cd_bookmark_unsaved
                     ),
-                    contentDescription = stringResource(id = R.string.cd_bookmark_icon),
                     tint = if (isSaved) MaterialTheme.colorScheme.primary else Color.White,
                     modifier = Modifier.size(18.dp)
                 )
@@ -125,11 +156,17 @@ fun DiscoveryOfferCard(
         }
 
         Column(modifier = Modifier.padding(12.dp)) {
+            // Food Title with fixed min height and max 2 lines to preserve card grid alignment
             Text(
                 text = offer.title,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.heightIn(min = 44.dp)
             )
+
+            Spacer(modifier = Modifier.height(6.dp))
 
             // Store Name & Real Dynamic Rating Row
             Row(
@@ -165,12 +202,13 @@ fun DiscoveryOfferCard(
                 }
             }
 
-            Spacer(modifier = Modifier.size(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Price Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 if (isNgoFree) {
                     Text(
@@ -200,8 +238,9 @@ fun DiscoveryOfferCard(
                 }
             }
 
-            Spacer(modifier = Modifier.size(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
+            // Location, Quantity and Closing details
             Text(
                 text = stringResource(
                     id = R.string.offer_details,
@@ -216,7 +255,7 @@ fun DiscoveryOfferCard(
     }
 }
 
-//Offer card for map pin
+// Offer card for map pin preview carousel
 @Composable
 fun CompactDiscoveryOfferCard(
     offer: OfferUiModel,
@@ -227,8 +266,7 @@ fun CompactDiscoveryOfferCard(
     val isNgoFree = userRole == UserRole.NGO && offer.isEligibleForNgoFree && offer.hoursToClose <= 1
 
     Card(
-        modifier = modifier
-            .clickable { onClick(offer) },
+        modifier = modifier.clickable { onClick(offer) },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -242,14 +280,25 @@ fun CompactDiscoveryOfferCard(
             // Image Thumbnail
             Box(
                 modifier = Modifier
-                    .size(52.dp)
+                    .size(54.dp)
                     .clip(RoundedCornerShape(8.dp))
             ) {
-                Image(
-                    painter = painterResource(id = offer.imageResId),
+                SubcomposeAsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(offer.imageUrl)
+                        .crossfade(true)
+                        .build(),
                     contentDescription = offer.title,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    error = {
+                        Image(
+                            painter = painterResource(id = R.drawable.food_spaghetti),
+                            contentDescription = offer.title,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
                 )
 
                 if (isNgoFree) {
@@ -335,10 +384,11 @@ private fun DiscoveryOfferCardConsumerPreview() {
             DiscoveryOfferCard(
                 offer = OfferUiModel(
                     id = "1",
-                    title = "Bolognese Spaghetti",
+                    title = "Bolognese Spaghetti with Signature Minced Beef Meatballs",
                     storeName = "Mr Lee Western Food",
                     storeRating = 4.7,
                     imageResId = R.drawable.food_spaghetti,
+                    imageUrl = null,
                     discountPercent = 30,
                     currentPrice = 10.50,
                     originalPrice = 15.00,
@@ -368,10 +418,11 @@ private fun DiscoveryOfferCardNgoPreview() {
             DiscoveryOfferCard(
                 offer = OfferUiModel(
                     id = "2",
-                    title = "Butter Croissant",
+                    title = "Artisan Butter Croissant",
                     storeName = "Madam Lim Bakery",
                     storeRating = 4.9,
                     imageResId = R.drawable.food_spaghetti,
+                    imageUrl = null,
                     discountPercent = 50,
                     currentPrice = 5.00,
                     originalPrice = 10.00,
@@ -388,37 +439,6 @@ private fun DiscoveryOfferCardNgoPreview() {
                 userRole = UserRole.NGO,
                 onClick = {},
                 onToggleBookmark = {}
-            )
-        }
-    }
-}
-
-@Preview(showBackground = true, name = "Compact Card - Consumer View")
-@Composable
-private fun CompactDiscoveryOfferCardConsumerPreview() {
-    BiteSaversTheme {
-        Box(modifier = Modifier.padding(12.dp)) {
-            CompactDiscoveryOfferCard(
-                offer = OfferUiModel(
-                    id = "o1",
-                    title = "Bolognese Spaghetti",
-                    storeName = "Mr Lee Western Food",
-                    storeRating = 4.8,
-                    imageResId = R.drawable.food_spaghetti,
-                    discountPercent = 30,
-                    currentPrice = 10.50,
-                    originalPrice = 15.00,
-                    distanceKm = 1.9,
-                    quantityLeft = 10,
-                    hoursToClose = 2,
-                    category = DiscoveryCategory.HOT_MEALS,
-                    isEligibleForNgoFree = false,
-                    liveTemperature = 65.0,
-                    storageType = "HOT",
-                    description = "Signature spaghetti with minced beef."
-                ),
-                userRole = UserRole.CONSUMER,
-                onClick = {}
             )
         }
     }

@@ -59,6 +59,7 @@ import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
 import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.annotations.IconFactory
 import org.maplibre.android.annotations.MarkerOptions
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.location.LocationComponentActivationOptions
@@ -77,6 +78,7 @@ fun DiscoveryMapSection(
     selectedOfferId: String?,
     onMarkerClick: (String?) -> Unit,
     onOfferNavigate: (String) -> Unit,
+    onLocationResolved: (Double, Double) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
     val isInPreview = LocalInspectionMode.current
@@ -102,7 +104,8 @@ fun DiscoveryMapSection(
                 userLongitude = userLongitude,
                 isExpanded = isExpanded,
                 onToggleExpand = { isExpanded = !isExpanded },
-                onMarkerClick = onMarkerClick
+                onMarkerClick = onMarkerClick,
+                onLocationResolved = onLocationResolved
             )
         }
 
@@ -161,6 +164,7 @@ private fun DiscoveryMapMapLibre(
     isExpanded: Boolean,
     onToggleExpand: () -> Unit,
     onMarkerClick: (String?) -> Unit,
+    onLocationResolved: (Double, Double) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val styleUrl = "https://api.maptiler.com/maps/streets-v4/style.json?key=3OJ2B5f1qI0Cqbcpt5xf"
@@ -253,10 +257,11 @@ private fun DiscoveryMapMapLibre(
                                 locationComponent.renderMode = RenderMode.COMPASS
                                 locationComponent.zoomWhileTracking(15.5)
 
-                                // Center map on initial load
-                                if (!hasCenteredInitially) {
-                                    val lastLoc = locationComponent.lastKnownLocation
-                                    if (lastLoc != null) {
+                                // Center map on initial load and notify caller of current GPS coordinates
+                                val lastLoc = locationComponent.lastKnownLocation
+                                if (lastLoc != null) {
+                                    onLocationResolved(lastLoc.latitude, lastLoc.longitude)
+                                    if (!hasCenteredInitially) {
                                         map.animateCamera(
                                             CameraUpdateFactory.newLatLngZoom(
                                                 LatLng(lastLoc.latitude, lastLoc.longitude),
@@ -264,7 +269,9 @@ private fun DiscoveryMapMapLibre(
                                             )
                                         )
                                         hasCenteredInitially = true
-                                    } else if (userLatitude != null && userLongitude != null) {
+                                    }
+                                } else if (userLatitude != null && userLongitude != null) {
+                                    if (!hasCenteredInitially) {
                                         map.animateCamera(
                                             CameraUpdateFactory.newLatLngZoom(
                                                 LatLng(userLatitude, userLongitude),
@@ -276,6 +283,19 @@ private fun DiscoveryMapMapLibre(
                                 }
                             } catch (e: Exception) {
                                 e.printStackTrace()
+                            }
+
+                            // Draws markers when the style finishes loading on initial startup
+                            val iconFactory = IconFactory.getInstance(context)
+                            val markerIcon = iconFactory.defaultMarker()
+                            markers.forEach { markerData ->
+                                map.addMarker(
+                                    MarkerOptions()
+                                        .position(LatLng(markerData.latitude, markerData.longitude))
+                                        .title(markerData.labelText)
+                                        .snippet(markerData.storeId)
+                                        .icon(markerIcon)
+                                )
                             }
 
                             map.setOnMarkerClickListener { marker ->
@@ -305,14 +325,19 @@ private fun DiscoveryMapMapLibre(
             },
             update = { view ->
                 view.getMapAsync { map ->
+                    // Ensures markers refresh smoothly when ViewModel state updates
                     if (map.style != null) {
                         map.clear()
+                        val iconFactory = IconFactory.getInstance(context)
+                        val markerIcon = iconFactory.defaultMarker()
+
                         markers.forEach { markerData ->
                             map.addMarker(
                                 MarkerOptions()
                                     .position(LatLng(markerData.latitude, markerData.longitude))
                                     .title(markerData.labelText)
                                     .snippet(markerData.storeId)
+                                    .icon(markerIcon)
                             )
                         }
                     }
@@ -320,12 +345,12 @@ private fun DiscoveryMapMapLibre(
             }
         )
 
-        // Floating Action Controls: Recenter & Expand Buttons
+        // Floating Action Controls: Recenter & Expand Buttons with comfortable spacing
         Row(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             // Recenter to user's live position
             IconButton(
@@ -339,6 +364,7 @@ private fun DiscoveryMapMapLibre(
                                 locComponent.cameraMode = CameraMode.TRACKING
                                 val lastKnown = locComponent.lastKnownLocation
                                 if (lastKnown != null) {
+                                    onLocationResolved(lastKnown.latitude, lastKnown.longitude)
                                     map.animateCamera(
                                         CameraUpdateFactory.newLatLngZoom(
                                             LatLng(lastKnown.latitude, lastKnown.longitude),
@@ -356,6 +382,7 @@ private fun DiscoveryMapMapLibre(
                                 ?: locationManager?.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
 
                             if (gpsLocation != null) {
+                                onLocationResolved(gpsLocation.latitude, gpsLocation.longitude)
                                 map.animateCamera(
                                     CameraUpdateFactory.newLatLngZoom(
                                         LatLng(gpsLocation.latitude, gpsLocation.longitude),
@@ -382,14 +409,14 @@ private fun DiscoveryMapMapLibre(
                     }
                 },
                 modifier = Modifier
-                    .size(36.dp)
-                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f), CircleShape)
+                    .size(38.dp)
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.92f), CircleShape)
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_my_location),
-                    contentDescription = null,
+                    contentDescription = stringResource(id = R.string.cd_recenter_location),
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
 
@@ -397,16 +424,16 @@ private fun DiscoveryMapMapLibre(
             IconButton(
                 onClick = onToggleExpand,
                 modifier = Modifier
-                    .size(36.dp)
-                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f), CircleShape)
+                    .size(38.dp)
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.92f), CircleShape)
             ) {
                 Icon(
                     painter = painterResource(
                         id = if (isExpanded) R.drawable.ic_fullscreen_exit else R.drawable.ic_fullscreen
                     ),
-                    contentDescription = null,
+                    contentDescription = stringResource(id = R.string.cd_toggle_fullscreen),
                     tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
@@ -452,7 +479,7 @@ private fun DiscoveryMapPlaceholder(
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, name = "Discovery Map - Default")
 @Composable
 private fun DiscoveryMapSectionPreview() {
     BiteSaversTheme {
@@ -460,27 +487,67 @@ private fun DiscoveryMapSectionPreview() {
             markers = listOf(
                 NearbyDealMarkerUiModel(
                     storeId = "s1",
-                    storeName = "Bakery Delights",
+                    storeName = "Raja Uda Aroma Bakery",
                     labelText = "2 DEALS",
-                    latitude = 3.1466,
-                    longitude = 101.6958,
+                    latitude = 5.4325,
+                    longitude = 100.3855,
                     offers = listOf(
                         OfferUiModel(
                             id = "1",
-                            title = "Butter Croissant",
-                            storeName = "Bakery Delights",
+                            title = "Golden Egg Tart Box (4 pcs)",
+                            storeName = "Raja Uda Aroma Bakery",
                             imageResId = R.drawable.food_spaghetti,
-                            discountPercent = 30,
-                            currentPrice = 4.50,
-                            originalPrice = 6.50,
-                            distanceKm = 0.5,
+                            discountPercent = 50,
+                            currentPrice = 8.00,
+                            originalPrice = 16.00,
+                            distanceKm = 0.4,
                             quantityLeft = 5,
                             hoursToClose = 2,
                             category = DiscoveryCategory.BAKERY,
-                            isEligibleForNgoFree = false,
+                            isEligibleForNgoFree = true,
                             liveTemperature = 25.0,
                             storageType = "ROOM_TEMP",
-                            description = "Freshly baked croissant."
+                            description = "Freshly baked egg tarts."
+                        )
+                    )
+                )
+            ),
+            selectedOfferId = null,
+            onMarkerClick = {},
+            onOfferNavigate = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Discovery Map - Selected Store Carousel")
+@Composable
+private fun DiscoveryMapSectionSelectedPreview() {
+    BiteSaversTheme {
+        DiscoveryMapSection(
+            markers = listOf(
+                NearbyDealMarkerUiModel(
+                    storeId = "s1",
+                    storeName = "Raja Uda Aroma Bakery",
+                    labelText = "2 DEALS",
+                    latitude = 5.4325,
+                    longitude = 100.3855,
+                    offers = listOf(
+                        OfferUiModel(
+                            id = "1",
+                            title = "Golden Egg Tart Box (4 pcs)",
+                            storeName = "Raja Uda Aroma Bakery",
+                            imageResId = R.drawable.food_spaghetti,
+                            discountPercent = 50,
+                            currentPrice = 8.00,
+                            originalPrice = 16.00,
+                            distanceKm = 0.4,
+                            quantityLeft = 5,
+                            hoursToClose = 2,
+                            category = DiscoveryCategory.BAKERY,
+                            isEligibleForNgoFree = true,
+                            liveTemperature = 25.0,
+                            storageType = "ROOM_TEMP",
+                            description = "Freshly baked egg tarts."
                         )
                     )
                 )

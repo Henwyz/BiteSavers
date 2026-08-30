@@ -43,39 +43,37 @@ fun DiscoveryHeader(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 20.dp),
+                .padding(horizontal = 16.dp, vertical = 18.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
-                Text(
-                    text = user.greeting,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            // Displays user name and clear food-saving purpose without clutter
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = user.displayName,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = stringResource(id = R.string.location_format, location),
-                    style = MaterialTheme.typography.bodySmall,
+                    text = stringResource(id = R.string.discovery_header_subtitle),
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            // Action area containing notification bell and user profile avatar
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_notification),
                     contentDescription = stringResource(id = R.string.cd_notifications),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier
-                        .size(22.dp)
+                        .size(24.dp)
                         .clickable { onNotificationClick() }
                 )
-
-                Spacer(modifier = Modifier.size(12.dp))
 
                 Text(
                     text = user.avatarInitials,
@@ -97,11 +95,11 @@ private fun DiscoveryHeaderPreview() {
     BiteSaversTheme {
         DiscoveryHeader(
             user = UserUiModel(
-                greeting = "👋 Good Evening",
+                greeting = "",
                 displayName = "Sarah Tan",
                 avatarInitials = "ST"
             ),
-            location = "Tanjung Bungah, Penang",
+            location = "Penang",
             onNotificationClick = {}
         )
     }

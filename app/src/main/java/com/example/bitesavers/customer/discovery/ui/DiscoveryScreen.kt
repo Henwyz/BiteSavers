@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -37,6 +38,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitesavers.R
 import com.example.bitesavers.customer.discovery.data.DiscoveryUiState
+import com.example.bitesavers.customer.discovery.data.UserUiModel
 import com.example.bitesavers.customer.discovery.logic.DiscoveryViewModel
 import com.example.bitesavers.customer.discovery.logic.LocationUtils.fetchDeviceCoordinates
 import com.example.bitesavers.customer.discovery.ui.components.DiscoveryFilterRow
@@ -44,7 +46,11 @@ import com.example.bitesavers.customer.discovery.ui.components.DiscoveryHeader
 import com.example.bitesavers.customer.discovery.ui.components.DiscoveryMapSection
 import com.example.bitesavers.customer.discovery.ui.components.DiscoveryOfferCard
 import com.example.bitesavers.customer.discovery.ui.components.DiscoverySearchBar
+import com.example.bitesavers.data.model.DiscoveryCategory
+import com.example.bitesavers.data.model.OfferUiModel
+import com.example.bitesavers.data.model.UserRole
 import com.example.bitesavers.data.repository.SavedRepository
+import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @Composable
 fun DiscoveryRoute(
@@ -99,6 +105,10 @@ fun DiscoveryRoute(
 
     DiscoveryScreen(
         state = uiState,
+        onLocationResolved = { lat, lng ->
+            // Forwards map engine GPS fix to recalculate distance from real location
+            viewModel.updateUserLocation(lat, lng)
+        },
         onEvent = { event ->
             when (event) {
                 is DiscoveryUiEvent.OnSearchQueryChanged ->
@@ -136,6 +146,7 @@ fun DiscoveryRoute(
 @Composable
 fun DiscoveryScreen(
     state: DiscoveryUiState,
+    onLocationResolved: (Double, Double) -> Unit = { _, _ -> },
     onEvent: (DiscoveryUiEvent) -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -162,7 +173,7 @@ fun DiscoveryScreen(
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     DiscoveryHeader(
                         user = state.user,
-                        location = "Kuala Lumpur",
+                        location = "Butterworth, Penang",
                         onNotificationClick = {
                             onEvent(DiscoveryUiEvent.OnNotificationClicked)
                         }
@@ -196,7 +207,8 @@ fun DiscoveryScreen(
                             userLongitude = state.userLongitude,
                             selectedOfferId = state.selectedMapOfferId,
                             onMarkerClick = { onEvent(DiscoveryUiEvent.OnMapMarkerClicked(it)) },
-                            onOfferNavigate = { onEvent(DiscoveryUiEvent.OnMapOfferNavigate(it)) }
+                            onOfferNavigate = { onEvent(DiscoveryUiEvent.OnMapOfferNavigate(it)) },
+                            onLocationResolved = onLocationResolved
                         )
 
                         Text(
@@ -217,7 +229,7 @@ fun DiscoveryScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "No active deals found",
+                                text = stringResource(id = R.string.discovery_empty_deals),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -248,6 +260,44 @@ fun DiscoveryScreen(
         SnackbarHost(
             hostState = snackbarHostState,
             modifier = Modifier.align(Alignment.BottomCenter)
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Discovery Screen Preview")
+@Composable
+private fun DiscoveryScreenPreview() {
+    BiteSaversTheme {
+        DiscoveryScreen(
+            state = DiscoveryUiState(
+                isLoading = false,
+                user = UserUiModel(
+                    greeting = "",
+                    displayName = "Sarah Tan",
+                    avatarInitials = "ST"
+                ),
+                offers = listOf(
+                    OfferUiModel(
+                        id = "1",
+                        title = "Golden Egg Tart Box (4 pcs)",
+                        storeName = "Raja Uda Aroma Bakery",
+                        storeRating = 4.8,
+                        imageResId = R.drawable.food_spaghetti,
+                        discountPercent = 50,
+                        currentPrice = 8.00,
+                        originalPrice = 16.00,
+                        distanceKm = 0.3,
+                        quantityLeft = 5,
+                        hoursToClose = 2,
+                        category = DiscoveryCategory.BAKERY,
+                        isEligibleForNgoFree = true,
+                        liveTemperature = 25.0,
+                        storageType = "ROOM_TEMP",
+                        description = "Freshly baked egg tarts."
+                    )
+                )
+            ),
+            onEvent = {}
         )
     }
 }

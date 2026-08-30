@@ -1,10 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- ================================================================= -->
+    <!-- APP GLOBAL & COMMON UTILITIES                                     -->
+    <!-- ================================================================= -->
     <string name="app_name">BiteSavers</string>
+    <string name="currency_rm">RM %1$.2f</string>
+    <string name="text_to">to</string>
 
-    <!-- ================================================================= -->
-    <!-- GLOBAL / NAVIGATION                                               -->
-    <!-- ================================================================= -->
+    <!-- Global Accessibility / Content Descriptions -->
+    <string name="cd_navigate_back">Navigate Back</string>
+    <string name="cd_back_button">Back</string>
+    <string name="cd_close">Close</string>
+    <string name="cd_notifications">Notifications</string>
+    <string name="cd_search">Search</string>
+    <string name="cd_decrease">Decrease</string>
+    <string name="cd_increase">Increase</string>
+
+    <!-- Navigation Bar -->
     <string name="nav_home">Home</string>
     <string name="nav_orders">Orders</string>
     <string name="nav_saved">Saved</string>
@@ -12,37 +24,60 @@
     <string name="nav_listings">Listings</string>
     <string name="nav_analytics">Analytics</string>
 
-    <string name="cd_navigate_back">Navigate Back</string>
-    <string name="cd_close">Close</string>
-    <string name="cd_notifications">Notifications</string>
-    <string name="cd_search">Search</string>
-    <string name="currency_rm">RM %1$.2f</string>
-
-    <!-- Login & SignUp Resources -->
+    <!-- ================================================================= -->
+    <!-- AUTHENTICATION (LOGIN & SIGN UP)                                  -->
+    <!-- ================================================================= -->
+    <!-- Login Screen -->
     <string name="login_tagline">Save food. Save money. Save Earth</string>
+    <string name="welcome_back">Welcome Back 👋</string>
+    <string name="login_email_label">Email Address</string>
+    <string name="login_password_label">Password</string>
+    <string name="account_type_label">Account Type</string>
+    <string name="role_consumer">Consumer</string>
+    <string name="role_business">Business</string>
+    <string name="forgot_password">Forgot password ?</string>
+    <string name="log_in_button">Log In</string>
+    <string name="no_account_yet">No account yet? </string>
+    <string name="sign_up_free">Sign up free</string>
+
+    <!-- Sign Up Screen -->
+    <string name="create_account">Create Account</string>
+    <string name="full_name">Full Name</string>
+    <string name="business_name">Business Name</string>
+    <string name="email_address">Email Address</string>
+    <string name="contact_number">Contact Number</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="passwords_do_not_match">Passwords do not match!</string>
+    <string name="terms_agreement">I agree to the </string>
+    <string name="terms_policy">Terms of Service &amp; Privacy Policy</string>
+    <string name="already_have_account">Already have an account? </string>
+    <string name="sign_in">Sign in.</string>
+    <string name="role_toggle_consumer">🛒 Consumer</string>
+    <string name="role_toggle_business">🏪 Business</string>
+
+    <!-- Auth Placeholders & Content Descriptions -->
     <string name="signup_placeholder_name_consumer">Sarah Tan</string>
     <string name="signup_placeholder_name_business">BiteSaver Cafe</string>
     <string name="signup_placeholder_email">sarah@gmail.com</string>
     <string name="signup_placeholder_phone">012-3456789</string>
     <string name="signup_placeholder_password">min 8 characters</string>
-    <string name="role_toggle_consumer">🛒 Consumer</string>
-    <string name="role_toggle_business">🏪 Business</string>
     <string name="cd_email_icon">Email Icon</string>
     <string name="cd_password_icon">Password Icon</string>
     <string name="cd_account_icon">Account Icon</string>
     <string name="cd_toggle_password">Toggle Password Visibility</string>
-    <string name="cd_back_button">Back</string>
 
     <!-- ================================================================= -->
-    <!-- DISCOVERY PAGE                                                    -->
+    <!-- CUSTOMER DISCOVERY & MAP                                          -->
     <!-- ================================================================= -->
-    <!-- Header -->
+    <!-- Header & Search -->
     <string name="greeting_prefix">👋 Good Evening</string>
+    <string name="discovery_header_subtitle">Ready to save surplus food?</string>
     <string name="search_hint_food_items">Search places</string>
     <string name="avatar_initials">SL</string>
     <string name="location_format">📍 %1$s</string>
 
-    <!-- Filters -->
+    <!-- Categories -->
     <string name="category_all">All</string>
     <string name="category_bakery">Bakery</string>
     <string name="category_hot_meals">Hot Meals</string>
@@ -50,14 +85,23 @@
     <string name="category_beverages">Beverages</string>
     <string name="category_free">Claim for Free</string>
 
-    <!-- Sections -->
+    <!-- Map Elements & Controls -->
+    <string name="map_preview_placeholder">Map Preview Placeholder</string>
+    <string name="deals_count">%1$d DEALS</string>
+    <string name="cd_recenter_location">Recenter map to my location</string>
+    <string name="cd_toggle_fullscreen">Toggle map fullscreen</string>
+    <string name="cd_map_recenter">Recenter to current location</string>
+    <string name="cd_map_expand">Expand Map</string>
+    <string name="cd_map_collapse">Collapse Map</string>
+
+    <!-- Section Titles & Item Meta -->
+    <string name="discovery_recommended_title">Recommended for you</string>
     <string name="nearby_deals_title">Nearby Deals</string>
     <string name="offers_title">Offers</string>
     <string name="bags_nearby">%1$d bags nearby</string>
     <string name="distance_km">%1$.1f km</string>
     <string name="time_left_hours">%1$d h</string>
-    <string name="map_preview_placeholder">Map Preview Placeholder</string>
-    <string name="discovery_recommended_title">Recommended for you</string>
+    <string name="hours_remaining_format">%d hr left</string>
 
     <!-- Offer Card -->
     <string name="original_price">RM %1$.2f</string>
@@ -65,59 +109,52 @@
     <string name="offer_details">%1$.1f km • %2$d left • closes in %3$dh</string>
     <string name="badge_ngo_free">NGO FREE CLAIM</string>
     <string name="price_free">RM 0.00</string>
+    <string name="cd_store_rating">Store Rating</string>
 
     <!-- Empty State -->
+    <string name="discovery_empty_deals">No active deals found</string>
     <string name="empty_state_title">No deals found</string>
     <string name="empty_state_message">We couldn\'t find any food deals matching your search or selected filter.</string>
     <string name="empty_state_clear_filters">Clear Filters</string>
 
-    <!-- Discovery Map & Rating Strings -->
-    <string name="cd_store_rating">Store Rating</string>
-    <string name="cd_map_recenter">Recenter to current location</string>
-    <string name="cd_map_expand">Expand Map</string>
-    <string name="cd_map_collapse">Collapse Map</string>
-    <string name="deals_count">%1$d DEALS</string>
-
-    <!-- Food Detail Dynamic Tags -->
-    <string name="detail_rating_format">⭐ %1$.1f Rating</string>
-    <string name="detail_co2_saved_format">🌱 %1$.1f kg CO₂ saved</string>
-
     <!-- ================================================================= -->
-    <!-- FOOD DETAIL PAGE                                                  -->
+    <!-- CUSTOMER FOOD DETAIL PAGE                                         -->
     <!-- ================================================================= -->
     <string name="detail_top_bar_title">Offer Details</string>
     <string name="action_reserve_now">Reserve Now</string>
     <string name="detail_about_title">About this surplus item</string>
     <string name="detail_category_format">Category: %1$s</string>
     <string name="detail_saved_amount">Saved RM%1$.2f</string>
-
-    <!-- Hero & Selector -->
     <string name="cd_food_item_image">Food Item Image</string>
     <string name="detail_select_quantity">Select Quantity</string>
-    <string name="cd_decrease">Decrease</string>
-    <string name="cd_increase">Increase</string>
 
-    <!-- Safety Banner -->
+    <!-- Smart Box Safety Banner -->
     <string name="cd_safety_status_icon">Safety Status Icon</string>
     <string name="detail_safety_verified">Smart Box Safety Verified</string>
     <string name="detail_temperature_alert">Temperature Alert!</string>
     <string name="detail_live_temp_active">Live temp monitoring active</string>
 
-    <!-- Status & Tags -->
+    <!-- Details Tags & Impact -->
     <string name="detail_expires_in_label">⏰ EXPIRES IN</string>
     <string name="detail_expires_in_time">%1$dh 00m</string>
     <string name="detail_stock_left_label">🛒 STOCK LEFT</string>
     <string name="detail_distance_away">📍 %1$.1f km away</string>
+    <string name="detail_rating_format">⭐ %1$.1f Rating</string>
     <string name="detail_rating_dummy">⭐ 4.8 (120+ ratings)</string>
+    <string name="detail_co2_saved_format">🌱 %1$.1f kg CO₂ saved</string>
     <string name="detail_co2_saved_dummy">🌱 ~1.2kg CO₂ saved</string>
 
-    <!--========== Saved Foods Page ===========-->
+    <!-- ================================================================= -->
+    <!-- SAVED FOODS PAGE                                                  -->
+    <!-- ================================================================= -->
     <string name="saved_screen_title">Saved Items</string>
     <string name="saved_empty_title">No saved items yet</string>
     <string name="saved_empty_subtitle">Tap the heart/bookmark icon on any food item to save it for later.</string>
     <string name="badge_sold_out">SOLD OUT</string>
     <string name="action_remove_saved">Remove from Saved</string>
     <string name="cd_bookmark_icon">Bookmark</string>
+    <string name="cd_bookmark_saved">Remove from saved</string>
+    <string name="cd_bookmark_unsaved">Save to bookmarks</string>
 
     <!-- ================================================================= -->
     <!-- CHECKOUT & PAYMENT SELECTION                                      -->
@@ -130,7 +167,7 @@
     <string name="checkout_total_payment">Total Payment</string>
     <string name="action_confirm_payment">Confirm Payment</string>
 
-    <!-- Card Component -->
+    <!-- Payment Method Component -->
     <string name="checkout_payment_title">Payment Method</string>
     <string name="checkout_payment_method_title">Payment Method</string>
     <string name="checkout_change_action">Change</string>
@@ -138,11 +175,9 @@
     <string name="checkout_payment_balance_format">Balance: RM %1$.2f</string>
     <string name="checkout_balance_format">Available: RM %1$.2f</string>
 
-    <!-- Bottom Sheet Selector -->
+    <!-- Bottom Sheet & Methods -->
     <string name="payment_sheet_title">Select Payment Method</string>
     <string name="payment_sheet_manage_action">Manage / Add Payment Methods</string>
-
-    <!-- Payment Names & Options -->
     <string name="payment_bitesaver_pay">BiteSaver Pay</string>
     <string name="payment_method_bitesaver_pay">BiteSaver Pay</string>
     <string name="payment_tng_title">Touch \'n Go eWallet</string>
@@ -155,13 +190,11 @@
     <string name="payment_no_cards">No cards saved yet.</string>
     <string name="badge_default">Default</string>
 
-    <!-- Payment Error Messages -->
+    <!-- Payment Errors & Validations -->
     <string name="error_insufficient_bitesaver_balance">Insufficient funds in BiteSaver Pay.</string>
     <string name="error_tng_not_linked">Please link your Touch \'n Go eWallet before paying.</string>
     <string name="error_bank_card_not_registered">Please add a valid Debit/Credit Card before paying.</string>
     <string name="error_order_failed_general">Payment failed. Please check your balance or try again.</string>
-
-    <!-- Card Form Validations -->
     <string name="error_invalid_card_number">Card number must be 16 digits</string>
     <string name="error_invalid_expiry">Enter a valid future MM/YY</string>
     <string name="error_invalid_cvv">CVV must be 3 digits</string>
@@ -202,7 +235,7 @@
     <string name="action_get_otp">Get Verification Code</string>
     <string name="action_confirm_link_account">Confirm &amp; Link Account</string>
 
-    <!-- Card Form -->
+    <!-- Add Card Form -->
     <string name="payment_title_add_card">Add Debit / Credit Card</string>
     <string name="field_card_number">Card Number</string>
     <string name="hint_card_number">16 digits</string>
@@ -224,6 +257,7 @@
     <string name="order_success_subtitle">Your food rescue reservation is confirmed. Show your ticket at pickup.</string>
     <string name="btn_view_ticket">View Pickup Ticket</string>
 
+    <!-- Ticket View -->
     <string name="ticket_header_title">Pickup Ticket</string>
     <string name="ticket_header_subtitle">Show this to staff at pickup</string>
     <string name="ticket_status_confirmed">• RESERVATION CONFIRMED</string>
@@ -243,25 +277,24 @@
     <string name="ticket_impact_message">You saved RM %1$d and prevented -%2$.1f kg of food waste. Thank you!</string>
 
     <!-- ================================================================= -->
-    <!-- ORDERS TAB                                                        -->
+    <!-- ORDERS HISTORY TAB                                                -->
     <!-- ================================================================= -->
-    <string name="orders_price_format">RM %1$.2f</string>
     <string name="orders_header_title">My Orders</string>
     <string name="orders_header_summary_format">%1$d completed • RM %2$.2f saved</string>
-    <string name="cd_orders_notification_icon">Notifications</string>
-    <string name="cd_orders_profile_avatar">User Avatar</string>
-
+    <string name="orders_price_format">RM %1$.2f</string>
     <string name="orders_tab_active">Active</string>
     <string name="orders_tab_history">History</string>
     <string name="orders_status_completed">Completed</string>
     <string name="orders_status_cancelled">Cancelled</string>
     <string name="orders_status_ready">Ready for Pickup</string>
-    <string name="cd_orders_time_icon">Time icon</string>
     <string name="orders_empty_active">No active orders</string>
     <string name="orders_empty_history">No order history</string>
+    <string name="cd_orders_notification_icon">Notifications</string>
+    <string name="cd_orders_profile_avatar">User Avatar</string>
+    <string name="cd_orders_time_icon">Time icon</string>
 
     <!-- ================================================================= -->
-    <!-- PROFILE PAGE                                                      -->
+    <!-- CUSTOMER PROFILE                                                  -->
     <!-- ================================================================= -->
     <string name="profile_sign_out">Sign Out</string>
     <string name="profile_wallet_label">E-WALLET BALANCE</string>
@@ -280,23 +313,24 @@
     <!-- ================================================================= -->
     <!-- NGO REGISTRATION & MANAGEMENT                                     -->
     <!-- ================================================================= -->
+    <!-- Registration Form -->
     <string name="ngo_registration_title">Register as NGO</string>
     <string name="ngo_registration_subtitle">Tell us about your organization so we can verify your NGO status and unlock free surplus food claims.</string>
     <string name="ngo_field_org_name">Organization Name</string>
+    <string name="ngo_field_registration_type">Registration Type</string>
     <string name="ngo_field_registration_number">Registration Number</string>
     <string name="ngo_field_contact_name">Contact Person Name</string>
     <string name="ngo_field_contact_email">Contact Email</string>
     <string name="ngo_field_contact_phone">Contact Phone Number</string>
     <string name="ngo_field_cause_category">Cause Category</string>
     <string name="ngo_field_address">Organization Address</string>
-    <string name="ngo_agree_terms">I confirm this information is accurate and agree to the Terms of Service.</string>
-    <string name="ngo_submit_application">Submit Application</string>
-
-    <string name="ngo_field_registration_type">Registration Type</string>
     <string name="ngo_field_certificate">Certificate of Registration (PDF)</string>
     <string name="ngo_certificate_placeholder">Tap to upload PDF</string>
     <string name="ngo_select_category_placeholder">Select a Category</string>
+    <string name="ngo_agree_terms">I confirm this information is accurate and agree to the Terms of Service.</string>
+    <string name="ngo_submit_application">Submit Application</string>
 
+    <!-- Form Placeholders -->
     <string name="ngo_placeholder_org_name">e.g. Kechara Soup Kitchen</string>
     <string name="ngo_placeholder_registration_ssm">e.g. 202301012345 or 1234567-A</string>
     <string name="ngo_placeholder_registration_ros">e.g. PPM-002-10-04091985</string>
@@ -305,33 +339,37 @@
     <string name="ngo_placeholder_phone">e.g. 012-3456789</string>
     <string name="ngo_placeholder_address">e.g. No 12, Jalan Ampang, 50450 Kuala Lumpur</string>
 
+    <!-- Terms & Conditions Dialog -->
     <string name="ngo_tnc_dialog_title">Terms &amp; Conditions</string>
     <string name="ngo_tnc_dialog_confirm">Agree &amp; Submit</string>
     <string name="ngo_tnc_dialog_message_register">Please agree to the Terms of Service to submit your application.</string>
     <string name="ngo_tnc_dialog_message_edit">Please agree to the Terms of Service to change the NGO details.</string>
 
-    <string name="ngo_edit_title">Change NGO Details</string>
-    <string name="ngo_submit_edit">Change NGO Details</string>
+    <!-- Details & Edit Management -->
     <string name="ngo_details_title">NGO Details</string>
     <string name="ngo_details_edit_button">Edit</string>
     <string name="ngo_details_empty">No NGO details found.</string>
+    <string name="ngo_details_pending_banner">This information may not be accurate. Your change request is still pending approval.</string>
+    <string name="ngo_details_certificate_verified">Certificate Verified</string>
+    <string name="ngo_details_certificate_label">Certificate of Registration</string>
+
+    <string name="ngo_edit_title">Change NGO Details</string>
+    <string name="ngo_submit_edit">Change NGO Details</string>
+    <string name="ngo_field_reason_for_change">Reason for Change</string>
+    <string name="ngo_placeholder_reason_for_change">e.g. Updated contact person after staff change</string>
 
     <string name="ngo_pending_title">Update Submitted</string>
     <string name="ngo_pending_message">Your NGO details will be updated once approved. In the meantime, your current NGO details remain active.</string>
     <string name="ngo_pending_understood">Understood</string>
 
-    <string name="ngo_field_reason_for_change">Reason for Change</string>
-    <string name="ngo_placeholder_reason_for_change">e.g. Updated contact person after staff change</string>
     <string name="ngo_no_changes_title">No Changes Made</string>
     <string name="ngo_no_changes_message">You haven\'t changed any details. Please update at least one field before submitting.</string>
     <string name="ngo_dialog_ok">OK</string>
 
     <string name="ngo_pending_edit_dialog_title">Change Request Pending</string>
     <string name="ngo_pending_edit_dialog_message">You already have a change request pending approval. Please wait for approval before submitting another change.</string>
-    <string name="ngo_details_pending_banner">This information may not be accurate. Your change request is still pending approval.</string>
-    <string name="ngo_details_certificate_verified">Certificate Verified</string>
-    <string name="ngo_details_certificate_label">Certificate of Registration</string>
 
+    <!-- Disable NGO Account -->
     <string name="ngo_details_disable_button">Disable NGO Account</string>
     <string name="ngo_disable_title">Disable NGO Account</string>
     <string name="ngo_disable_confirm_title">Are you sure you want to disable your NGO account?</string>
@@ -342,7 +380,7 @@
     <string name="ngo_disabled_dialog_message">Your NGO account has been disabled.</string>
 
     <!-- ================================================================= -->
-    <!-- DASHBOARD                                                         -->
+    <!-- BUSINESS DASHBOARD & STORE SETUP                                  -->
     <!-- ================================================================= -->
     <string name="dashboard_sample_date">Friday, 28 Aug 2026</string>
     <string name="dashboard_store_name">Madam Lim Bakery</string>
@@ -362,8 +400,16 @@
     <string name="dashboard_waste_kg_format">%1$.1f kg</string>
     <string name="dashboard_currency_format">RM %.0f</string>
 
+    <!-- Restaurant Registration -->
+    <string name="register_restaurant_title">Register Your Restaurant 🏪</string>
+    <string name="restaurant_name">Restaurant Name</string>
+    <string name="address">Address</string>
+    <string name="opening_time">Opening Time</string>
+    <string name="closing_time">Closing Time</string>
+    <string name="save_and_continue">Save &amp; Continue</string>
+
     <!-- ================================================================= -->
-    <!-- MERCHANT / INVENTORY & LISTINGS                                   -->
+    <!-- BUSINESS INVENTORY & LISTINGS                                     -->
     <!-- ================================================================= -->
     <string name="my_listings_title">My Listing</string>
     <string name="my_listings_subtitle">%1$d items · %2$d active</string>
@@ -372,6 +418,7 @@
     <string name="btn_delete">Delete</string>
     <string name="remaining_count">%1$d remaining</string>
 
+    <!-- Add / Edit Food Form -->
     <string name="add_food_title">Add Surplus Food</string>
     <string name="upload_photo_title">Upload Food Photo</string>
     <string name="upload_photo_subtitle">Tap to take photo or pick from gallery</string>
@@ -385,7 +432,6 @@
     <string name="label_quantity">Quantity</string>
     <string name="label_pickup_window">Pickup Window</string>
     <string name="label_expiry_time">Expiry Time</string>
-    <string name="text_to">to</string>
     <string name="hint_price_original">4.50</string>
     <string name="hint_price_discount">1.50</string>
     <string name="hint_time_default">06:00 PM</string>
@@ -393,6 +439,8 @@
     <string name="hint_pickup_end">07:00 PM</string>
     <string name="btn_update_listing">Update Listing</string>
     <string name="btn_publish_listing">Publish Listing</string>
+
+    <!-- Photo Selection Sheet -->
     <string name="title_choose_photo_source">Choose Photo Source</string>
     <string name="action_take_photo">Take Photo</string>
     <string name="action_choose_from_gallery">Choose from gallery</string>
@@ -417,6 +465,7 @@
     <string name="analytics_this_week">This Week</string>
     <string name="analytics_meals_per_day_title">Meals Rescued per Day</string>
 
+    <!-- Business Profile Info -->
     <string name="business_verified_merchant">Verified Merchant</string>
     <string name="business_reviews_suffix">reviews</string>
     <string name="business_info_title">Business Information</string>
@@ -426,8 +475,9 @@
     <string name="business_operating_hours_title">Operating Hours</string>
 
     <!-- ================================================================= -->
-    <!-- STATIC / INFORMATIONAL (PRIVACY, HELP, ABOUT)                    -->
+    <!-- STATIC / INFORMATIONAL (PRIVACY, HELP, ABOUT)                     -->
     <!-- ================================================================= -->
+    <!-- Privacy & Security -->
     <string name="privacy_data_collected_title">Data We Collect</string>
     <string name="privacy_data_collected_body">We collect your name, email, phone number, and pickup location to coordinate food reservations. Order history is used to calculate your personal impact stats.</string>
     <string name="privacy_data_use_title">How We Use Your Data</string>
@@ -437,6 +487,7 @@
     <string name="privacy_account_security_title">Account Security</string>
     <string name="privacy_account_security_body">Use a strong, unique password for your account. You can sign out at any time from the top of your Profile page.</string>
 
+    <!-- FAQ & Support -->
     <string name="help_faq_title">Frequently Asked Questions</string>
     <string name="faq_q_reserve">How do I reserve a surprise bag?</string>
     <string name="faq_a_reserve">Browse nearby deals on the Home tab, tap a listing, choose your quantity, and confirm your reservation. You\'ll get a pickup ticket with a collection PIN.</string>
@@ -450,48 +501,11 @@
     <string name="help_contact_email">support@bitesaver.app</string>
     <string name="help_contact_phone">+60 3-1234 5678</string>
 
+    <!-- About BiteSaver -->
     <string name="about_tagline">Turning unsold food into saved value.</string>
     <string name="about_mission_title">Our Mission</string>
     <string name="about_mission_body">BiteSaver connects food businesses with surplus, unsold-but-safe food to nearby consumers at a discount, and to registered NGOs for free — reducing food waste while making meals more affordable.</string>
     <string name="about_sdg_title">SDG Alignment</string>
     <string name="about_sdg_body">This app supports UN Sustainable Development Goal 12 (Responsible Consumption and Production) and Goal 2 (Zero Hunger).</string>
     <string name="about_version_label">Version 1.0.0 (MVP)</string>
-
-    <!-- ================================================================= -->
-    <!--                         Sign Up Page                              -->
-    <!-- ================================================================= -->
-
-    <string name="create_account">Create Account</string>
-    <string name="full_name">Full Name</string>
-    <string name="business_name">Business Name</string>
-    <string name="email_address">Email Address</string>
-    <string name="contact_number">Contact Number</string>
-    <string name="password">Password</string>
-    <string name="confirm_password">Confirm Password</string>
-    <string name="passwords_do_not_match">Passwords do not match!</string>
-    <string name="terms_agreement">I agree to the </string>
-    <string name="terms_policy">Terms of Service &amp; Privacy Policy</string>
-    <string name="already_have_account">Already have an account? </string>
-    <string name="sign_in">Sign in.</string>
-
-
-    <!-- Login Page Strings -->
-    <string name="welcome_back">Welcome Back 👋</string>
-    <string name="login_email_label">Email Address</string>
-    <string name="login_password_label">Password</string>
-    <string name="account_type_label">Account Type</string>
-    <string name="role_consumer">Consumer</string>
-    <string name="role_business">Business</string>
-    <string name="forgot_password">Forgot password ?</string>
-    <string name="log_in_button">Log In</string>
-    <string name="no_account_yet">No account yet? </string>
-    <string name="sign_up_free">Sign up free</string>
-
-    <!-- Register Restaurant Page Strings -->
-    <string name="register_restaurant_title">Register Your Restaurant 🏪</string>
-    <string name="restaurant_name">Restaurant Name</string>
-    <string name="address">Address</string>
-    <string name="opening_time">Opening Time</string>
-    <string name="closing_time">Closing Time</string>
-    <string name="save_and_continue">Save &amp; Continue</string>
 </resources>
