@@ -70,6 +70,7 @@ fun SignUpScreen(
             .fillMaxSize()
             .background(BiteSaverColors.HeaderGreen)
     ) {
+        Spacer(Modifier.height(10.dp))
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -154,6 +155,16 @@ fun SignUpScreen(
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = BiteSaverColors.SoftGreen,
                             unfocusedContainerColor = BiteSaverColors.SoftGreen,
+                            disabledContainerColor = BiteSaverColors.SoftGreen,
+                            errorContainerColor = BiteSaverColors.SoftGreen,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            errorTextColor = Color.Black,
+                            disabledTextColor = Color.Black,
+                            focusedPlaceholderColor = Color.DarkGray,
+                            unfocusedPlaceholderColor = Color.DarkGray,
+                            errorBorderColor = Color.Red,
+                            errorCursorColor = Color.Red,
                             focusedBorderColor = if (viewModel.fullNameError != null) Color.Red else BiteSaverColors.PrimaryGreen,
                             unfocusedBorderColor = if (viewModel.fullNameError != null) Color.Red else BiteSaverColors.PrimaryGreen
                         ),
@@ -186,6 +197,16 @@ fun SignUpScreen(
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = BiteSaverColors.SoftGreen,
                             unfocusedContainerColor = BiteSaverColors.SoftGreen,
+                            disabledContainerColor = BiteSaverColors.SoftGreen,
+                            errorContainerColor = BiteSaverColors.SoftGreen,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            errorTextColor = Color.Black,
+                            disabledTextColor = Color.Black,
+                            focusedPlaceholderColor = Color.DarkGray,
+                            unfocusedPlaceholderColor = Color.DarkGray,
+                            errorBorderColor = Color.Red,
+                            errorCursorColor = Color.Red,
                             focusedBorderColor = if (viewModel.emailError != null) Color.Red else BiteSaverColors.PrimaryGreen,
                             unfocusedBorderColor = if (viewModel.emailError != null) Color.Red else BiteSaverColors.PrimaryGreen
                         )
@@ -218,6 +239,16 @@ fun SignUpScreen(
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = BiteSaverColors.SoftGreen,
                             unfocusedContainerColor = BiteSaverColors.SoftGreen,
+                            disabledContainerColor = BiteSaverColors.SoftGreen,
+                            errorContainerColor = BiteSaverColors.SoftGreen,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            errorTextColor = Color.Black,
+                            disabledTextColor = Color.Black,
+                            focusedPlaceholderColor = Color.DarkGray,
+                            unfocusedPlaceholderColor = Color.DarkGray,
+                            errorBorderColor = Color.Red,
+                            errorCursorColor = Color.Red,
                             focusedBorderColor = if (viewModel.phoneError != null) Color.Red else BiteSaverColors.PrimaryGreen,
                             unfocusedBorderColor = if (viewModel.phoneError != null) Color.Red else BiteSaverColors.PrimaryGreen
                         )
@@ -261,6 +292,16 @@ fun SignUpScreen(
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = BiteSaverColors.SoftGreen,
                             unfocusedContainerColor = BiteSaverColors.SoftGreen,
+                            disabledContainerColor = BiteSaverColors.SoftGreen,
+                            errorContainerColor = BiteSaverColors.SoftGreen,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            errorTextColor = Color.Black,
+                            disabledTextColor = Color.Black,
+                            focusedPlaceholderColor = Color.DarkGray,
+                            unfocusedPlaceholderColor = Color.DarkGray,
+                            errorBorderColor = Color.Red,
+                            errorCursorColor = Color.Red,
                             focusedBorderColor = if (viewModel.passwordError != null) Color.Red else BiteSaverColors.PrimaryGreen,
                             unfocusedBorderColor = if (viewModel.passwordError != null) Color.Red else BiteSaverColors.PrimaryGreen
                         ),
@@ -305,6 +346,16 @@ fun SignUpScreen(
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = BiteSaverColors.SoftGreen,
                             unfocusedContainerColor = BiteSaverColors.SoftGreen,
+                            disabledContainerColor = BiteSaverColors.SoftGreen,
+                            errorContainerColor = BiteSaverColors.SoftGreen,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            errorTextColor = Color.Black,
+                            disabledTextColor = Color.Black,
+                            focusedPlaceholderColor = Color.DarkGray,
+                            unfocusedPlaceholderColor = Color.DarkGray,
+                            errorBorderColor = Color.Red,
+                            errorCursorColor = Color.Red,
                             focusedBorderColor = if (viewModel.confirmPasswordError != null) Color.Red else BiteSaverColors.PrimaryGreen,
                             unfocusedBorderColor = if (viewModel.confirmPasswordError != null) Color.Red else BiteSaverColors.PrimaryGreen
                         ),
@@ -369,6 +420,9 @@ fun SignUpScreen(
                         shape = RoundedCornerShape(50),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = BiteSaverColors.PrimaryGreen,
+                            disabledContainerColor = BiteSaverColors.PrimaryGreen.copy(alpha = 0.5f),
+                            contentColor = BiteSaverColors.White,
+                            disabledContentColor = BiteSaverColors.White.copy(alpha = 0.8f)
                         )
                     ) {
                         if (viewModel.isLoading) {

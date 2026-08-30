@@ -10,6 +10,7 @@ import com.example.bitesavers.business.navigation.BusinessNavHost
 import com.example.bitesavers.customer.navigation.CustomerNavHost
 import com.example.bitesavers.login.ui.LoginScreen
 import com.example.bitesavers.login.ui.SignUpScreen
+import com.example.bitesavers.login.ui.TermsScreen
 
 @Composable
 fun AppNavHost(
@@ -54,12 +55,21 @@ fun AppNavHost(
                     navController.popBackStack()
                 },
                 onNavigateToTerms = {
-                    // Navigate to terms screen or web url if needed
+                    navController.navigate(RootRoute.Terms.route)
                 }
             )
         }
 
-        // 3. Customer Navigation Subgraph
+        // 3. Terms & Privacy Policy Screen
+        composable(RootRoute.Terms.route) {
+            TermsScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // 4. Customer Navigation Subgraph
         composable(RootRoute.CustomerGraph.route) {
             CustomerNavHost(
                 onLogout = {
@@ -70,7 +80,7 @@ fun AppNavHost(
             )
         }
 
-        // 4. Business Navigation Subgraph
+        // 5. Business Navigation Subgraph
         composable(RootRoute.BusinessGraph.route) {
             BusinessNavHost(
                 onLogout = {

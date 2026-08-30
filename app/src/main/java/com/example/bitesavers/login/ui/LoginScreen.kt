@@ -173,6 +173,12 @@ fun LoginScreen(
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = BiteSaverColors.SoftGreen,
                             unfocusedContainerColor = BiteSaverColors.SoftGreen,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            errorBorderColor = Color.Red,
+                            errorCursorColor = Color.Red,
+                            focusedPlaceholderColor = Color.DarkGray,
+                            unfocusedPlaceholderColor = Color.DarkGray,
                             focusedBorderColor = if (viewModel.emailError != null) Color.Red else BiteSaverColors.PrimaryGreen,
                             unfocusedBorderColor = if (viewModel.emailError != null) Color.Red else BiteSaverColors.PrimaryGreen
                         ),
@@ -230,6 +236,12 @@ fun LoginScreen(
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = BiteSaverColors.SoftGreen,
                             unfocusedContainerColor = BiteSaverColors.SoftGreen,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            errorBorderColor = Color.Red,
+                            errorCursorColor = Color.Red,
+                            focusedPlaceholderColor = Color.DarkGray,
+                            unfocusedPlaceholderColor = Color.DarkGray,
                             focusedBorderColor = if (viewModel.passwordError != null) Color.Red else BiteSaverColors.PrimaryGreen,
                             unfocusedBorderColor = if (viewModel.passwordError != null) Color.Red else BiteSaverColors.PrimaryGreen
                         ),
@@ -284,6 +296,9 @@ fun LoginScreen(
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedContainerColor = BiteSaverColors.SoftGreen,
                                 unfocusedContainerColor = BiteSaverColors.SoftGreen,
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black,
+                                errorTextColor = Color.Black,
                                 focusedBorderColor = BiteSaverColors.PrimaryGreen,
                                 unfocusedBorderColor = BiteSaverColors.PrimaryGreen
                             )
