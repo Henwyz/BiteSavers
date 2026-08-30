@@ -19,8 +19,8 @@ import androidx.compose.ui.unit.dp
 import com.example.bitesavers.R
 import com.example.bitesavers.data.model.DiscoveryCategory
 import com.example.bitesavers.data.model.OfferUiModel
+import com.example.bitesavers.data.model.getDisplayNameRes
 import com.example.bitesavers.ui.theme.BiteSaversTheme
-import java.util.Locale
 
 @Composable
 fun FoodDetailHeader(
@@ -28,7 +28,8 @@ fun FoodDetailHeader(
     modifier: Modifier = Modifier
 ) {
     val savedAmount = offer.originalPrice - offer.currentPrice
-    val categoryString = offer.category.name.lowercase().replaceFirstChar { it.titlecase(Locale.US) }
+    // Resolves localized label directly from XML resources (e.g., "Hot Meals", "Bakery")
+    val categoryString = stringResource(id = offer.category.getDisplayNameRes())
 
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -82,7 +83,35 @@ fun FoodDetailHeader(
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, name = "Food Detail Header - Hot Meals")
+@Composable
+private fun FoodDetailHeaderHotMealsPreview() {
+    BiteSaversTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            FoodDetailHeader(
+                offer = OfferUiModel(
+                    id = "e3",
+                    title = "Chicken Bolognese Pasta",
+                    storeName = "Apollo Western & Pasta",
+                    imageResId = R.drawable.food_spaghetti,
+                    discountPercent = 45,
+                    currentPrice = 9.90,
+                    originalPrice = 18.00,
+                    distanceKm = 0.3,
+                    quantityLeft = 6,
+                    hoursToClose = 15,
+                    category = DiscoveryCategory.HOT_MEALS,
+                    isEligibleForNgoFree = true,
+                    liveTemperature = 25.0,
+                    storageType = "ROOM_TEMP",
+                    description = "Hearty minced chicken pasta in slow-simmered tomato sauce."
+                )
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true, name = "Food Detail Header - Bakery")
 @Composable
 private fun FoodDetailHeaderPreview() {
     BiteSaversTheme {

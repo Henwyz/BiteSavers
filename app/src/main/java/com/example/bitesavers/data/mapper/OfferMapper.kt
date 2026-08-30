@@ -5,9 +5,7 @@ import com.example.bitesavers.data.model.DiscoveryCategory
 import com.example.bitesavers.data.model.OfferUiModel
 import com.example.bitesavers.data.remote.dto.OfferDto
 import com.example.bitesavers.data.remote.dto.StoreDto
-import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Locale
 
 fun OfferDto.toUiModel(store: StoreDto?): OfferUiModel {
     val origPrice = originalPrice ?: 0.0
@@ -16,7 +14,14 @@ fun OfferDto.toUiModel(store: StoreDto?): OfferUiModel {
         (((origPrice - discPrice) / origPrice) * 100).toInt()
     } else 0
 
-    val mappedCategory = when (category?.uppercase()) {
+    // Normalizes input strings by converting spaces and dashes to underscores so "Hot Meals" matches HOT_MEALS
+    val normalizedCategory = category
+        ?.trim()
+        ?.uppercase()
+        ?.replace(" ", "_")
+        ?.replace("-", "_")
+
+    val mappedCategory = when (normalizedCategory) {
         "BAKERY" -> DiscoveryCategory.BAKERY
         "HOT_MEALS" -> DiscoveryCategory.HOT_MEALS
         "DESSERTS" -> DiscoveryCategory.DESSERTS
@@ -49,7 +54,7 @@ fun OfferDto.toUiModel(store: StoreDto?): OfferUiModel {
     )
 }
 
-
+// Computes remaining hours until store closes, accounting for regular operating hours and midnight rollovers
 private fun calculateHoursRemaining(closingTimeString: String?): Int {
     if (closingTimeString.isNullOrBlank()) return 2
 
@@ -59,11 +64,16 @@ private fun calculateHoursRemaining(closingTimeString: String?): Int {
         val currentMinute = currentCalendar.get(Calendar.MINUTE)
 
         val closingParts = closingTimeString.split(":")
-        val closingHour = closingParts[0].toInt()
-        val closingMinute = if (closingParts.size > 1) closingParts[1].toInt() else 0
+        val closingHour = closingParts[0].trim().toInt()
+        val closingMinute = if (closingParts.size > 1) closingParts[1].trim().toInt() else 0
 
         val currentTotalMinutes = (currentHour * 60) + currentMinute
-        val closingTotalMinutes = (closingHour * 60) + closingMinute
+        var closingTotalMinutes = (closingHour * 60) + closingMinute
+
+        // Accounts for stores with operating hours extending past midnight into early morning
+        if (closingTotalMinutes < currentTotalMinutes) {
+            closingTotalMinutes += 24 * 60
+        }
 
         val diffMinutes = closingTotalMinutes - currentTotalMinutes
         if (diffMinutes <= 0) 1 else (diffMinutes / 60).coerceAtLeast(1)

@@ -17,8 +17,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.bitesavers.R
 import com.example.bitesavers.customer.details.data.FoodDetailUiState
 import com.example.bitesavers.customer.details.logic.FoodDetailViewModel
 import com.example.bitesavers.customer.details.ui.components.FoodDetailCheckoutBar
@@ -30,6 +32,9 @@ import com.example.bitesavers.customer.details.ui.components.FoodDetailSafetyBan
 import com.example.bitesavers.customer.details.ui.components.FoodDetailStatusRow
 import com.example.bitesavers.customer.details.ui.components.FoodDetailTagsRow
 import com.example.bitesavers.customer.details.ui.components.FoodDetailTopBar
+import com.example.bitesavers.data.model.DiscoveryCategory
+import com.example.bitesavers.data.model.OfferUiModel
+import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 /**
  * THE ROUTE WRAPPER
@@ -163,5 +168,54 @@ fun FoodDetailScreen(
                 }
             }
         }
+    }
+}
+
+// Renders the full details screen with mock offer data in Android Studio preview
+@Preview(showBackground = true, name = "Food Detail Screen - Populated")
+@Composable
+private fun FoodDetailScreenPreview() {
+    BiteSaversTheme {
+        FoodDetailScreen(
+            state = FoodDetailUiState(
+                isLoading = false,
+                isSaved = false,
+                quantity = 1,
+                totalPrice = 9.90,
+                temperatureText = "25.0°C – within safe room_temp storage zone",
+                isTemperatureSafe = true,
+                offer = OfferUiModel(
+                    id = "e3333333-3333-3333-3333-333333333333",
+                    title = "Chicken Bolognese Pasta",
+                    storeName = "Apollo Western & Pasta",
+                    storeRating = 4.9,
+                    imageResId = R.drawable.food_spaghetti,
+                    discountPercent = 45,
+                    currentPrice = 9.90,
+                    originalPrice = 18.00,
+                    distanceKm = 0.3,
+                    quantityLeft = 6,
+                    hoursToClose = 16,
+                    category = DiscoveryCategory.HOT_MEALS,
+                    isEligibleForNgoFree = true,
+                    liveTemperature = 25.0,
+                    storageType = "ROOM_TEMP",
+                    description = "Hearty minced chicken pasta in slow-simmered tomato sauce."
+                )
+            ),
+            onEvent = {}
+        )
+    }
+}
+
+// Shows the loading progress indicator state
+@Preview(showBackground = true, name = "Food Detail Screen - Loading")
+@Composable
+private fun FoodDetailScreenLoadingPreview() {
+    BiteSaversTheme {
+        FoodDetailScreen(
+            state = FoodDetailUiState(isLoading = true),
+            onEvent = {}
+        )
     }
 }
