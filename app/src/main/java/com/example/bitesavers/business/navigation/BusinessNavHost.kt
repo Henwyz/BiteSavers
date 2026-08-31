@@ -68,8 +68,18 @@ fun BusinessNavHost(
                     metrics = dynamicMetrics,
                     viewModel = dashboardViewModel,
                     onNavigateToAddFood = { navController.navigate(BusinessScreen.AddFood.route) },
-                    onNavigateToListings = { navController.navigate(BusinessScreen.Listings.route) },
-                    onNavigateToAnalytics = { navController.navigate(BusinessScreen.Analytics.route) }
+                    onNavigateToListings = {
+                        navController.navigate(BusinessScreen.Listings.route) {
+                            popUpTo(navController.graph.startDestinationId) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        } },
+                    onNavigateToAnalytics = {
+                        navController.navigate(BusinessScreen.Analytics.route) {
+                            popUpTo(navController.graph.startDestinationId) {saveState = true}
+                            launchSingleTop = true
+                            restoreState = true
+                        }}
                 )
             }
 
