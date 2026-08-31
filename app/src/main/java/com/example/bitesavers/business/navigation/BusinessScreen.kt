@@ -7,4 +7,5 @@ sealed class BusinessScreen(val route: String) {
     object Analytics : BusinessScreen("business_analytics_screen")
     object Profile : BusinessScreen("business_profile_screen")
     object RegisterRestaurant : BusinessScreen("register_restaurant_screen")
+    object Temperature : BusinessScreen("temperature_screen")
 }

@@ -25,6 +25,7 @@ import com.example.bitesavers.business.inventory.ui.MyListingScreen
 import com.example.bitesavers.business.profile.ui.BusinessProfileScreen
 import com.example.bitesavers.business.restaurant.ui.RegisterRestaurantScreen
 import com.example.bitesavers.business.sharedUI.BusinessBottomNavigationBar
+import com.example.bitesavers.business.temperature.ui.TemperatureScreen
 
 @Composable
 fun BusinessNavHost(
@@ -79,7 +80,10 @@ fun BusinessNavHost(
                             popUpTo(navController.graph.startDestinationId) {saveState = true}
                             launchSingleTop = true
                             restoreState = true
-                        }}
+                        }},
+                    onNavigateToTemperature = {
+                        navController.navigate(BusinessScreen.Temperature.route)
+                    }
                 )
             }
 
@@ -125,6 +129,13 @@ fun BusinessNavHost(
                             popUpTo(BusinessScreen.RegisterRestaurant.route) { inclusive = true }
                         }
                     }
+                )
+            }
+
+            // 7. TEMPERATURE MONITOR SCREEN
+            composable(BusinessScreen.Temperature.route) {
+                TemperatureScreen(
+                    onBackClick = { navController.popBackStack() }
                 )
             }
         }

@@ -450,6 +450,15 @@
     <string name="btn_close">Close</string>
 
     <!-- ================================================================= -->
+    <!-- BUSINESS TEMPERATURE                                              -->
+    <!-- ================================================================= -->
+    <string name="temperature_monitor">Temperature Monitor</string>
+    <string name="esp32_live_sensor">ESP32 Live Sensor</string>
+    <string name="live">LIVE</string>
+    <string name="all_connected_units">All Connected Units</string>
+    <string name="select_a_unit">Select a unit</string>
+
+    <!-- ================================================================= -->
     <!-- BUSINESS ANALYTICS & PROFILE                                      -->
     <!-- ================================================================= -->
     <string name="analytics_title">Analytics</string>

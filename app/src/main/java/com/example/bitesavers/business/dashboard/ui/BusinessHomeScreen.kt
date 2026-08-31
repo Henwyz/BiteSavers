@@ -44,7 +44,8 @@ fun BusinessHomeScreen(
     viewModel: DashboardViewModel = viewModel(),
     onNavigateToAddFood: () -> Unit = {},
     onNavigateToListings: () -> Unit = {},
-    onNavigateToAnalytics: () -> Unit = {}
+    onNavigateToAnalytics: () -> Unit = {},
+    onNavigateToTemperature: () -> Unit = {}
 ) {
     val recentOrders by viewModel.recentOrders.collectAsState()
 
@@ -201,7 +202,8 @@ fun BusinessHomeScreen(
                                 label = "Temperature",
                                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                                 contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                onClick = onNavigateToTemperature
                             )
                             QuickActionButton(
                                 icon = "\uD83D\uDCCA",
