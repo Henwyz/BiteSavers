@@ -1,19 +1,17 @@
 package com.example.bitesavers.business.inventory.ui
 
+import android.app.TimePickerDialog
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
-import android.inputmethodservice.Keyboard
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.result.launch
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,7 +28,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -53,12 +50,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.toString
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -74,9 +68,7 @@ import com.example.bitesavers.business.inventory.logic.InventoryViewModel
 import com.example.bitesavers.R
 import com.example.bitesavers.business.inventory.data.ListingItem
 import com.example.bitesavers.data.model.DiscoveryCategory
-import com.example.bitesavers.ui.theme.BiteSaversTheme
 import java.io.File
-import kotlin.contracts.contract
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -94,10 +86,11 @@ fun AddFoodScreen(
     var originalPrice by remember { mutableStateOf("") }
     var discountPrice by remember { mutableStateOf("") }
     var quantity by remember { mutableStateOf("") }
-    var expiryTime by remember { mutableStateOf("06:00 PM")}
+    var weightKg by remember { mutableStateOf("") }
     var pickupStartTime by remember { mutableStateOf("05:00 PM") }
     var pickupEndTime by remember { mutableStateOf("07:00 PM") }
 
+    // selects photo and takes photo
     var myFoodImage by remember { mutableStateOf<Bitmap?>(null) }
     var showImagePick by remember { mutableStateOf(false) }
     var showFullImagePreview by remember { mutableStateOf(false) }
@@ -109,18 +102,23 @@ fun AddFoodScreen(
         originalPrice = editingItem?.originalPrice?.toString() ?: ""
         discountPrice = editingItem?.discountPrice?.toString() ?: ""
         quantity = editingItem?.quantity?.toString() ?: ""
-        expiryTime = editingItem?.expiryTime ?: "06:00 PM"
+        weightKg = editingItem?.weightKg?.toString() ?: ""
+        pickupStartTime = editingItem?.pickupStart ?: "05:00 PM"
+        pickupEndTime = editingItem?.pickupEnd ?: "07:00 PM"
         myFoodImage = editingItem?.imageBitmap
     }
 
+    // Validate mandatory form fields before enabling publish
     val isFormValid = foodName.isNotBlank() &&
             category.isNotBlank() &&
             (originalPrice.toDoubleOrNull() ?: 0.0) > 0.0 &&
             (discountPrice.toDoubleOrNull() ?: 0.0) > 0.0 &&
             ((discountPrice.toDoubleOrNull() ?: 0.0) <= (originalPrice.toDoubleOrNull() ?: 0.0)) &&
             (quantity.toIntOrNull() ?: 0) > 0 &&
-            expiryTime.isNotBlank()
+            pickupStartTime.isNotBlank() &&
+            pickupEndTime.isNotBlank()
 
+    // Activity launcher for gallery media selection
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -137,6 +135,7 @@ fun AddFoodScreen(
 
     var tempImageUri by remember { mutableStateOf<Uri?>(null) }
 
+    // Activity launcher for camera capture via temporary content URI
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
@@ -473,7 +472,7 @@ fun AddFoodScreen(
                 }
             }
 
-            // quantity and expiry time
+            // quantity and weight
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -489,10 +488,11 @@ fun AddFoodScreen(
                 }
                 Box(modifier = Modifier.weight(1f)) {
                     FormField(
-                        label = stringResource(R.string.label_expiry_time),
-                        value = expiryTime,
-                        placeholder = "06:00 PM",
-                        onValueChange = { expiryTime = it }
+                        label = "Est. Weight (kg)",
+                        value = weightKg,
+                        placeholder = "0.35",
+                        keyboardType = KeyboardType.Decimal,
+                        onValueChange = { weightKg = it }
                     )
                 }
             }
@@ -511,20 +511,43 @@ fun AddFoodScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(modifier = Modifier.weight(1f)) {
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable {
+                                TimePickerDialog(
+                                    context,
+                                    { _, selectedHour, selectedMinute ->
+                                        val amPm = if (selectedHour >= 12) "PM" else "AM"
+                                        val hourIn12Format = if (selectedHour % 12 == 0) 12 else selectedHour % 12
+                                        // Format time string explicitly using device system locale
+                                        pickupStartTime = String.format(java.util.Locale.getDefault(), "%02d:%02d %s", hourIn12Format, selectedMinute, amPm)
+                                    },
+                                    17, // Default hour: 5 PM
+                                    0,  // Default minute: 00
+                                    false // 12-hour format with AM/PM toggle
+                                ).show()
+                            }
+                    ) {
                         OutlinedTextField(
                             value = pickupStartTime,
-                            onValueChange = { pickupStartTime = it },
-                            placeholder = { Text("05:00 PM",
-                                fontSize = 13.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                            onValueChange = {},
+                            placeholder = {
+                                Text(
+                                    text = "05:00 PM",
+                                    fontSize = 13.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            },
+                            readOnly = true, // disable keyboard edit, prevent somebody type wrong like (05:00pm) (05:00) or (5)
+                            enabled = false,
                             singleLine = true,
-                            shape = RoundedCornerShape(10.dp),
+                            shape = RoundedCornerShape(size = 10.dp),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                disabledBorderColor = MaterialTheme.colorScheme.outline
                             ),
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -537,20 +560,43 @@ fun AddFoodScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    Box(modifier = Modifier.weight(1f)) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable {
+                                // Launch native Android TimePickerDialog for End Time
+                                val calendar = java.util.Calendar.getInstance()
+                                TimePickerDialog(
+                                    context,
+                                    { _, selectedHour, selectedMinute ->
+                                        val amPm = if (selectedHour >= 12) "PM" else "AM"
+                                        val hourIn12Format = if (selectedHour % 12 == 0) 12 else selectedHour % 12
+                                        pickupEndTime = String.format("%02d:%02d %s", hourIn12Format, selectedMinute, amPm)
+                                    },
+                                    19, // Default hour: 7 PM
+                                    0,  // Default minute: 00
+                                    false // 12-hour format with AM/PM toggle
+                                ).show()
+                            }
+                    ) {
                         OutlinedTextField(
                             value = pickupEndTime,
-                            onValueChange = { pickupEndTime = it },
-                            placeholder = { Text("07:00 PM",
-                                fontSize = 13.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                            onValueChange = {},
+                            placeholder = {
+                                Text(
+                                    text = "07:00 PM",
+                                    fontSize = 13.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            },
+                            readOnly = true, // Disable keyboard editing
+                            enabled = false, // Route touch events strictly to the parent Box
                             singleLine = true,
-                            shape = RoundedCornerShape(10.dp),
+                            shape = RoundedCornerShape(size = 10.dp),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                disabledBorderColor = MaterialTheme.colorScheme.outline
                             ),
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -571,21 +617,25 @@ fun AddFoodScreen(
                             originalPrice = originalPrice.toDoubleOrNull() ?: editingItem.originalPrice,
                             discountPrice = discountPrice.toDoubleOrNull() ?: editingItem.discountPrice,
                             quantity = quantity.toIntOrNull() ?: editingItem.quantity,
-                            expiryTime = expiryTime.trim(),
+                            weightKg = weightKg.toDoubleOrNull() ?: editingItem.weightKg,
+                            pickupStart = pickupStartTime.trim(),
+                            pickupEnd = pickupEndTime.trim(),
                             imageBitmap = myFoodImage
                         )
                         viewModel.updateListing(updated)
                     } else {
                         val newItem = ListingItem(
-                            id = System.currentTimeMillis().toString(),
+                            id = java.util.UUID.randomUUID().toString(),
                             name = foodName.trim(),
                             description = description.trim().ifBlank { "" },
                             category = category.trim(),
                             originalPrice = originalPrice.toDoubleOrNull() ?: 0.0,
                             discountPrice = discountPrice.toDoubleOrNull() ?: 0.0,
                             quantity = quantity.toIntOrNull() ?: 1,
-                            expiryTime = expiryTime.trim(),
-                            status = "Active",
+                            weightKg = weightKg.toDoubleOrNull() ?: 0.3,
+                            pickupStart = pickupStartTime.trim(),
+                            pickupEnd = pickupEndTime.trim(),
+                            status = "ACTIVE",
                             imageBitmap = myFoodImage
                         )
                         viewModel.addListing(newItem)

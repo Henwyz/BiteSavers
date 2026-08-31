@@ -49,6 +49,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.example.bitesavers.R
 import com.example.bitesavers.business.inventory.data.ListingItem
 import com.example.bitesavers.business.inventory.logic.InventoryViewModel
@@ -62,7 +63,9 @@ fun MyListingScreen(
     onNavigateToEditFood: (String)-> Unit = {}
 ) {
     val listings by viewModel.listings.collectAsState()
-    val activeCount = listings.count { it.status == "Active" }
+
+    // Compare status case-insensitively to match both "ACTIVE" and "Active"
+    val activeCount = listings.count { it.status.equals("Active", ignoreCase = true) }
 
     Scaffold(
         topBar = {
@@ -144,7 +147,16 @@ fun ListingCard(item: ListingItem,
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (item.imageBitmap != null){
+                    if (!item.imageUrl.isNullOrBlank()) {
+                        AsyncImage(
+                            model = item.imageUrl,
+                            contentDescription = item.name,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(8.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                } else if (item.imageBitmap != null){
                         Image(
                             bitmap = item.imageBitmap.asImageBitmap(),
                             contentDescription = item.name,
@@ -167,8 +179,9 @@ fun ListingCard(item: ListingItem,
                         fontSize = 16.sp,
                         color = MaterialTheme.colorScheme.onSurface
                     )
+
                     Text(
-                        text = "${item.category} - Exp: ${item.expiryTime}",
+                        text = "${item.category} ",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -206,6 +219,19 @@ fun ListingCard(item: ListingItem,
                         text = stringResource(R.string.remaining_count, item.quantity),
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    // 1. Construct explicit pickup duration string without fallback to store hours
+                    val pickupWindowDisplay = if (!item.pickupStart.isNullOrBlank() && !item.pickupEnd.isNullOrBlank()) {
+                        "${item.pickupStart} - ${item.pickupEnd}"
+                    } else {
+                        item.pickupEnd ?: "Pickup time pending"
+                    }
+                    Text(
+                        text = "Pickup Time: $pickupWindowDisplay",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(top = 2.dp)
                     )
                 }
 

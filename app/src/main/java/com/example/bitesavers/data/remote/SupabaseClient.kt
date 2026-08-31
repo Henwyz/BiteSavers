@@ -3,6 +3,7 @@ package com.example.bitesavers.data.remote
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.gotrue.Auth
 import io.github.jan.supabase.postgrest.Postgrest
+import io.github.jan.supabase.storage.Storage
 
 object SupabaseClient {
 
@@ -13,6 +14,7 @@ object SupabaseClient {
         ) {
             install(Postgrest) // Table queries
             install(Auth)      // Secure authentication engine
+            install(Storage)   //File/Photo Storage Plugin
         }
     }
 }
