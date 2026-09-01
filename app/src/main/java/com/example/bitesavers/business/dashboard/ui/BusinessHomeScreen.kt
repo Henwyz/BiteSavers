@@ -30,13 +30,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import com.example.bitesavers.business.dashboard.data.CheckOrderData
 import com.example.bitesavers.business.dashboard.data.DashboardMetrics
 import com.example.bitesavers.business.dashboard.data.RecentOrderItem
 import com.example.bitesavers.business.dashboard.logic.DashboardViewModel
+import com.example.bitesavers.business.navigation.BusinessScreen
 
 @Composable
 fun BusinessHomeScreen(
@@ -44,6 +48,7 @@ fun BusinessHomeScreen(
     viewModel: DashboardViewModel = viewModel(),
     onNavigateToAddFood: () -> Unit = {},
     onNavigateToListings: () -> Unit = {},
+    onNavigateToOrders: () -> Unit = {},
     onNavigateToAnalytics: () -> Unit = {},
     onNavigateToTemperature: () -> Unit = {}
 ) {
@@ -237,14 +242,21 @@ fun BusinessHomeScreen(
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.clickable{ /*Handle view all orders action */}
+                        modifier = Modifier.clickable{
+                            onNavigateToOrders()
+                        }
                     )
                 }
             }
 
             // Recent orders list items
-            items(recentOrders) { order ->
-                RecentOrderCard(order = order)
+            items(recentOrders.take(3)) { order ->
+                RecentOrderCard(
+                    order = order,
+                    onClick = { clickedOrderId ->
+
+                    }
+                )
             }
         }
     }
@@ -274,16 +286,28 @@ fun MetricCard(
             ) {
                 Text(text = icon, fontSize = 16.sp)
             }
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = label,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = contentColor,
-                )
-            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = value,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = label,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = subText,
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+            )
         }
     }
+}
 
     @Composable
     fun QuickActionButton(
@@ -316,12 +340,16 @@ fun MetricCard(
     }
 
     @Composable
-    fun RecentOrderCard(order: RecentOrderItem) {
+    fun RecentOrderCard(
+        order: CheckOrderData,
+        onClick: (String) -> Unit = {}
+    ) {
         Card(
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
             modifier = Modifier.fillMaxWidth()
+                .clickable{ onClick(order.id) }
         ) {
             Row(
                 modifier = Modifier
@@ -329,30 +357,44 @@ fun MetricCard(
                     .padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(text = "\uD83E\uDD50", fontSize = 20.sp)
+                if (!order.displayImageUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = order.displayImageUrl,
+                        contentDescription = order.displayItemName,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(
+                                MaterialTheme.colorScheme.surfaceVariant,
+                                RoundedCornerShape(8.dp)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = "\uD83E\uDD50", fontSize = 20.sp)
+                    }
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = order.title,
+                        text = "${order.displayItemName} x${order.quantity}",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = order.customerInfo,
+                        text = "Customer #${order.formattedCustomerName}",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Text(
-                    text = "RM %.2f".format(order.price),
+                    text = "RM %.2f".format(order.totalPrice),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary

@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.Dispatcher
 import java.io.ByteArrayOutputStream
 import java.util.UUID
 
@@ -24,15 +25,14 @@ class InventoryViewModel : ViewModel() {
     private val _listings = MutableStateFlow<List<ListingItem>>(emptyList())
     val listings: StateFlow<List<ListingItem>> = _listings.asStateFlow()
 
-    // Holds the item being edited (null means creating new food)
     var selectedItemForEdit by mutableStateOf<ListingItem?>(null)
 
     init {
-        fetchListings() // open screen and automatically get the data from supabase
+        fetchListings()
     }
 
     fun fetchListings() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 val result = SupabaseClient.client
                     .from("offers")
@@ -47,7 +47,7 @@ class InventoryViewModel : ViewModel() {
 
     private suspend fun uploadFoodImage(bitmap: Bitmap): String? = withContext(Dispatchers.IO) {
         try {
-            val outputStream = ByteArrayOutputStream() //
+            val outputStream = ByteArrayOutputStream()
             bitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
             val byteArray = outputStream.toByteArray()
 
@@ -61,12 +61,14 @@ class InventoryViewModel : ViewModel() {
             null
         }
     }
+
     fun addListing(item: ListingItem) {
-        viewModelScope.launch {
+        _listings.value = listOf(item) + _listings.value
+
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 var finalImageUrl = item.imageUrl
 
-                // if take photo or choose picture,upload fist in supabase storage
                 if (item.imageBitmap != null) {
                     val uploadedUrl = uploadFoodImage(item.imageBitmap)
                     if (uploadedUrl != null) {
@@ -76,14 +78,14 @@ class InventoryViewModel : ViewModel() {
 
                 val itemToInsert = item.copy(
                     id = if (item.id.isBlank()) UUID.randomUUID().toString() else item.id,
-                    imageUrl = finalImageUrl
+                    imageUrl = finalImageUrl,
+                    imageBitmap = null
                 )
 
                 SupabaseClient.client
                     .from("offers")
                     .insert(itemToInsert)
 
-                // refresh list and get new data
                 fetchListings()
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -91,13 +93,11 @@ class InventoryViewModel : ViewModel() {
         }
     }
 
-    // updateListing
     fun updateListing(item: ListingItem) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 var finalImageUrl = item.imageUrl
 
-                // Changed the new image if update
                 if (item.imageBitmap != null) {
                     val uploadedUrl = uploadFoodImage(item.imageBitmap)
                     if (uploadedUrl != null) {
@@ -105,7 +105,10 @@ class InventoryViewModel : ViewModel() {
                     }
                 }
 
-                val itemToUpdate = item.copy(imageUrl = finalImageUrl)
+                val itemToUpdate = item.copy(
+                    imageUrl = finalImageUrl,
+                    imageBitmap = null
+                )
 
                 SupabaseClient.client
                     .from("offers")
@@ -123,7 +126,7 @@ class InventoryViewModel : ViewModel() {
     }
 
     fun deleteListing(itemId: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 SupabaseClient.client
                     .from("offers")

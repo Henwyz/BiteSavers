@@ -417,6 +417,23 @@
     <string name="dashboard_waste_kg_format">%1$.1f kg</string>
     <string name="dashboard_currency_format">RM %.0f</string>
 
+    <!-- Business Orders & Verification Strings -->
+    <string name="title_all_orders">Customer Orders</string>
+    <string name="tab_all">All</string>
+    <string name="tab_pending">Pending</string>
+    <string name="tab_completed">Completed</string>
+    <string name="tab_cancelled">Cancelled</string>
+    <string name="empty_orders_msg">No orders found</string>
+
+    <!-- Order Item & Card Strings -->
+    <string name="order_id_prefix">Order #</string>
+    <string name="customer_prefix">Customer #</string>
+    <string name="status_ready_pickup">Ready for Pickup</string>
+    <string name="status_completed">Completed</string>
+    <string name="status_cancelled">Cancelled</string>
+    <string name="status_pending">Pending</string>
+    <string name="ngo_badge">NGO Claim</string>
+
     <!-- Restaurant Registration -->
     <string name="register_restaurant_title">Register Your Restaurant 🏪</string>
     <string name="restaurant_name">Restaurant Name</string>

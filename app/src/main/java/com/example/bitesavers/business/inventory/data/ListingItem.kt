@@ -7,9 +7,11 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class ListingItem(
+    @SerialName("id")
     val id: String = "",
+
     @SerialName("store_id")
-    val storeId: String = "",
+    val storeId: String = "33333333-3333-3333-3333-333333333333",
 
     @SerialName("storage_box_id")
     val storageBoxId: String? = null,
@@ -17,7 +19,10 @@ data class ListingItem(
     @SerialName("title")
     val name: String = "",
 
+    @SerialName("description")
     val description: String = "",
+
+    @SerialName("category")
     val category: String = "",
 
     @SerialName("original_price")
@@ -30,13 +35,13 @@ data class ListingItem(
     val weightKg: Double? = null,
 
     @SerialName("quantity_available")
-    val quantity: Int = 0,
+    val quantity: Int = 1,
 
     @SerialName("pickup_start")
-    val pickupStart: String? = null,
+    val pickupStart: String? = "17:00:00",
 
     @SerialName("pickup_end")
-    val pickupEnd: String? = null,
+    val pickupEnd: String? = "19:00:00",
 
     @SerialName("is_eligible_for_ngo_free")
     val isEligibleForNgoFree: Boolean = false,

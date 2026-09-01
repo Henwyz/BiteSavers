@@ -19,6 +19,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.bitesavers.business.analytics.ui.AnalyticsScreen
 import com.example.bitesavers.business.dashboard.logic.DashboardViewModel
 import com.example.bitesavers.business.dashboard.ui.BusinessHomeScreen
+import com.example.bitesavers.business.dashboard.ui.BusinessOrdersScreen
 import com.example.bitesavers.business.inventory.logic.InventoryViewModel
 import com.example.bitesavers.business.inventory.ui.AddFoodScreen
 import com.example.bitesavers.business.inventory.ui.MyListingScreen
@@ -83,6 +84,9 @@ fun BusinessNavHost(
                         }},
                     onNavigateToTemperature = {
                         navController.navigate(BusinessScreen.Temperature.route)
+                    },
+                    onNavigateToOrders = {
+                        navController.navigate(BusinessScreen.BusinessOrders.route)
                     }
                 )
             }
@@ -138,6 +142,22 @@ fun BusinessNavHost(
                     onBackClick = { navController.popBackStack() },
                     onAddUnitClick = {
                         navController.navigate(BusinessScreen.AddBox.route)
+                    }
+                )
+            }
+
+            // 8. CHECK CUSTOMER ORDER SCREEN
+            composable(BusinessScreen.BusinessOrders.route) {
+                // Collect the existing recentOrders flow from your DashboardViewModel
+                val orders by dashboardViewModel.recentOrders.collectAsState()
+
+                BusinessOrdersScreen(
+                    orders = orders,
+                    onOrderClick = { orderId ->
+                        // Keep empty for now until verification screen is ready
+                    },
+                    onNavigateBack = {
+                        navController.popBackStack()
                     }
                 )
             }
