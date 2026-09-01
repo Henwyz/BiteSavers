@@ -44,6 +44,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.IconButton
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextDecoration
@@ -65,7 +66,8 @@ fun MyListingScreen(
     val listings by viewModel.listings.collectAsState()
 
     // Compare status case-insensitively to match both "ACTIVE" and "Active"
-    val activeCount = listings.count { it.status.equals("Active", ignoreCase = true) }
+    val activeCount = listings.count { it.status.equals("Active", ignoreCase = true)
+            && !isPickupEnd(it.pickupEnd)}
 
     Scaffold(
         topBar = {
@@ -125,6 +127,25 @@ fun MyListingScreen(
     }
 }
 
+// Checks if current system time has passed the 12-hour pickup end time
+fun isPickupEnd(pickupEndTimeStr: String?): Boolean {
+    if (pickupEndTimeStr.isNullOrBlank()) return false
+    return try {
+        val dateFormat = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.ENGLISH)
+        val endTime = dateFormat.parse(pickupEndTimeStr.trim()) ?: return false
+
+        val currentCal = java.util.Calendar.getInstance()
+        val endCal = java.util.Calendar.getInstance().apply {
+            time = endTime
+            set(java.util.Calendar.YEAR, currentCal.get(java.util.Calendar.YEAR))
+            set(java.util.Calendar.MONTH, currentCal.get(java.util.Calendar.MONTH))
+            set(java.util.Calendar.DAY_OF_MONTH, currentCal.get(java.util.Calendar.DAY_OF_MONTH))
+        }
+        currentCal.after(endCal)
+    } catch (e: Exception) {
+        false
+    }
+}
 @Composable
 fun ListingCard(item: ListingItem,
                 onEditClick: (String) -> Unit,
@@ -137,7 +158,7 @@ fun ListingCard(item: ListingItem,
             .clickable { onEditClick(item.id) }
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
                 Box(
                     modifier = Modifier
                         .size(50.dp)
@@ -235,18 +256,25 @@ fun ListingCard(item: ListingItem,
                     )
                 }
 
-                val (statusBg, statusText) = when (item.status) {
-                    "Active" -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
-                    "Paused" -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
-                    else -> MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.errorContainer
-            }
+                val isExpired = isPickupEnd(item.pickupEnd)
+                val effectiveStatus = if (isExpired) "PAUSED" else item.status.uppercase()
+                val (statusBg, statusText) = if (effectiveStatus == "ACTIVE") {
+                    MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                    MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.onErrorContainer
+                }
 
                 Box(
                     modifier = Modifier
                         .background(statusBg, RoundedCornerShape(12.dp))
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
-                    Text(text = item.status, fontSize = 11.sp, color = statusText)
+                    Text(
+                        text = effectiveStatus,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = statusText
+                    )
                 }
             }
 
