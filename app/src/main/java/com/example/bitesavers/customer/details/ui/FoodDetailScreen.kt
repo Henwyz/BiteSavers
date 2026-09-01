@@ -77,6 +77,9 @@ fun FoodDetailScreen(
     state: FoodDetailUiState,
     onEvent: (FoodDetailUiEvent) -> Unit
 ) {
+    val isSoldOut = (state.offer?.quantityLeft ?: 0) <= 0
+    val isExpired = (state.offer?.hoursToClose ?: 1) <= 0
+
     Scaffold(
         topBar = {
             FoodDetailTopBar(
@@ -89,6 +92,8 @@ fun FoodDetailScreen(
             if (state.offer != null) {
                 FoodDetailCheckoutBar(
                     totalPrice = state.totalPrice,
+                    isSoldOut = isSoldOut,
+                    isExpired = isExpired,
                     onReserveClick = { onEvent(FoodDetailUiEvent.OnReserveClicked) }
                 )
             }
@@ -157,11 +162,14 @@ fun FoodDetailScreen(
                                 description = offer.description
                             )
 
-                            FoodDetailQuantitySelector(
-                                quantity = state.quantity,
-                                onIncrease = { onEvent(FoodDetailUiEvent.OnIncreaseQuantity) },
-                                onDecrease = { onEvent(FoodDetailUiEvent.OnDecreaseQuantity) }
-                            )
+                            // Only display quantity selector if stock is available and offer is active
+                            if (!isSoldOut && !isExpired) {
+                                FoodDetailQuantitySelector(
+                                    quantity = state.quantity,
+                                    onIncrease = { onEvent(FoodDetailUiEvent.OnIncreaseQuantity) },
+                                    onDecrease = { onEvent(FoodDetailUiEvent.OnDecreaseQuantity) }
+                                )
+                            }
 
                             Spacer(modifier = Modifier.padding(bottom = 16.dp))
                         }
@@ -202,6 +210,43 @@ private fun FoodDetailScreenPreview() {
                     liveTemperature = 25.0,
                     storageType = "ROOM_TEMP",
                     description = "Hearty minced chicken pasta in slow-simmered tomato sauce."
+                )
+            ),
+            onEvent = {}
+        )
+    }
+}
+
+// Renders the details screen in a Sold Out state
+@Preview(showBackground = true, name = "Food Detail Screen - Sold Out")
+@Composable
+private fun FoodDetailScreenSoldOutPreview() {
+    BiteSaversTheme {
+        FoodDetailScreen(
+            state = FoodDetailUiState(
+                isLoading = false,
+                isSaved = true,
+                quantity = 0,
+                totalPrice = 8.00,
+                temperatureText = "4.0°C – within safe cold storage zone",
+                isTemperatureSafe = true,
+                offer = OfferUiModel(
+                    id = "e2222222-2222-2222-2222-222222222222",
+                    title = "Japanese Matcha Mille Crepe",
+                    storeName = "Sweet Treats Cafe",
+                    storeRating = 4.9,
+                    imageResId = R.drawable.food_spaghetti,
+                    discountPercent = 50,
+                    currentPrice = 8.00,
+                    originalPrice = 16.00,
+                    distanceKm = 0.0,
+                    quantityLeft = 0,
+                    hoursToClose = 2,
+                    category = DiscoveryCategory.DESSERTS,
+                    isEligibleForNgoFree = false,
+                    liveTemperature = 4.0,
+                    storageType = "COLD",
+                    description = "Delicate layers of crepe with matcha cream."
                 )
             ),
             onEvent = {}

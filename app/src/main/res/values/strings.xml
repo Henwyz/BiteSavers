@@ -23,6 +23,7 @@
     <string name="nav_profile">Profile</string>
     <string name="nav_listings">Listings</string>
     <string name="nav_analytics">Analytics</string>
+    <string name="nav_discover">Discover</string>
 
     <!-- ================================================================= -->
     <!-- AUTHENTICATION (LOGIN & SIGN UP)                                  -->
@@ -144,6 +145,12 @@
     <string name="detail_co2_saved_format">🌱 %1$.1f kg CO₂ saved</string>
     <string name="detail_co2_saved_dummy">🌱 ~1.2kg CO₂ saved</string>
 
+    <!-- Food Detail Additional Statuses & Buttons -->
+    <string name="detail_status_expired">Expired</string>
+    <string name="stock_sold_out">Sold Out</string>
+    <string name="btn_sold_out">Sold Out</string>
+    <string name="btn_offer_expired">Offer Expired</string>
+
     <!-- ================================================================= -->
     <!-- SAVED FOODS PAGE                                                  -->
     <!-- ================================================================= -->
@@ -155,6 +162,7 @@
     <string name="cd_bookmark_icon">Bookmark</string>
     <string name="cd_bookmark_saved">Remove from saved</string>
     <string name="cd_bookmark_unsaved">Save to bookmarks</string>
+    <string name="sold_out_status">Sold Out • %1$.1f km</string>
 
     <!-- ================================================================= -->
     <!-- CHECKOUT & PAYMENT SELECTION                                      -->

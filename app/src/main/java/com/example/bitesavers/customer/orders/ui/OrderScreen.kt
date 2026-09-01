@@ -40,9 +40,7 @@ import com.example.bitesavers.ui.theme.BiteSaversTheme
 @Composable
 fun OrdersRoute(
     viewModel: OrdersViewModel = viewModel(),
-    onOrderClick: (String) -> Unit = {},
-    onNotificationClick: () -> Unit = {},
-    onProfileClick: () -> Unit = {}
+    onOrderClick: (String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -59,11 +57,7 @@ fun OrdersRoute(
                 is CustomerOrdersUiEvent.OnOrderClicked ->
                     onOrderClick(event.orderId)
 
-                is CustomerOrdersUiEvent.OnNotificationClicked ->
-                    onNotificationClick()
-
-                is CustomerOrdersUiEvent.OnProfileAvatarClicked ->
-                    onProfileClick()
+                else -> Unit
             }
         }
     )
@@ -86,13 +80,7 @@ fun OrdersScreen(
             ) {
                 OrdersHeader(
                     completedCount = state.completedCount,
-                    totalSavedAmount = state.totalSavedAmount,
-                    onNotificationClick = {
-                        onEvent(CustomerOrdersUiEvent.OnNotificationClicked)
-                    },
-                    onAvatarClick = {
-                        onEvent(CustomerOrdersUiEvent.OnProfileAvatarClicked)
-                    }
+                    totalSavedAmount = state.totalSavedAmount
                 )
             }
         },
@@ -187,7 +175,7 @@ fun OrdersScreen(
 
 @Preview(name = "Orders Screen - History Tab", showBackground = true)
 @Composable
-private fun OrdersScreenHistoryPreview() {  
+private fun OrdersScreenHistoryPreview() {
     val sampleOrders = listOf(
         CustomerOrderItemUiModel(
             orderId = "1",
@@ -208,26 +196,6 @@ private fun OrdersScreenHistoryPreview() {
             totalPrice = 2.50,
             moneySaved = 5.00,
             status = OrderStatusType.COMPLETED
-        ),
-        CustomerOrderItemUiModel(
-            orderId = "3",
-            shortOrderId = "#BS-0698",
-            storeName = "Artisan Cafe KL",
-            itemName = "Croissant Bundle",
-            formattedDate = "8 Jul 2026",
-            totalPrice = 5.00,
-            moneySaved = 5.50,
-            status = OrderStatusType.COMPLETED
-        ),
-        CustomerOrderItemUiModel(
-            orderId = "4",
-            shortOrderId = "#BS-0695",
-            storeName = "Penang Hawker Corner",
-            itemName = "Char Kway Teow",
-            formattedDate = "7 Jul 2026",
-            totalPrice = 3.50,
-            moneySaved = 0.0,
-            status = OrderStatusType.CANCELLED
         )
     )
 
@@ -237,8 +205,25 @@ private fun OrdersScreenHistoryPreview() {
                 isLoading = false,
                 selectedTab = OrderTab.HISTORY,
                 historyOrders = sampleOrders,
-                completedCount = 4,
-                totalSavedAmount = 15.00
+                completedCount = 2,
+                totalSavedAmount = 9.50
+            ),
+            onEvent = {}
+        )
+    }
+}
+
+@Preview(name = "Orders Screen - Empty State", showBackground = true)
+@Composable
+private fun OrdersScreenEmptyPreview() {
+    BiteSaversTheme {
+        OrdersScreen(
+            state = CustomerOrdersUiState(
+                isLoading = false,
+                selectedTab = OrderTab.ACTIVE,
+                activeOrders = emptyList(),
+                completedCount = 0,
+                totalSavedAmount = 0.0
             ),
             onEvent = {}
         )

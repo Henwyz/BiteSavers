@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -14,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -28,6 +30,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -35,6 +38,9 @@ import com.example.bitesavers.R
 import com.example.bitesavers.customer.saved.data.SavedUiState
 import com.example.bitesavers.customer.saved.logic.SavedViewModel
 import com.example.bitesavers.customer.saved.ui.components.SavedOfferCard
+import com.example.bitesavers.data.model.DiscoveryCategory
+import com.example.bitesavers.data.model.OfferUiModel
+import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 /**
  * THE ROUTE WRAPPER
@@ -69,19 +75,27 @@ fun SavedScreen(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.saved_screen_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
+            Column {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = stringResource(R.string.saved_screen_title),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface
+                    ),
+                    windowInsets = WindowInsets(0.dp)
                 )
-            )
+                HorizontalDivider(
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
+                )
+            }
         }
     ) { innerPadding ->
         Box(
@@ -106,7 +120,7 @@ fun SavedScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_launcher_foreground), // Replace with your bookmark empty icon
+                            painter = painterResource(id = R.drawable.ic_saved),
                             contentDescription = stringResource(R.string.cd_bookmark_icon),
                             tint = MaterialTheme.colorScheme.outline,
                             modifier = Modifier.size(64.dp)
@@ -148,5 +162,69 @@ fun SavedScreen(
                 }
             }
         }
+    }
+}
+
+// Renders saved items list preview with sample data
+@Preview(showBackground = true, name = "Saved Screen - Populated")
+@Composable
+private fun SavedScreenPopulatedPreview() {
+    BiteSaversTheme {
+        SavedScreen(
+            state = SavedUiState(
+                isLoading = false,
+                savedOffers = listOf(
+                    OfferUiModel(
+                        id = "e1",
+                        title = "Chicken Bolognese Pasta",
+                        storeName = "Apollo Western & Pasta",
+                        storeRating = 4.9,
+                        imageResId = R.drawable.food_spaghetti,
+                        discountPercent = 45,
+                        currentPrice = 9.90,
+                        originalPrice = 18.00,
+                        distanceKm = 0.0,
+                        quantityLeft = 6,
+                        hoursToClose = 15,
+                        category = DiscoveryCategory.HOT_MEALS,
+                        isEligibleForNgoFree = true,
+                        liveTemperature = 25.0,
+                        storageType = "ROOM_TEMP",
+                        description = "Hearty minced chicken pasta in slow-simmered tomato sauce."
+                    )
+                )
+            ),
+            onEvent = {}
+        )
+    }
+}
+
+// Renders empty saved items preview
+@Preview(showBackground = true, name = "Saved Screen - Empty")
+@Composable
+private fun SavedScreenEmptyPreview() {
+    BiteSaversTheme {
+        SavedScreen(
+            state = SavedUiState(
+                isLoading = false,
+                savedOffers = emptyList()
+            ),
+            onEvent = {}
+        )
+    }
+}
+
+// Renders loading indicator preview
+@Preview(showBackground = true, name = "Saved Screen - Loading")
+@Composable
+private fun SavedScreenLoadingPreview() {
+    BiteSaversTheme {
+        SavedScreen(
+            state = SavedUiState(
+                isLoading = true,
+                savedOffers = emptyList()
+            ),
+            onEvent = {}
+        )
     }
 }

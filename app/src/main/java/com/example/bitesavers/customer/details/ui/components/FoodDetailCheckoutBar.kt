@@ -27,9 +27,13 @@ import com.example.bitesavers.ui.theme.BiteSaversTheme
 @Composable
 fun FoodDetailCheckoutBar(
     totalPrice: Double,
+    isSoldOut: Boolean,
+    isExpired: Boolean,
     onReserveClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isActionEnabled = !isSoldOut && !isExpired
+
     Surface(
         modifier = modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface,
@@ -42,10 +46,13 @@ fun FoodDetailCheckoutBar(
         ) {
             Button(
                 onClick = onReserveClick,
+                enabled = isActionEnabled,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                    disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                 ),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp)
             ) {
@@ -54,30 +61,55 @@ fun FoodDetailCheckoutBar(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = stringResource(id = R.string.action_reserve_now),
+                        text = when {
+                            isSoldOut -> stringResource(id = R.string.btn_sold_out)
+                            isExpired -> stringResource(id = R.string.btn_offer_expired)
+                            else -> stringResource(id = R.string.action_reserve_now)
+                        },
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimary
+                        color = if (isActionEnabled) {
+                            MaterialTheme.colorScheme.onPrimary
+                        } else {
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                        }
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(id = R.string.currency_rm, totalPrice),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
-                    )
+                    if (isActionEnabled) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(id = R.string.currency_rm, totalPrice),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                        )
+                    }
                 }
             }
         }
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, name = "Checkout Bar - Available")
 @Composable
 private fun FoodDetailCheckoutBarPreview() {
     BiteSaversTheme {
         FoodDetailCheckoutBar(
             totalPrice = 10.50,
+            isSoldOut = false,
+            isExpired = false,
+            onReserveClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Checkout Bar - Sold Out")
+@Composable
+private fun FoodDetailCheckoutBarSoldOutPreview() {
+    BiteSaversTheme {
+        FoodDetailCheckoutBar(
+            totalPrice = 10.50,
+            isSoldOut = true,
+            isExpired = false,
             onReserveClick = {}
         )
     }

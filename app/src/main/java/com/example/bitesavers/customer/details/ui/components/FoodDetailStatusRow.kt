@@ -1,5 +1,6 @@
 package com.example.bitesavers.customer.details.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -26,16 +28,25 @@ fun FoodDetailStatusRow(
     stockLeft: Int,
     modifier: Modifier = Modifier
 ) {
+    val isSoldOut = stockLeft <= 0
+    val isExpired = hoursToClose <= 0
+
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // 1. EXPIRES IN CARD (Yellow tint)
+        // 1. EXPIRES IN CARD (Yellow tint / Error tint if expired)
         Card(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .alpha(if (isSoldOut && !isExpired) 0.6f else 1f),
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer // Soft yellow/orange background
+                containerColor = if (isExpired) {
+                    MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f)
+                } else {
+                    MaterialTheme.colorScheme.tertiaryContainer // Soft yellow/orange background
+                }
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
@@ -46,24 +57,32 @@ fun FoodDetailStatusRow(
                 Text(
                     text = stringResource(id = R.string.detail_expires_in_label),
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    color = if (isExpired) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onTertiaryContainer,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = stringResource(id = R.string.detail_expires_in_time, hoursToClose),
+                    text = if (isExpired) {
+                        stringResource(id = R.string.detail_status_expired)
+                    } else {
+                        stringResource(id = R.string.detail_expires_in_time, hoursToClose)
+                    },
                     style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    color = if (isExpired) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onTertiaryContainer,
                     fontWeight = FontWeight.Bold
                 )
             }
         }
 
-        // 2. STOCK LEFT CARD (Green tint)
+        // 2. STOCK LEFT CARD (Green tint / Error tint if sold out)
         Card(
             modifier = Modifier.weight(1f),
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer // Soft green background
+                containerColor = if (isSoldOut) {
+                    MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f)
+                } else {
+                    MaterialTheme.colorScheme.secondaryContainer // Soft green background
+                }
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
@@ -74,13 +93,17 @@ fun FoodDetailStatusRow(
                 Text(
                     text = stringResource(id = R.string.detail_stock_left_label),
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    color = if (isSoldOut) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSecondaryContainer,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = stockLeft.toString(),
+                    text = if (isSoldOut) {
+                        stringResource(id = R.string.stock_sold_out)
+                    } else {
+                        stockLeft.toString()
+                    },
                     style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    color = if (isSoldOut) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSecondaryContainer,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -88,7 +111,7 @@ fun FoodDetailStatusRow(
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, name = "Food Detail Status Row - Available")
 @Composable
 private fun FoodDetailStatusRowPreview() {
     BiteSaversTheme {
@@ -96,6 +119,19 @@ private fun FoodDetailStatusRowPreview() {
             FoodDetailStatusRow(
                 hoursToClose = 1,
                 stockLeft = 6
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true, name = "Food Detail Status Row - Sold Out")
+@Composable
+private fun FoodDetailStatusRowSoldOutPreview() {
+    BiteSaversTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            FoodDetailStatusRow(
+                hoursToClose = 3,
+                stockLeft = 0
             )
         }
     }

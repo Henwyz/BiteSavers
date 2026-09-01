@@ -1,16 +1,23 @@
 package com.example.bitesavers.sharedUI
 
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.example.bitesavers.R
 import com.example.bitesavers.customer.navigation.CustomerScreen
+import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @Composable
 fun CustomerBottomNavigationBar(navController: NavController) {
@@ -19,7 +26,7 @@ fun CustomerBottomNavigationBar(navController: NavController) {
     val currentRoute = navBackStackEntry?.destination?.route
 
     NavigationBar {
-        // HOME TAB
+        // DISCOVER TAB (Search icon)
         NavigationBarItem(
             selected = currentRoute == CustomerScreen.Discovery.route,
             onClick = {
@@ -28,8 +35,14 @@ fun CustomerBottomNavigationBar(navController: NavController) {
                     launchSingleTop = true
                 }
             },
-            icon = { Icon(painterResource(id = R.drawable.ic_home), contentDescription = "Home") },
-            label = { Text("Home") }
+            icon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_search),
+                    contentDescription = stringResource(id = R.string.nav_discover),
+                    modifier = Modifier.size(24.dp)
+                )
+            },
+            label = { Text(text = stringResource(id = R.string.nav_discover)) }
         )
 
         // ORDERS TAB
@@ -41,8 +54,14 @@ fun CustomerBottomNavigationBar(navController: NavController) {
                     launchSingleTop = true
                 }
             },
-            icon = { Icon(painterResource(id = R.drawable.ic_orders), contentDescription = "Orders") },
-            label = { Text("Orders") }
+            icon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_orders),
+                    contentDescription = stringResource(id = R.string.nav_orders),
+                    modifier = Modifier.size(24.dp)
+                )
+            },
+            label = { Text(text = stringResource(id = R.string.nav_orders)) }
         )
 
         // SAVED TAB
@@ -54,8 +73,14 @@ fun CustomerBottomNavigationBar(navController: NavController) {
                     launchSingleTop = true
                 }
             },
-            icon = { Icon(painterResource(id = R.drawable.ic_saved), contentDescription = "Saved") },
-            label = { Text("Saved") }
+            icon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_saved),
+                    contentDescription = stringResource(id = R.string.nav_saved),
+                    modifier = Modifier.size(24.dp)
+                )
+            },
+            label = { Text(text = stringResource(id = R.string.nav_saved)) }
         )
 
         // PROFILE TAB
@@ -67,8 +92,22 @@ fun CustomerBottomNavigationBar(navController: NavController) {
                     launchSingleTop = true
                 }
             },
-            icon = { Icon(painterResource(id = R.drawable.ic_profile), contentDescription = "Profile") },
-            label = { Text("Profile") }
+            icon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_profile),
+                    contentDescription = stringResource(id = R.string.nav_profile),
+                    modifier = Modifier.size(24.dp)
+                )
+            },
+            label = { Text(text = stringResource(id = R.string.nav_profile)) }
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun CustomerBottomNavigationBarPreview() {
+    BiteSaversTheme {
+        CustomerBottomNavigationBar(navController = rememberNavController())
     }
 }

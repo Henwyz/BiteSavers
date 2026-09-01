@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -104,7 +105,9 @@ fun PaymentMethodsScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface
-                )
+                ),
+                // Removes excessive system bar inset padding to eliminate the large gap below the status bar
+                windowInsets = WindowInsets(0.dp)
             )
         }
     ) { innerPadding ->
@@ -354,15 +357,16 @@ fun PaymentMethodsScreen(
     }
 }
 
-@Preview(showBackground = true, name = "Main Payment Methods View")
+// Previews the main payment methods screen with saved cards
+@Preview(showBackground = true, name = "Payment Methods - Populated")
 @Composable
-private fun PaymentMethodsScreenPreview() {
+private fun PaymentMethodsScreenPopulatedPreview() {
     BiteSaversTheme {
         PaymentMethodsScreen(
             state = PaymentMethodsUiState(
-                walletBalance = 45.00,
-                isTngLinked = true,
-                tngPhone = "+60 12-345 6789",
+                walletBalance = 29.50,
+                isTngLinked = false,
+                tngPhone = "",
                 savedCards = listOf(
                     SavedBankCard(
                         id = "1",
@@ -372,6 +376,25 @@ private fun PaymentMethodsScreenPreview() {
                         isDefault = true
                     )
                 )
+            ),
+            onEvent = {}
+        )
+    }
+}
+
+// Previews the screen in Add Card mode
+@Preview(showBackground = true, name = "Payment Methods - Add Card Mode")
+@Composable
+private fun PaymentMethodsScreenAddCardPreview() {
+    BiteSaversTheme {
+        PaymentMethodsScreen(
+            state = PaymentMethodsUiState(
+                isAddingCard = true,
+                cardNumber = "4111222233334444",
+                cardHolder = "Sarah Tan",
+                expiryDate = "1228",
+                cvv = "123",
+                isFormValid = true
             ),
             onEvent = {}
         )

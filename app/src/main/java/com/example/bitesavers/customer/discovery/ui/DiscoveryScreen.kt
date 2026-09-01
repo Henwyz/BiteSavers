@@ -172,11 +172,7 @@ fun DiscoveryScreen(
                 // SECTION 1: THE HEADER
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     DiscoveryHeader(
-                        user = state.user,
-                        location = "Butterworth, Penang",
-                        onNotificationClick = {
-                            onEvent(DiscoveryUiEvent.OnNotificationClicked)
-                        }
+                        user = state.user
                     )
                 }
 
@@ -199,9 +195,10 @@ fun DiscoveryScreen(
                             onCategorySelected = { onEvent(DiscoveryUiEvent.OnCategorySelected(it)) }
                         )
 
+                        // Restricts the carousel inside the map card to a max of 3 items
                         DiscoveryMapSection(
                             markers = state.nearbyMarkers,
-                            offers = state.offers,
+                            offers = state.offers.take(3),
                             userRole = state.userRole,
                             userLatitude = state.userLatitude,
                             userLongitude = state.userLongitude,
@@ -236,6 +233,7 @@ fun DiscoveryScreen(
                         }
                     }
                 } else {
+                    // Displays ALL active offers in the grid
                     itemsIndexed(state.offers, key = { _, offer -> offer.id }) { index, offer ->
                         val startPadding = if (index % 2 == 0) 16.dp else 0.dp
                         val endPadding = if (index % 2 == 1) 16.dp else 0.dp

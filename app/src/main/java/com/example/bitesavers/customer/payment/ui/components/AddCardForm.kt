@@ -140,7 +140,11 @@ fun AddCardForm(
                 enabled = canSubmit,
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                    disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                )
             ) {
                 Text(stringResource(R.string.action_save_card), fontWeight = FontWeight.Bold)
             }
@@ -148,7 +152,7 @@ fun AddCardForm(
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, name = "Add Card Form Preview")
 @Composable
 private fun AddCardFormPreview() {
     BiteSaversTheme {

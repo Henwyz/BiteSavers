@@ -1,14 +1,33 @@
 package com.example.bitesavers.customer.profile.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -18,20 +37,23 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitesavers.R
 import com.example.bitesavers.customer.profile.data.NgoStatus
+import com.example.bitesavers.customer.profile.data.UserProfileUiModel
 import com.example.bitesavers.customer.profile.logic.ProfileViewModel
 import com.example.bitesavers.customer.profile.logic.SustainabilityCalculator
+import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @Composable
 fun ProfileScreen(
     onRegisterAsNgoClick: () -> Unit,
     onViewNgoDetailsClick: () -> Unit,
-    onPaymentMethodsClick: () -> Unit, // <--- ADDED: Navigation callback for Payment Methods screen
+    onPaymentMethodsClick: () -> Unit, // Navigation callback for Payment Methods screen
     onSignOutClick: () -> Unit,
     onPrivacySecurityClick: () -> Unit,
     onHelpSupportClick: () -> Unit,
@@ -41,6 +63,34 @@ fun ProfileScreen(
     val profile by viewModel.profile.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val loadError by viewModel.loadError.collectAsStateWithLifecycle()
+
+    ProfileContent(
+        profile = profile,
+        isLoading = isLoading,
+        loadError = loadError,
+        onRegisterAsNgoClick = onRegisterAsNgoClick,
+        onViewNgoDetailsClick = onViewNgoDetailsClick,
+        onPaymentMethodsClick = onPaymentMethodsClick,
+        onSignOutClick = onSignOutClick,
+        onPrivacySecurityClick = onPrivacySecurityClick,
+        onHelpSupportClick = onHelpSupportClick,
+        onAboutClick = onAboutClick
+    )
+}
+
+@Composable
+private fun ProfileContent(
+    profile: UserProfileUiModel,
+    isLoading: Boolean,
+    loadError: String?,
+    onRegisterAsNgoClick: () -> Unit,
+    onViewNgoDetailsClick: () -> Unit,
+    onPaymentMethodsClick: () -> Unit,
+    onSignOutClick: () -> Unit,
+    onPrivacySecurityClick: () -> Unit,
+    onHelpSupportClick: () -> Unit,
+    onAboutClick: () -> Unit
+) {
     val impact = SustainabilityCalculator.calculateImpact(profile.mealsRescued)
     val menuIconTint = MaterialTheme.colorScheme.primary
 
@@ -55,11 +105,12 @@ fun ProfileScreen(
         }
         if (loadError != null) {
             Text(
-                loadError!!,
+                loadError,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(12.dp)
             )
         }
+
         // ---------- Header ----------
         Column(
             modifier = Modifier
@@ -69,7 +120,7 @@ fun ProfileScreen(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 AssistChip(
@@ -94,21 +145,9 @@ fun ProfileScreen(
                     ),
                     border = null
                 )
-                IconButton(
-                    onClick = { /* TODO wire to notifications */ },
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary)
-                ) {
-                    Icon(
-                        Icons.Filled.Notifications,
-                        contentDescription = stringResource(R.string.cd_notifications),
-                        tint = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(8.dp))
 
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -122,7 +161,7 @@ fun ProfileScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        profile.avatarInitials,
+                        text = profile.avatarInitials,
                         color = MaterialTheme.colorScheme.onTertiary,
                         fontWeight = FontWeight.Bold,
                         fontSize = 22.sp
@@ -130,19 +169,19 @@ fun ProfileScreen(
                 }
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    profile.name,
+                    text = profile.name,
                     color = MaterialTheme.colorScheme.onSecondary,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
                 Text(
-                    profile.email,
+                    text = profile.email,
                     color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f),
                     fontSize = 13.sp
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    profile.memberSinceLabel,
+                    text = profile.memberSinceLabel,
                     color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.6f),
                     fontSize = 11.sp
                 )
@@ -174,9 +213,10 @@ fun ProfileScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            Icons.Filled.AccountBalanceWallet,
+                            painter = painterResource(id = R.drawable.ic_payment),
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                     Spacer(Modifier.width(10.dp))
@@ -194,7 +234,7 @@ fun ProfileScreen(
                     }
                 }
                 Button(
-                    onClick = { /* TODO wire to top-up flow */ },
+                    onClick = onPaymentMethodsClick,
                     shape = RoundedCornerShape(20.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.onSurface,
@@ -213,16 +253,21 @@ fun ProfileScreen(
                 .padding(top = 16.dp)
         ) {
             ProfileMenuRow(
-                icon = { Icon(Icons.Filled.VolunteerActivism, contentDescription = null, tint = menuIconTint, modifier = Modifier.size(16.dp)) },
+                icon = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_saved),
+                        contentDescription = null,
+                        tint = menuIconTint,
+                        modifier = Modifier.size(16.dp)
+                    )
+                },
                 labelResId = when (profile.ngoStatus) {
                     NgoStatus.NONE -> R.string.profile_register_ngo
                     NgoStatus.PENDING -> R.string.profile_ngo_pending
                     NgoStatus.APPROVED -> R.string.profile_ngo_approved
                 },
                 onClick = {
-                    // Approved NGOs land on the read-only details screen (with
-                    // an Edit FAB); everyone else goes straight to the
-                    // registration form.
+                    // Approved NGOs land on the read-only details screen; everyone else goes straight to registration form.
                     if (profile.ngoStatus == NgoStatus.APPROVED) {
                         onViewNgoDetailsClick()
                     } else {
@@ -231,22 +276,50 @@ fun ProfileScreen(
                 }
             )
             ProfileMenuRow(
-                icon = { Icon(Icons.Filled.CreditCard, contentDescription = null, tint = menuIconTint, modifier = Modifier.size(16.dp)) },
+                icon = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_payment),
+                        contentDescription = null,
+                        tint = menuIconTint,
+                        modifier = Modifier.size(16.dp)
+                    )
+                },
                 labelResId = R.string.profile_payment_methods,
-                onClick = onPaymentMethodsClick // <--- MODIFIED: Trigger payment methods navigation
+                onClick = onPaymentMethodsClick // Trigger payment methods navigation
             )
             ProfileMenuRow(
-                icon = { Icon(Icons.Filled.Lock, contentDescription = null, tint = menuIconTint, modifier = Modifier.size(16.dp)) },
+                icon = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_lock),
+                        contentDescription = null,
+                        tint = menuIconTint,
+                        modifier = Modifier.size(16.dp)
+                    )
+                },
                 labelResId = R.string.profile_privacy_security,
                 onClick = onPrivacySecurityClick
             )
             ProfileMenuRow(
-                icon = { Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = null, tint = menuIconTint, modifier = Modifier.size(16.dp)) },
+                icon = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                        contentDescription = null,
+                        tint = menuIconTint,
+                        modifier = Modifier.size(16.dp)
+                    )
+                },
                 labelResId = R.string.profile_help_support,
                 onClick = onHelpSupportClick
             )
             ProfileMenuRow(
-                icon = { Icon(Icons.Filled.Eco, contentDescription = null, tint = menuIconTint, modifier = Modifier.size(16.dp)) },
+                icon = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_notification),
+                        contentDescription = null,
+                        tint = menuIconTint,
+                        modifier = Modifier.size(16.dp)
+                    )
+                },
                 labelResId = R.string.profile_about,
                 onClick = onAboutClick
             )
@@ -313,22 +386,22 @@ private fun ProfileMenuRow(
                 }
                 Spacer(Modifier.width(12.dp))
                 Text(
-                    stringResource(labelResId),
+                    text = stringResource(labelResId),
                     fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
             Icon(
                 painter = painterResource(R.drawable.ic_arrow_back),
                 contentDescription = null,
                 modifier = Modifier
-                    .size(14.dp)
+                    .size(16.dp)
                     .padding(end = 12.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
-    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
 }
 
 @Composable
@@ -355,3 +428,4 @@ private fun StatCard(modifier: Modifier = Modifier, value: String, label: String
         }
     }
 }
+

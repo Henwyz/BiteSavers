@@ -84,10 +84,6 @@ fun CustomerNavHost(
                 OrdersRoute(
                     onOrderClick = { orderId ->
                         navController.navigate(CustomerScreen.Ticket.createRoute(orderId))
-                    },
-                    onNotificationClick = {},
-                    onProfileClick = {
-                        navController.navigate(CustomerScreen.Profile.route)
                     }
                 )
             }

@@ -143,8 +143,7 @@ class DiscoveryViewModel : ViewModel() {
     }
 
     /**
-     * Groups offers by store coordinates.
-     * If multiple deals are available at one store, groups them under a single pin marker.
+     * Groups offers by store coordinates and returns only the 3 closest store markers for the map.
      */
     private fun groupOffersByStore(
         offers: List<OfferUiModel>,
@@ -153,28 +152,33 @@ class DiscoveryViewModel : ViewModel() {
     ): List<NearbyDealMarkerUiModel> {
         val groupedByStore = offers.groupBy { it.storeName }
 
-        return groupedByStore.entries.mapIndexed { index, entry ->
-            val storeOffers = entry.value
-            val firstOffer = storeOffers.first()
+        return groupedByStore.entries
+            // Sorts store groups by the closest offer distance
+            .sortedBy { entry -> entry.value.minOfOrNull { it.distanceKm } ?: Double.MAX_VALUE }
+            // Limits map pins strictly to the top 3 closest stores
+            .take(3)
+            .mapIndexed { index, entry ->
+                val storeOffers = entry.value
+                val firstOffer = storeOffers.first()
 
-            val pinLat = firstOffer.latitude ?: (fallbackLat + (index * 0.003))
-            val pinLng = firstOffer.longitude ?: (fallbackLng + (index * 0.003))
+                val pinLat = firstOffer.latitude ?: (fallbackLat + (index * 0.003))
+                val pinLng = firstOffer.longitude ?: (fallbackLng + (index * 0.003))
 
-            val label = if (storeOffers.size > 1) {
-                "${storeOffers.size} DEALS"
-            } else {
-                "RM %.2f".format(firstOffer.currentPrice)
+                val label = if (storeOffers.size > 1) {
+                    "${storeOffers.size} DEALS"
+                } else {
+                    "RM %.2f".format(firstOffer.currentPrice)
+                }
+
+                NearbyDealMarkerUiModel(
+                    storeId = firstOffer.id, // Primary key identifier for pin selection
+                    storeName = entry.key,
+                    labelText = label,
+                    latitude = pinLat,
+                    longitude = pinLng,
+                    offers = storeOffers
+                )
             }
-
-            NearbyDealMarkerUiModel(
-                storeId = firstOffer.id, // Primary key identifier for pin selection
-                storeName = entry.key,
-                labelText = label,
-                latitude = pinLat,
-                longitude = pinLng,
-                offers = storeOffers
-            )
-        }
     }
 
     // To Handle map pin clicked
@@ -274,6 +278,7 @@ class DiscoveryViewModel : ViewModel() {
                         offer.storeName.lowercase().contains(query)
             }
 
+        // Returns all matching items sorted by closest distance without truncating the list
         return if (currentLat != null && currentLng != null) {
             filteredSequence
                 .map { offer ->
@@ -283,12 +288,9 @@ class DiscoveryViewModel : ViewModel() {
                     offer.copy(distanceKm = dist)
                 }
                 .sortedBy { it.distanceKm }
-                .take(3)
                 .toList()
         } else {
-            filteredSequence
-                .take(3)
-                .toList()
+            filteredSequence.toList()
         }
     }
 
