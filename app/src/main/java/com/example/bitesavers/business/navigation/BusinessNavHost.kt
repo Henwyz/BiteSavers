@@ -135,7 +135,10 @@ fun BusinessNavHost(
             // 7. TEMPERATURE MONITOR SCREEN
             composable(BusinessScreen.Temperature.route) {
                 TemperatureScreen(
-                    onBackClick = { navController.popBackStack() }
+                    onBackClick = { navController.popBackStack() },
+                    onAddUnitClick = {
+                        navController.navigate(BusinessScreen.AddBox.route)
+                    }
                 )
             }
         }

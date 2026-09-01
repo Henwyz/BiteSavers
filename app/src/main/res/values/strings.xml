@@ -466,6 +466,18 @@
     <string name="all_connected_units">All Connected Units</string>
     <string name="select_a_unit">Select a unit</string>
 
+    <!-- ADD BOX SCREEN -->
+    <string name="add_storage_box">Add Storage Box</string>
+    <string name="esp32_hardware_setup">ESP32 Hardware Setup</string>
+    <string name="add_box_description">Enter the name of your new refrigerator or hot box connected to your temperature sensor.</string>
+    <string name="box_name_hint">Box Name (e.g. Refrigerator C)</string>
+    <string name="storage_category">Storage Category</string>
+    <string name="cold_storage">Cold Storage</string>
+    <string name="warm_storage">Warm Storage</string>
+    <string name="refrigerator">Refrigerator</string>
+    <string name="hot_box">Hot Box</string>
+    <string name="save_and_connect_unit">Save &amp; Connect Unit</string>
+
     <!-- ================================================================= -->
     <!-- BUSINESS ANALYTICS & PROFILE                                      -->
     <!-- ================================================================= -->

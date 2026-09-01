@@ -19,12 +19,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Surface
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -44,18 +46,34 @@ import com.example.bitesavers.ui.theme.BiteSaverColors
 @Composable
 fun TemperatureScreen(
     viewModel: TemperatureViewModel = viewModel(),
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onAddUnitClick: () -> Unit = {}
 ) {
     val currentSelected = viewModel.selectedUnit
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = Color(0xFF121A14)
-    ) {
+    Scaffold(
+        containerColor = Color(0xFF121A14),
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onAddUnitClick,
+                containerColor = Color(0xFFA5D6A7),
+                contentColor = Color(0xFF121A14),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.padding(bottom = 8.dp, end = 8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add Storage Unit",
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+        }
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp)
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
                 .verticalScroll(rememberScrollState())
         ) {
             // Header
@@ -82,7 +100,7 @@ fun TemperatureScreen(
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
-                Box(modifier = Modifier.size(48.dp))
+                Box(modifier = Modifier.size(40.dp))
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -144,7 +162,7 @@ fun TemperatureScreen(
                 text = stringResource(R.string.all_connected_units),
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
-                fontSize =.16.sp
+                fontSize = 16.sp
             )
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -186,13 +204,17 @@ fun DetailedUnitCard(
         border = if (isSelected) BorderStroke(1.5.dp, Color(0xFFA5D6A7)) else null
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
-                    modifier = Modifier.size(42.dp).background(Color(0xFF2C3E30), shape = RoundedCornerShape(10.dp)),
+                    modifier = Modifier
+                        .size(42.dp)
+                        .background(Color(0xFF2C3E30), shape = RoundedCornerShape(10.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -203,20 +225,42 @@ fun DetailedUnitCard(
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
-                    Text(text = name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                    Text(text = type, color = Color(0xFF90A4AE), fontSize = 12.sp)
+                    Text(
+                        text = name,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp
+                    )
+                    Text(
+                        text = type,
+                        color = Color(0xFF90A4AE),
+                        fontSize = 12.sp
+                    )
                 }
             }
 
             Column(horizontalAlignment = Alignment.End) {
-                Text(text = temp, color = if (isWarning) Color(0xFFFFB74D) else Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(
+                    text = temp,
+                    color = if (isWarning) Color(0xFFFFB74D) else Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
                 Spacer(modifier = Modifier.height(4.dp))
                 Box(
                     modifier = Modifier
-                        .background(color = if (isWarning) Color(0xFF3E2723) else Color(0xFF1B3822), shape = RoundedCornerShape(6.dp))
+                        .background(
+                            color = if (isWarning) Color(0xFF3E2723) else Color(0xFF1B3822),
+                            shape = RoundedCornerShape(6.dp)
+                        )
                         .padding(horizontal = 8.dp, vertical = 2.dp)
                 ) {
-                    Text(text = status, color = if (isWarning) Color(0xFFFFAB91) else Color(0xFFA5D6A7), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = status,
+                        color = if (isWarning) Color(0xFFFFAB91) else Color(0xFFA5D6A7),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }

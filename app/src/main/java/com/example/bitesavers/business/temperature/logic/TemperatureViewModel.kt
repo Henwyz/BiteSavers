@@ -6,7 +6,6 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.example.bitesavers.business.temperature.data.TemperatureData
 import com.example.bitesavers.business.temperature.data.TemperatureRepository
-
 class TemperatureViewModel : ViewModel() {
     private val repository = TemperatureRepository()
 
@@ -14,6 +13,7 @@ class TemperatureViewModel : ViewModel() {
         private set
 
     // Track the currently selected unit for the box
+    // use for show what the user click to see the live
     var selectedUnit by mutableStateOf<TemperatureData?>(null)
         private set
 
@@ -32,4 +32,6 @@ class TemperatureViewModel : ViewModel() {
     fun selectUnit(unit: TemperatureData) {
         selectedUnit = unit
     }
+
+
 }
