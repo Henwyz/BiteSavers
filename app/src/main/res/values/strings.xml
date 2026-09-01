@@ -318,6 +318,15 @@
     <string name="profile_stat_co2_reduced">CO₂ Reduced</string>
     <string name="profile_stat_meals_rescued">Meals Rescued</string>
 
+    <!-- Profile Edit Strings -->
+    <string name="profile_edit_title">Edit Profile</string>
+    <string name="profile_edit_name_label">Full Name</string>
+    <string name="profile_edit_name_hint">Enter your full name</string>
+    <string name="profile_edit_save">Save Changes</string>
+    <string name="profile_edit_cancel">Cancel</string>
+    <string name="profile_edit_success">Profile updated successfully</string>
+    <string name="profile_edit_name_empty">Name cannot be empty</string>
+
     <!-- ================================================================= -->
     <!-- NGO REGISTRATION & MANAGEMENT                                     -->
     <!-- ================================================================= -->

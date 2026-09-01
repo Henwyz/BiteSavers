@@ -16,18 +16,23 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -64,10 +69,16 @@ fun ProfileScreen(
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val loadError by viewModel.loadError.collectAsStateWithLifecycle()
 
+    val showEditDialog by viewModel.showEditProfileDialog.collectAsStateWithLifecycle()
+    val editName by viewModel.editProfileName.collectAsStateWithLifecycle()
+    val editError by viewModel.editProfileError.collectAsStateWithLifecycle()
+    val isUpdating by viewModel.isUpdatingProfile.collectAsStateWithLifecycle()
+
     ProfileContent(
         profile = profile,
         isLoading = isLoading,
         loadError = loadError,
+        onEditProfileClick = { viewModel.openEditProfileDialog() },
         onRegisterAsNgoClick = onRegisterAsNgoClick,
         onViewNgoDetailsClick = onViewNgoDetailsClick,
         onPaymentMethodsClick = onPaymentMethodsClick,
@@ -76,6 +87,17 @@ fun ProfileScreen(
         onHelpSupportClick = onHelpSupportClick,
         onAboutClick = onAboutClick
     )
+
+    if (showEditDialog) {
+        EditProfileDialog(
+            name = editName,
+            error = editError,
+            isUpdating = isUpdating,
+            onNameChange = viewModel::onEditProfileNameChange,
+            onDismiss = viewModel::dismissEditProfileDialog,
+            onConfirm = viewModel::saveProfileChanges
+        )
+    }
 }
 
 @Composable
@@ -83,6 +105,7 @@ private fun ProfileContent(
     profile: UserProfileUiModel,
     isLoading: Boolean,
     loadError: String?,
+    onEditProfileClick: () -> Unit,
     onRegisterAsNgoClick: () -> Unit,
     onViewNgoDetailsClick: () -> Unit,
     onPaymentMethodsClick: () -> Unit,
@@ -120,7 +143,7 @@ private fun ProfileContent(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start,
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 AssistChip(
@@ -145,6 +168,19 @@ private fun ProfileContent(
                     ),
                     border = null
                 )
+
+                // Top-right edit profile button to update display name
+                IconButton(
+                    onClick = onEditProfileClick,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_edit),
+                        contentDescription = stringResource(R.string.profile_edit_title),
+                        tint = MaterialTheme.colorScheme.onSecondary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
 
             Spacer(Modifier.height(8.dp))
@@ -351,6 +387,74 @@ private fun ProfileContent(
     }
 }
 
+// Dialog allowing customer to update display name
+@Composable
+private fun EditProfileDialog(
+    name: String,
+    error: String?,
+    isUpdating: Boolean,
+    onNameChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = stringResource(R.string.profile_edit_title),
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp
+            )
+        },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = onNameChange,
+                    label = { Text(stringResource(R.string.profile_edit_name_label)) },
+                    placeholder = { Text(stringResource(R.string.profile_edit_name_hint)) },
+                    singleLine = true,
+                    isError = error != null,
+                    supportingText = {
+                        if (error != null) {
+                            Text(
+                                text = error,
+                                color = MaterialTheme.colorScheme.error,
+                                fontSize = 12.sp
+                            )
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                enabled = !isUpdating && name.isNotBlank()
+            ) {
+                if (isUpdating) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Spacer(Modifier.width(8.dp))
+                }
+                Text(stringResource(R.string.profile_edit_save))
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isUpdating
+            ) {
+                Text(stringResource(R.string.profile_edit_cancel))
+            }
+        }
+    )
+}
+
 @Composable
 private fun ProfileMenuRow(
     icon: @Composable () -> Unit,
@@ -429,3 +533,48 @@ private fun StatCard(modifier: Modifier = Modifier, value: String, label: String
     }
 }
 
+// ---------- Previews ----------
+
+@Preview(showBackground = true)
+@Composable
+private fun ProfileScreenPreview() {
+    BiteSaversTheme {
+        ProfileContent(
+            profile = UserProfileUiModel(
+                id = "usr_123",
+                name = "Alex Johnson",
+                email = "alex.johnson@example.com",
+                avatarInitials = "AJ",
+                memberSinceLabel = "Member since Aug 2024",
+                walletBalance = 42.50,
+                mealsRescued = 12,
+                ngoStatus = NgoStatus.NONE
+            ),
+            isLoading = false,
+            loadError = null,
+            onEditProfileClick = {},
+            onRegisterAsNgoClick = {},
+            onViewNgoDetailsClick = {},
+            onPaymentMethodsClick = {},
+            onSignOutClick = {},
+            onPrivacySecurityClick = {},
+            onHelpSupportClick = {},
+            onAboutClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun EditProfileDialogPreview() {
+    BiteSaversTheme {
+        EditProfileDialog(
+            name = "Alex Johnson",
+            error = null,
+            isUpdating = false,
+            onNameChange = {},
+            onDismiss = {},
+            onConfirm = {}
+        )
+    }
+}

@@ -52,6 +52,20 @@ class UserRepository {
         }
     }
 
+    // Update user profile display name in Supabase
+    suspend fun updateUserName(userId: String, newName: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            client.from("users")
+                .update({ set("name", newName) }) {
+                    filter { eq("id", userId) }
+                }
+            true
+        } catch (e: Exception) {
+            Log.e("UserRepository", "updateUserName error: ${e.message}", e)
+            false
+        }
+    }
+
     // Update user stats (e.g. after rescuing food)
     suspend fun incrementMealsRescued(count: Int = 1): Boolean = withContext(Dispatchers.IO) {
         val uid = UserSession.getUserId()
