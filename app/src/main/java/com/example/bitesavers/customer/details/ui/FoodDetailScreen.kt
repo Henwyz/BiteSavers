@@ -125,6 +125,7 @@ fun FoodDetailScreen(
                             .verticalScroll(scrollState)
                     ) {
                         FoodDetailHero(
+                            imageUrl = offer.imageUrl,
                             imageResId = offer.imageResId
                         )
 

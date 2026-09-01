@@ -274,7 +274,7 @@
     <string name="ticket_label_pickup_window">PICKUP WINDOW</string>
     <string name="ticket_label_item">ITEM</string>
     <string name="cd_impact_icon">Impact</string>
-    <string name="ticket_impact_message">You saved RM %1$d and prevented -%2$.1f kg of food waste. Thank you!</string>
+    <string name="ticket_impact_message">You saved RM %1$d and prevented %2$.1f kg of food waste. Thank you!</string>
 
     <!-- ================================================================= -->
     <!-- ORDERS HISTORY TAB                                                -->

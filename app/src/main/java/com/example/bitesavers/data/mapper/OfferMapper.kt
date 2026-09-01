@@ -32,12 +32,21 @@ fun OfferDto.toUiModel(store: StoreDto?): OfferUiModel {
     // Dynamic calculation of hours left until store closing time
     val calculatedHoursToClose = calculateHoursRemaining(store?.closingTime)
 
+    // Selects a category-appropriate local fallback drawable when imageUrl is unavailable
+    val fallbackImageResId = when (mappedCategory) {
+        DiscoveryCategory.BAKERY -> R.drawable.food_spaghetti // Replace with R.drawable.food_croissant / bakery drawable if available
+        DiscoveryCategory.HOT_MEALS -> R.drawable.food_spaghetti
+        DiscoveryCategory.DESSERTS -> R.drawable.food_spaghetti // Replace with dessert drawable if available
+        DiscoveryCategory.BEVERAGES -> R.drawable.food_spaghetti // Replace with drink drawable if available
+        else -> R.drawable.food_spaghetti
+    }
+
     return OfferUiModel(
         id = id,
         title = title,
         storeName = store?.name ?: "Local Merchant",
         storeRating = store?.rating ?: 4.8,
-        imageResId = R.drawable.food_spaghetti,
+        imageResId = fallbackImageResId,
         imageUrl = imageUrl,
         discountPercent = calculatedDiscount,
         currentPrice = discPrice,

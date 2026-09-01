@@ -4,7 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -124,7 +126,7 @@ fun CheckoutScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(16.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
@@ -140,6 +142,9 @@ fun CheckoutScreen(
                         walletBalance = state.walletBalance,
                         onChangeClick = { onEvent(CheckoutUiEvent.OnChangePaymentClicked) }
                     )
+
+                    // Provides natural bottom buffer above the pinned checkout action bar
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
 
@@ -163,19 +168,32 @@ fun CheckoutScreen(
     }
 }
 
-@Preview(showBackground = true)
+// Renders the standard populated state preview for the Checkout Screen
+@Preview(showBackground = true, name = "Checkout Screen - Populated")
 @Composable
 private fun CheckoutScreenPreview() {
     BiteSaversTheme {
         CheckoutScreen(
             state = CheckoutUiState(
-                storeName = "Artisan Bakery",
-                itemName = "Butter Croissant",
-                quantity = 2,
-                unitPrice = 2.50,
-                walletBalance = 45.50,
+                storeName = "Raja Uda Aroma Bakery",
+                itemName = "Golden Egg Tart Box (4 pcs)",
+                quantity = 1,
+                unitPrice = 8.00,
+                walletBalance = 67.50,
                 selectedPaymentMethod = PaymentMethod.BITESAVER_PAY
             ),
+            onEvent = {}
+        )
+    }
+}
+
+// Renders the loading spinner state preview for the Checkout Screen
+@Preview(showBackground = true, name = "Checkout Screen - Loading")
+@Composable
+private fun CheckoutScreenLoadingPreview() {
+    BiteSaversTheme {
+        CheckoutScreen(
+            state = CheckoutUiState(isLoading = true),
             onEvent = {}
         )
     }
