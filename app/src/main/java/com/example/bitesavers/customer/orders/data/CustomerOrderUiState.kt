@@ -26,10 +26,10 @@ data class CustomerOrderItemUiModel(
     val storeName: String,
     val itemName: String,
     val formattedDate: String,
-
     val totalPrice: Double,
     val moneySaved: Double,
-    val status: OrderStatusType
+    val status: OrderStatusType,
+    val isReviewed: Boolean = false
 )
 
 /**

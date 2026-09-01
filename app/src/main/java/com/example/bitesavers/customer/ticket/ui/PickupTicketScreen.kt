@@ -20,6 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitesavers.customer.ticket.data.TicketUiState
 import com.example.bitesavers.customer.ticket.logic.TicketViewModel
+import com.example.bitesavers.customer.ticket.ui.components.OrderReviewBottomSheet
 import com.example.bitesavers.customer.ticket.ui.components.PickupTicketHeader
 import com.example.bitesavers.customer.ticket.ui.components.PickupTicketImpactCard
 import com.example.bitesavers.customer.ticket.ui.components.PickupTicketPaymentCard
@@ -47,6 +48,7 @@ fun TicketRoute(
             // 2. Trigger navigation if the event requires it
             when (event) {
                 is TicketUiEvent.OnBackClick -> onNavigateBack()
+                else -> Unit
             }
         }
     )
@@ -102,12 +104,23 @@ fun PickupTicketScreen(
             }
         }
     }
+
+    // Displays the rating and review modal upon order completion
+    if (state.showReviewSheet) {
+        OrderReviewBottomSheet(
+            storeName = state.storeName,
+            onDismiss = { onEvent(TicketUiEvent.OnDismissReviewSheet) },
+            onSubmitReview = { rating, comment ->
+                onEvent(TicketUiEvent.OnSubmitReview(rating, comment))
+            }
+        )
+    }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, name = "Pickup Ticket - Light")
 @Composable
 private fun PickupTicketPreview() {
-    BiteSaversTheme {
+    BiteSaversTheme(darkTheme = false) {
         PickupTicketScreen(
             state = TicketUiState(
                 orderId = "BS-28401",
@@ -118,7 +131,30 @@ private fun PickupTicketPreview() {
                 savedAmount = 5.00,
                 co2Saved = 0.8,
                 pin = "7667",
-                paymentMethod = "TNG_EWALLET"
+                paymentMethod = "TNG_EWALLET",
+                showReviewSheet = false
+            ),
+            onEvent = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Pickup Ticket - Dark")
+@Composable
+private fun PickupTicketDarkPreview() {
+    BiteSaversTheme(darkTheme = true) {
+        PickupTicketScreen(
+            state = TicketUiState(
+                orderId = "BS-28401",
+                storeName = "Madam Lim Bakery",
+                pickupWindow = "4:00 - 6:00 PM",
+                itemName = "Butter Croissant",
+                totalPaid = 5.00,
+                savedAmount = 5.00,
+                co2Saved = 0.8,
+                pin = "7667",
+                paymentMethod = "TNG_EWALLET",
+                showReviewSheet = false
             ),
             onEvent = {}
         )

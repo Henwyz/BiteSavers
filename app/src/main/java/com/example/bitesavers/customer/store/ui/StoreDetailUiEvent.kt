@@ -9,5 +9,5 @@ sealed interface StoreDetailUiEvent {
     data class OnCallClicked(val phoneNumber: String?) : StoreDetailUiEvent
     data class OnWhatsAppClicked(val phoneNumber: String?) : StoreDetailUiEvent
     data class OnToggleBookmark(val offerId: String) : StoreDetailUiEvent
-    object OnBackClicked : StoreDetailUiEvent
+    data object OnBackClicked : StoreDetailUiEvent
 }

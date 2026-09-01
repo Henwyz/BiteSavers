@@ -15,6 +15,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 
 class OrdersViewModel : ViewModel() {
 
@@ -25,7 +27,17 @@ class OrdersViewModel : ViewModel() {
     val uiState: StateFlow<CustomerOrdersUiState> = _uiState.asStateFlow()
 
     init {
-        loadOrders()
+        loadOrders(showFullLoading = true)
+        startOrdersPolling() // <-- Start auto-refresh
+    }
+
+    private fun startOrdersPolling() {
+        viewModelScope.launch {
+            while (isActive) {
+                delay(5000) // Checks for status changes every 5 seconds
+                loadOrders(showFullLoading = false)
+            }
+        }
     }
 
     fun onEvent(event: CustomerOrdersUiEvent) {
@@ -34,22 +46,22 @@ class OrdersViewModel : ViewModel() {
                 _uiState.update { it.copy(selectedTab = event.tab) }
             }
             is CustomerOrdersUiEvent.OnRefresh -> {
-                loadOrders()
+                loadOrders(showFullLoading = true)
             }
-            else -> {
-            }
+            else -> Unit
         }
     }
 
-    fun loadOrders() {
+    // Added showFullLoading flag so polling doesn't trigger the big center spinner
+    fun loadOrders(showFullLoading: Boolean = false) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            if (showFullLoading) {
+                _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            }
 
             try {
-                // 1. Fetch raw orders from Supabase for current user
                 val rawOrders = orderRepository.fetchCustomerOrders()
 
-                // 2. Fetch all matching offers in parallel
                 val mappedList = rawOrders.map { order ->
                     async {
                         val offer = offerRepository.fetchOfferById(order.offerId)
@@ -63,6 +75,7 @@ class OrdersViewModel : ViewModel() {
                         }
 
                         val displayDate = order.createdAt?.take(10) ?: "Today"
+                        val hasBeenReviewed = !order.remark.isNullOrBlank() && order.remark.contains("Rating:")
 
                         CustomerOrderItemUiModel(
                             orderId = order.id.orEmpty(),
@@ -72,12 +85,12 @@ class OrdersViewModel : ViewModel() {
                             formattedDate = displayDate,
                             totalPrice = order.totalPrice,
                             moneySaved = saved,
-                            status = statusType
+                            status = statusType,
+                            isReviewed = hasBeenReviewed
                         )
                     }
                 }.awaitAll()
 
-                // 3. Separate Active vs History orders
                 val active = mappedList.filter { it.status == OrderStatusType.READY_FOR_PICKUP }
                 val history = mappedList.filter { it.status != OrderStatusType.READY_FOR_PICKUP }
                 val completed = history.count { it.status == OrderStatusType.COMPLETED }
