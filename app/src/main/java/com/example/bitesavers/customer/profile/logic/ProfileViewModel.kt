@@ -11,6 +11,7 @@ import com.example.bitesavers.data.mapper.toInsertDto
 import com.example.bitesavers.data.mapper.toUiModel
 import com.example.bitesavers.data.remote.UserSession
 import com.example.bitesavers.data.remote.repository.ProfileRepository
+import com.example.bitesavers.data.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,14 +37,15 @@ private val PLACEHOLDER_PROFILE = UserProfileUiModel(
 )
 
 /**
- * Now backed by real Supabase data (users + ngo_applications tables) via
- * ProfileRepository, keyed off UserSession.currentUserId. MainActivity's
- * business/customer toggle updates UserSession, which this ViewModel
- * observes and reloads from automatically.
+ * Backed by real Supabase data (users + ngo_applications tables) via
+ * ProfileRepository and UserRepository, keyed off UserSession.currentUserId.
+ * MainActivity's business/customer toggle updates UserSession, which this
+ * ViewModel observes and reloads from automatically.
  */
 class ProfileViewModel : ViewModel() {
 
     private val repository = ProfileRepository()
+    private val userRepository = UserRepository()
 
     private val _profile = MutableStateFlow(PLACEHOLDER_PROFILE)
     val profile: StateFlow<UserProfileUiModel> = _profile.asStateFlow()
@@ -82,6 +84,19 @@ class ProfileViewModel : ViewModel() {
     private val _submissionState = MutableStateFlow<SubmissionState>(SubmissionState.Idle)
     val submissionState: StateFlow<SubmissionState> = _submissionState.asStateFlow()
 
+    // Manages visibility and input validation for consumer profile editing dialog
+    private val _showEditProfileDialog = MutableStateFlow(false)
+    val showEditProfileDialog: StateFlow<Boolean> = _showEditProfileDialog.asStateFlow()
+
+    private val _editProfileName = MutableStateFlow("")
+    val editProfileName: StateFlow<String> = _editProfileName.asStateFlow()
+
+    private val _editProfileError = MutableStateFlow<String?>(null)
+    val editProfileError: StateFlow<String?> = _editProfileError.asStateFlow()
+
+    private val _isUpdatingProfile = MutableStateFlow(false)
+    val isUpdatingProfile: StateFlow<Boolean> = _isUpdatingProfile.asStateFlow()
+
     private val touchedFields = mutableSetOf<String>()
     private var currentMode = NgoFormMode.REGISTER
     private var pendingSubmitMode = NgoFormMode.REGISTER
@@ -115,6 +130,51 @@ class ProfileViewModel : ViewModel() {
 
     fun refresh() {
         viewModelScope.launch { loadProfileData(UserSession.currentUserId.value) }
+    }
+
+    // ---------- Consumer Edit Profile Handlers ----------
+
+    // Opens edit profile dialog pre-populated with current display name
+    fun openEditProfileDialog() {
+        _editProfileName.value = _profile.value.name
+        _editProfileError.value = null
+        _showEditProfileDialog.value = true
+    }
+
+    // Closes edit profile dialog and cleans up error state
+    fun dismissEditProfileDialog() {
+        _showEditProfileDialog.value = false
+        _editProfileError.value = null
+    }
+
+    // Updates name input buffer and clears error upon valid keystrokes
+    fun onEditProfileNameChange(newName: String) {
+        _editProfileName.value = newName
+        if (_editProfileError.value != null && newName.isNotBlank()) {
+            _editProfileError.value = null
+        }
+    }
+
+    // Persists updated name to Supabase and reloads user profile data
+    fun saveProfileChanges() {
+        val trimmedName = _editProfileName.value.trim()
+        if (trimmedName.isBlank()) {
+            _editProfileError.value = "Name cannot be empty"
+            return
+        }
+
+        val userId = UserSession.currentUserId.value
+        viewModelScope.launch {
+            _isUpdatingProfile.value = true
+            val success = userRepository.updateUserName(userId, trimmedName)
+            if (success) {
+                loadProfileData(userId)
+                _showEditProfileDialog.value = false
+            } else {
+                _editProfileError.value = "Failed to update profile. Please try again."
+            }
+            _isUpdatingProfile.value = false
+        }
     }
 
     // ---------- Screen setup ----------
