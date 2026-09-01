@@ -37,7 +37,7 @@ data class CustomerOrderItemUiModel(
  */
 data class CustomerOrdersUiState(
     val isLoading: Boolean = false,
-    val selectedTab: OrderTab = OrderTab.HISTORY,
+    val selectedTab: OrderTab = OrderTab.ACTIVE,
     val activeOrders: List<CustomerOrderItemUiModel> = emptyList(),
     val historyOrders: List<CustomerOrderItemUiModel> = emptyList(),
     val completedCount: Int = 0,

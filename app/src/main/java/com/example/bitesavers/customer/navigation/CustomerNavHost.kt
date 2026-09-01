@@ -35,8 +35,10 @@ import com.example.bitesavers.customer.profile.ui.NgoUpdatePendingScreen
 import com.example.bitesavers.customer.profile.ui.PrivacySecurityScreen
 import com.example.bitesavers.customer.profile.ui.ProfileScreen
 import com.example.bitesavers.customer.saved.ui.SavedRoute
+import com.example.bitesavers.customer.store.ui.StoreDetailScreen
 import com.example.bitesavers.customer.success.OrderSuccessScreen
 import com.example.bitesavers.customer.ticket.ui.TicketRoute
+import com.example.bitesavers.data.model.UserRole
 import com.example.bitesavers.sharedUI.CustomerBottomNavigationBar
 
 @Composable
@@ -75,6 +77,9 @@ fun CustomerNavHost(
                 DiscoveryRoute(
                     onOfferClick = { offerId ->
                         navController.navigate(CustomerScreen.FoodDetail.createRoute(offerId))
+                    },
+                    onStoreClick = { storeId ->
+                        navController.navigate(CustomerScreen.StoreDetail.createRoute(storeId))
                     }
                 )
             }
@@ -221,11 +226,32 @@ fun CustomerNavHost(
                     },
                     onReserveSuccess = { offerId, quantity ->
                         navController.navigate(CustomerScreen.Checkout.createRoute(offerId, quantity))
+                    },
+                    onStoreClick = { storeId ->
+                        navController.navigate(CustomerScreen.StoreDetail.createRoute(storeId))
                     }
                 )
             }
 
-            // 6. CHECKOUT SCREEN
+            // 6. STORE DETAIL SCREEN
+            composable(
+                route = CustomerScreen.StoreDetail.route,
+                arguments = listOf(
+                    navArgument("storeId") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val storeId = backStackEntry.arguments?.getString("storeId").orEmpty()
+                StoreDetailScreen(
+                    storeId = storeId,
+                    userRole = UserRole.CONSUMER,
+                    onBackClick = { navController.popBackStack() },
+                    onOfferClick = { offer ->
+                        navController.navigate(CustomerScreen.FoodDetail.createRoute(offer.id))
+                    }
+                )
+            }
+
+            // 7. CHECKOUT SCREEN
             composable(
                 route = CustomerScreen.Checkout.route,
                 arguments = listOf(
@@ -253,7 +279,7 @@ fun CustomerNavHost(
                 )
             }
 
-            // 7. SUCCESS SCREEN
+            // 8. SUCCESS SCREEN
             composable(
                 route = CustomerScreen.Success.route,
                 arguments = listOf(navArgument("orderId") { type = NavType.StringType })
@@ -269,16 +295,19 @@ fun CustomerNavHost(
                 )
             }
 
-            // 8. TICKET SCREEN
+            // 9. TICKET SCREEN
             composable(
                 route = CustomerScreen.Ticket.route,
                 arguments = listOf(navArgument("orderId") { type = NavType.StringType })
             ) {
                 TicketRoute(
                     onNavigateBack = {
-                        navController.navigate(CustomerScreen.Discovery.route) {
-                            popUpTo(CustomerScreen.Discovery.route) { inclusive = false }
-                            launchSingleTop = true
+                        val popped = navController.popBackStack()
+                        if (!popped) {
+                            navController.navigate(CustomerScreen.Discovery.route) {
+                                popUpTo(CustomerScreen.Discovery.route) { inclusive = false }
+                                launchSingleTop = true
+                            }
                         }
                     }
                 )

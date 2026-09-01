@@ -10,7 +10,7 @@ import com.example.bitesavers.customer.profile.data.UserProfileUiModel
 import com.example.bitesavers.data.mapper.toInsertDto
 import com.example.bitesavers.data.mapper.toUiModel
 import com.example.bitesavers.data.remote.UserSession
-import com.example.bitesavers.data.remote.repository.ProfileRepository
+import com.example.bitesavers.data.repository.ProfileRepository
 import com.example.bitesavers.data.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

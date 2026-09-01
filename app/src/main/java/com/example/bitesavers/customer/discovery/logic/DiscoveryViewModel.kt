@@ -2,8 +2,11 @@ package com.example.bitesavers.customer.discovery.logic
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.bitesavers.customer.discovery.data.DiscoveryStoreUiModel
 import com.example.bitesavers.customer.discovery.data.DiscoveryUiState
+import com.example.bitesavers.customer.discovery.data.DiscoveryViewMode
 import com.example.bitesavers.customer.discovery.data.NearbyDealMarkerUiModel
+import com.example.bitesavers.customer.discovery.data.UserUiModel
 import com.example.bitesavers.customer.discovery.ui.DiscoveryUiEvent
 import com.example.bitesavers.data.model.DiscoveryCategory
 import com.example.bitesavers.data.model.OfferUiModel
@@ -32,30 +35,8 @@ class DiscoveryViewModel : ViewModel() {
     private var userLatitude: Double? = null
     private var userLongitude: Double? = null
 
-    //If we put standard variables inside Compose UI, and part of the UI could accidentally
-    //overwrite the data, causing weird bugs where the wrong food shows up
-
-    /**
-     * BACKING PROPERTY PATTERN (Unidirectional Data Flow)
-     * This setup ensures the UI can only read data, while only this ViewModel can change it.
-     *
-     * 1. MutableStateFlow (The Kitchen):
-     *    - 'Mutable' means the data inside can be edited or updated.
-     *    - 'private' acts as a security guard. It ensures the Compose UI cannot
-     *      accidentally overwrite this data directly.
-     *    - '_' (underscore) is the standard Kotlin naming convention indicating
-     *      that this is an internal, private variable.
-     */
+    // Backing property pattern for unidirectional data flow
     private val _uiState = MutableStateFlow(DiscoveryUiState(isLoading = true))
-
-    /**
-     * 2. StateFlow (The Food Served):
-     *    - This is the public variable the UI will observe to draw the screen.
-     *    - 'asStateFlow()' takes the secret, editable data above and converts it
-     *      into a strictly Read-Only format.
-     *    - The UI can look at it to trigger recomposition (redrawing the screen),
-     *      but cannot change it, keeping our business logic safe and predictable.
-     */
     val uiState: StateFlow<DiscoveryUiState> = _uiState.asStateFlow()
 
     init {
@@ -64,15 +45,14 @@ class DiscoveryViewModel : ViewModel() {
         observeUserSessionChanges()
     }
 
-    /**
-     * Listens to UserSession changes dynamically.
-     * Whenever MainActivity changes user (e.g., u1 -> u2), it automatically fetches the new name and bookmarks.
-     */
+    // Listens to UserSession changes dynamically
+    // Listens to UserSession changes dynamically
+    // Listens to UserSession changes dynamically
+    // Listens to UserSession changes dynamically
     private fun observeUserSessionChanges() {
         viewModelScope.launch {
             UserSession.currentUserId.collectLatest { userId ->
                 if (userId.isNotBlank()) {
-                    // 1. Fetch real username from Supabase for this user ID
                     val profile = userRepository.fetchUserProfile(userId)
                     if (profile != null) {
                         _uiState.update { current ->
@@ -80,49 +60,47 @@ class DiscoveryViewModel : ViewModel() {
                         }
                     }
 
-                    // 2. Load bookmarks for this active user
+                    // Load bookmarks for this active user
                     savedRepository.loadUserSavedOffers(userId)
                 }
             }
         }
     }
 
-    /**
-     * Called when GPS location is acquired from the UI/Device.
-     * Updates coordinates, sorts offers by closest distance, and groups top items by store.
-     */
+    // Called when GPS location is acquired from the UI/Device
     fun updateUserLocation(lat: Double, lng: Double) {
         userLatitude = lat
         userLongitude = lng
         _uiState.update { current ->
             val visibleOffers = applyFilters(current, allOffers)
+            val visibleStores = deriveStoresFromOffers(visibleOffers, lat, lng)
             val generatedMarkers = groupOffersByStore(visibleOffers, lat, lng)
 
             current.copy(
                 userLatitude = lat,
                 userLongitude = lng,
                 offers = visibleOffers,
+                stores = visibleStores,
                 nearbyMarkers = generatedMarkers
             )
         }
     }
 
-    /**
-     * Fetch offers from Supabase via Repository
-     */
+    // Fetch offers from Supabase via Repository
     fun loadOffers() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
             try {
-                // 1. Fetch all items from Supabase SAFELY
+                // Fetch all items from Supabase safely
                 allOffers = repository.fetchOffers()
 
-                // 2. Filter them and generate map markers
+                // Filter them and generate map markers & stores
                 _uiState.update { current ->
                     val visibleOffers = applyFilters(current, allOffers)
                     val baseLat = userLatitude ?: 3.1390
                     val baseLng = userLongitude ?: 101.6869
+                    val visibleStores = deriveStoresFromOffers(visibleOffers, baseLat, baseLng)
                     val generatedMarkers = groupOffersByStore(visibleOffers, baseLat, baseLng)
 
                     current.copy(
@@ -130,6 +108,7 @@ class DiscoveryViewModel : ViewModel() {
                         userLatitude = userLatitude,
                         userLongitude = userLongitude,
                         offers = visibleOffers,
+                        stores = visibleStores,
                         nearbyMarkers = generatedMarkers
                     )
                 }
@@ -142,9 +121,40 @@ class DiscoveryViewModel : ViewModel() {
         }
     }
 
-    /**
-     * Groups offers by store coordinates and returns only the 3 closest store markers for the map.
-     */
+    // Transforms unique stores from the offer inventory with distances and active bag counts
+    private fun deriveStoresFromOffers(
+        offers: List<OfferUiModel>,
+        userLat: Double?,
+        userLng: Double?
+    ): List<DiscoveryStoreUiModel> {
+        return offers.groupBy { it.storeName }
+            .map { (storeName, storeOffers) ->
+                val firstOffer = storeOffers.first()
+                val storeLat = firstOffer.latitude
+                val storeLng = firstOffer.longitude
+                val dist = if (userLat != null && userLng != null && storeLat != null && storeLng != null) {
+                    LocationUtils.calculateDistanceKm(userLat, userLng, storeLat, storeLng)
+                } else {
+                    firstOffer.distanceKm
+                }
+
+                DiscoveryStoreUiModel(
+                    id = firstOffer.storeId.ifBlank { firstOffer.id }, // Uses the actual store identifier
+                    name = storeName,
+                    address = "Penang, Malaysia",
+                    rating = firstOffer.storeRating,
+                    imageUrl = firstOffer.imageUrl,
+                    operatingHours = firstOffer.pickupWindow,
+                    activeOffersCount = storeOffers.size,
+                    distanceKm = dist,
+                    latitude = storeLat,
+                    longitude = storeLng
+                )
+            }
+            .sortedBy { it.distanceKm }
+    }
+
+    // Groups offers by store coordinates and returns top 3 store markers for the map
     private fun groupOffersByStore(
         offers: List<OfferUiModel>,
         fallbackLat: Double,
@@ -153,9 +163,7 @@ class DiscoveryViewModel : ViewModel() {
         val groupedByStore = offers.groupBy { it.storeName }
 
         return groupedByStore.entries
-            // Sorts store groups by the closest offer distance
             .sortedBy { entry -> entry.value.minOfOrNull { it.distanceKm } ?: Double.MAX_VALUE }
-            // Limits map pins strictly to the top 3 closest stores
             .take(3)
             .mapIndexed { index, entry ->
                 val storeOffers = entry.value
@@ -171,7 +179,7 @@ class DiscoveryViewModel : ViewModel() {
                 }
 
                 NearbyDealMarkerUiModel(
-                    storeId = firstOffer.id, // Primary key identifier for pin selection
+                    storeId = firstOffer.id,
                     storeName = entry.key,
                     labelText = label,
                     latitude = pinLat,
@@ -181,7 +189,7 @@ class DiscoveryViewModel : ViewModel() {
             }
     }
 
-    // To Handle map pin clicked
+    // Handles map pin selection
     fun onMapMarkerClicked(markerStoreId: String?) {
         _uiState.update { current ->
             current.copy(selectedMapOfferId = markerStoreId)
@@ -196,6 +204,7 @@ class DiscoveryViewModel : ViewModel() {
             val baseLng = userLongitude ?: 101.6869
             updated.copy(
                 offers = filtered,
+                stores = deriveStoresFromOffers(filtered, baseLat, baseLng),
                 nearbyMarkers = groupOffersByStore(filtered, baseLat, baseLng)
             )
         }
@@ -209,15 +218,18 @@ class DiscoveryViewModel : ViewModel() {
             val baseLng = userLongitude ?: 101.6869
             updated.copy(
                 offers = filtered,
+                stores = deriveStoresFromOffers(filtered, baseLat, baseLng),
                 nearbyMarkers = groupOffersByStore(filtered, baseLat, baseLng)
             )
         }
     }
 
-    /**
-     * Future hook:
-     * NGO users can see RM0 items (e.g., close to expiry/closing).
-     */
+    fun onViewModeSelected(mode: DiscoveryViewMode) {
+        _uiState.update { current ->
+            current.copy(viewMode = mode)
+        }
+    }
+
     fun onUserRoleChanged(role: UserRole) {
         _uiState.update { current ->
             val updatedCategories = if (role == UserRole.NGO) {
@@ -238,6 +250,7 @@ class DiscoveryViewModel : ViewModel() {
             val baseLng = userLongitude ?: 101.6869
             updated.copy(
                 offers = filtered,
+                stores = deriveStoresFromOffers(filtered, baseLat, baseLng),
                 nearbyMarkers = groupOffersByStore(filtered, baseLat, baseLng)
             )
         }
@@ -251,16 +264,14 @@ class DiscoveryViewModel : ViewModel() {
         val filteredSequence = sourceList.asSequence()
             .filter { offer ->
                 if (state.userRole == UserRole.CONSUMER) {
-                    // Customers can ONLY see items with MORE than 1 hour remaining
                     offer.hoursToClose > 1
                 } else {
-                    // NGOs can see all active items
                     true
                 }
             }
             .filter { offer ->
                 when (state.selectedCategory) {
-                    null, DiscoveryCategory.ALL -> true
+                    DiscoveryCategory.ALL -> true
                     DiscoveryCategory.BAKERY -> offer.category == DiscoveryCategory.BAKERY
                     DiscoveryCategory.HOT_MEALS -> offer.category == DiscoveryCategory.HOT_MEALS
                     DiscoveryCategory.DESSERTS -> offer.category == DiscoveryCategory.DESSERTS
@@ -278,7 +289,6 @@ class DiscoveryViewModel : ViewModel() {
                         offer.storeName.lowercase().contains(query)
             }
 
-        // Returns all matching items sorted by closest distance without truncating the list
         return if (currentLat != null && currentLng != null) {
             filteredSequence
                 .map { offer ->
@@ -298,6 +308,7 @@ class DiscoveryViewModel : ViewModel() {
         when (event) {
             is DiscoveryUiEvent.OnSearchQueryChanged -> onSearchQueryChanged(event.query)
             is DiscoveryUiEvent.OnCategorySelected -> onCategorySelected(event.category)
+            is DiscoveryUiEvent.OnViewModeSelected -> onViewModeSelected(event.mode)
             is DiscoveryUiEvent.OnMapMarkerClicked -> onMapMarkerClicked(event.offerId)
             is DiscoveryUiEvent.OnResetFilters -> onResetFilters()
             is DiscoveryUiEvent.OnToggleBookmark -> onToggleBookmark(event.offerId)
@@ -328,6 +339,7 @@ class DiscoveryViewModel : ViewModel() {
             val baseLng = userLongitude ?: 101.6869
             updated.copy(
                 offers = filtered,
+                stores = deriveStoresFromOffers(filtered, baseLat, baseLng),
                 nearbyMarkers = groupOffersByStore(filtered, baseLat, baseLng)
             )
         }

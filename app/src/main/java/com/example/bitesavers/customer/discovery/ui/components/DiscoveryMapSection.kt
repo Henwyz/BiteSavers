@@ -48,6 +48,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.example.bitesavers.R
 import com.example.bitesavers.customer.discovery.data.NearbyDealMarkerUiModel
+import com.example.bitesavers.customer.sharedUI.CompactDiscoveryOfferCard
 import com.example.bitesavers.data.model.DiscoveryCategory
 import com.example.bitesavers.data.model.OfferUiModel
 import com.example.bitesavers.data.model.UserRole

@@ -48,7 +48,9 @@ fun PickupTicketPinCard(pin: String) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                pin.forEach { digit ->
+                // Ensure 4 digits are always rendered even if blank/loading
+                val displayPin = pin.ifBlank { "----" }
+                displayPin.forEach { digit ->
                     Box(
                         modifier = Modifier
                             .size(56.dp)

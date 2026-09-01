@@ -5,6 +5,7 @@ import com.example.bitesavers.R
 
 data class OfferUiModel(
     val id: String,
+    val storeId: String = "",
     val title: String,
     val storeName: String,
     val storeRating: Double = 4.8,

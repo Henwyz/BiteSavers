@@ -6,4 +6,5 @@ sealed interface FoodDetailUiEvent {
     data object OnDecreaseQuantity : FoodDetailUiEvent
     data object OnReserveClicked : FoodDetailUiEvent
     data object OnToggleBookmark : FoodDetailUiEvent
+    data object OnStoreClicked : FoodDetailUiEvent
 }

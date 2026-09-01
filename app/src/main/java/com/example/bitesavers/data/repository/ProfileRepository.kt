@@ -1,4 +1,4 @@
-package com.example.bitesavers.data.remote.repository
+package com.example.bitesavers.data.repository
 
 import com.example.bitesavers.data.remote.SupabaseClient
 import com.example.bitesavers.data.remote.dto.NgoApplicationDto

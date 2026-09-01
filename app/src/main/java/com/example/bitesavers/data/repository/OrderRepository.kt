@@ -9,6 +9,7 @@ import com.example.bitesavers.data.remote.dto.UserDto
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.random.Random
 
 class OrderRepository {
     private val client = SupabaseClient.client
@@ -46,6 +47,9 @@ class OrderRepository {
             val weight = offer.weightKg ?: 0.3
             val available = offer.quantityAvailable ?: 0
 
+            // Generates a 4-digit numeric pickup verification PIN
+            val pickupPin = Random.nextInt(1000, 10000).toString()
+
             val order = OrderDto(
                 userId = uid,
                 storeId = offer.storeId ?: "s1",
@@ -55,7 +59,8 @@ class OrderRepository {
                 totalWeightKg = weight * quantity,
                 isNgoFreeClaim = userRole == "NGO" || totalPrice == 0.0,
                 paymentMethod = paymentMethod,
-                status = "READY_FOR_PICKUP"
+                status = "READY_FOR_PICKUP",
+                pickupPin = pickupPin
             )
 
             // 3. Create the order

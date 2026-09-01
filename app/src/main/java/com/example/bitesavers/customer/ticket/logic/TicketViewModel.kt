@@ -57,18 +57,17 @@ class TicketViewModel(
                 // Calculates positive food waste / CO2 prevented based on item quantity
                 val co2Saved = abs(0.8 * order.quantity)
 
-                // Generates a deterministic positive 4-digit numeric pickup PIN from orderId
-                val pinNumber = (abs(orderId.hashCode()) % 9000) + 1000
-                val pin = pinNumber.toString()
+                // Reads the persistent PIN from Supabase or generates a deterministic fallback
+                val pin = order.pickupPin ?: (((abs(orderId.hashCode()) % 9000) + 1000).toString())
 
                 val shortOrderId = "BS-" + orderId.takeLast(5).uppercase()
 
                 // Formats display payment method name cleanly
-                val formattedPaymentMethod = when (order.paymentMethod?.uppercase()) {
+                val formattedPaymentMethod = when (order.paymentMethod.uppercase()) {
                     "BITESAVER_PAY" -> "BiteSaver Pay"
                     "TNG_EWALLET", "TNG" -> "Touch 'n Go eWallet"
                     "CASH_ON_PICKUP", "CASH" -> "Cash on Pickup"
-                    else -> order.paymentMethod ?: "BiteSaver Pay"
+                    else -> order.paymentMethod
                 }
 
                 _uiState.update {

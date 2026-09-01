@@ -25,6 +25,14 @@
     <string name="nav_analytics">Analytics</string>
     <string name="nav_discover">Discover</string>
 
+    <!-- Order Status Labels -->
+    <string name="order_status_pending">Pending</string>
+    <string name="order_status_confirmed">Confirmed</string>
+    <string name="order_status_ready_for_pickup">Ready for Pickup</string>
+    <string name="order_status_completed">Completed</string>
+    <string name="order_status_cancelled">Cancelled</string>
+    <string name="order_status_failed">Order Failed</string>
+
     <!-- ================================================================= -->
     <!-- AUTHENTICATION (LOGIN & SIGN UP)                                  -->
     <!-- ================================================================= -->
@@ -118,6 +126,11 @@
     <string name="empty_state_message">We couldn\'t find any food deals matching your search or selected filter.</string>
     <string name="empty_state_clear_filters">Clear Filters</string>
 
+    <!-- Discovery View Mode Tabs -->
+    <string name="discovery_tab_offers">Offers</string>
+    <string name="discovery_tab_stores">Stores</string>
+    <string name="discovery_store_deals_count">%1$d active bags</string>
+
     <!-- ================================================================= -->
     <!-- CUSTOMER FOOD DETAIL PAGE                                         -->
     <!-- ================================================================= -->
@@ -150,6 +163,19 @@
     <string name="stock_sold_out">Sold Out</string>
     <string name="btn_sold_out">Sold Out</string>
     <string name="btn_offer_expired">Offer Expired</string>
+
+    <!-- Store Detail Screen -->
+    <string name="store_detail_title">Store Details</string>
+    <string name="store_call_button">Call</string>
+    <string name="store_whatsapp_button">WhatsApp</string>
+    <string name="store_hours_label">Operating Hours</string>
+    <string name="store_address_label">Address</string>
+    <string name="store_active_offers_title">Available Surprise Bags</string>
+    <string name="store_no_offers">No active food bags available right now.</string>
+    <string name="store_contact_not_available">Contact information not available</string>
+    <string name="store_pickup_time_format">Pickup: %1$s - %2$s</string>
+    <string name="store_rating_format">★ %1$.1f</string>
+    <string name="store_error_loading">Failed to load store details: %1$s</string>
 
     <!-- ================================================================= -->
     <!-- SAVED FOODS PAGE                                                  -->
