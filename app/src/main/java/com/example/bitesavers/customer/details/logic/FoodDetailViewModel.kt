@@ -55,6 +55,9 @@ class FoodDetailViewModel(
             is FoodDetailUiEvent.OnReserveClicked -> {
                 // send the card data to the database
             }
+            is FoodDetailUiEvent.OnStoreClicked -> {
+                // Handled in the UI/Route layer for navigation
+            }
         }
     }
 

@@ -17,6 +17,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -40,23 +41,27 @@ import com.example.bitesavers.ui.theme.BiteSaversTheme
 @Composable
 fun OrdersRoute(
     viewModel: OrdersViewModel = viewModel(),
-    onOrderClick: (String) -> Unit = {}
+    onOrderClick: (orderId: String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Refresh orders when opening the screen
+    LaunchedEffect(Unit) {
+        viewModel.loadOrders()
+    }
 
     OrdersScreen(
         state = uiState,
         onEvent = { event ->
+            viewModel.onEvent(event)
+
             when (event) {
-                is CustomerOrdersUiEvent.OnTabSelected ->
-                    viewModel.onEvent(event)
-
-                is CustomerOrdersUiEvent.OnRefresh ->
-                    viewModel.onEvent(event)
-
-                is CustomerOrdersUiEvent.OnOrderClicked ->
+                is CustomerOrdersUiEvent.OnOrderClicked -> {
                     onOrderClick(event.orderId)
-
+                }
+                is CustomerOrdersUiEvent.OnRateOrderClicked -> {
+                    onOrderClick(event.orderId)
+                }
                 else -> Unit
             }
         }
@@ -159,6 +164,9 @@ fun OrdersScreen(
                                         order = order,
                                         onClick = {
                                             onEvent(CustomerOrdersUiEvent.OnOrderClicked(order.orderId))
+                                        },
+                                        onRateClick = {
+                                            onEvent(CustomerOrdersUiEvent.OnRateOrderClicked(order.orderId))
                                         }
                                     )
                                 }

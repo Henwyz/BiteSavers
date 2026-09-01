@@ -43,7 +43,8 @@ import com.example.bitesavers.ui.theme.BiteSaversTheme
 fun FoodDetailRoute(
     viewModel: FoodDetailViewModel,
     onBackClick: () -> Unit,
-    onReserveSuccess: (String, Int) -> Unit
+    onReserveSuccess: (String, Int) -> Unit,
+    onStoreClick: (String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -60,6 +61,12 @@ fun FoodDetailRoute(
                     val currentOfferId = uiState.offer?.id
                     if (currentOfferId != null) {
                         onReserveSuccess(currentOfferId, uiState.quantity)
+                    }
+                }
+                is FoodDetailUiEvent.OnStoreClicked -> {
+                    val storeId = uiState.offer?.storeId
+                    if (!storeId.isNullOrBlank()) {
+                        onStoreClick(storeId)
                     }
                 }
 
@@ -140,7 +147,12 @@ fun FoodDetailScreen(
                                 .padding(16.dp),
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            FoodDetailHeader(offer = offer)
+                            FoodDetailHeader(
+                                offer = offer,
+                                onStoreClick = {
+                                    onEvent(FoodDetailUiEvent.OnStoreClicked)
+                                }
+                            )
 
                             FoodDetailStatusRow(
                                 hoursToClose = offer.hoursToClose,
@@ -195,6 +207,7 @@ private fun FoodDetailScreenPreview() {
                 isTemperatureSafe = true,
                 offer = OfferUiModel(
                     id = "e3333333-3333-3333-3333-333333333333",
+                    storeId = "store_apollo",
                     title = "Chicken Bolognese Pasta",
                     storeName = "Apollo Western & Pasta",
                     storeRating = 4.9,
@@ -232,6 +245,7 @@ private fun FoodDetailScreenSoldOutPreview() {
                 isTemperatureSafe = true,
                 offer = OfferUiModel(
                     id = "e2222222-2222-2222-2222-222222222222",
+                    storeId = "store_sweet_treats",
                     title = "Japanese Matcha Mille Crepe",
                     storeName = "Sweet Treats Cafe",
                     storeRating = 4.9,

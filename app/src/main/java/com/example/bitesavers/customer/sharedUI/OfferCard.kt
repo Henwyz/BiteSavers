@@ -1,4 +1,4 @@
-package com.example.bitesavers.customer.discovery.ui.components
+package com.example.bitesavers.customer.sharedUI
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -50,7 +50,7 @@ import com.example.bitesavers.data.model.UserRole
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @Composable
-fun DiscoveryOfferCard(
+fun OfferCard(
     offer: OfferUiModel,
     isSaved: Boolean = false,
     userRole: UserRole = UserRole.CONSUMER, // Accepts current role
@@ -378,10 +378,10 @@ fun CompactDiscoveryOfferCard(
 
 @Preview(showBackground = true, name = "Consumer View - Standard Price")
 @Composable
-private fun DiscoveryOfferCardConsumerPreview() {
+private fun OfferCardConsumerPreview() {
     BiteSaversTheme {
         Box(modifier = Modifier.padding(16.dp)) {
-            DiscoveryOfferCard(
+            OfferCard(
                 offer = OfferUiModel(
                     id = "1",
                     title = "Bolognese Spaghetti with Signature Minced Beef Meatballs",
@@ -412,10 +412,10 @@ private fun DiscoveryOfferCardConsumerPreview() {
 
 @Preview(showBackground = true, name = "NGO View - Free Claim")
 @Composable
-private fun DiscoveryOfferCardNgoPreview() {
+private fun OfferCardNgoPreview() {
     BiteSaversTheme {
         Box(modifier = Modifier.padding(16.dp)) {
-            DiscoveryOfferCard(
+            OfferCard(
                 offer = OfferUiModel(
                     id = "2",
                     title = "Artisan Butter Croissant",

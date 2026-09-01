@@ -4,10 +4,13 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,7 +19,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
@@ -28,34 +33,41 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitesavers.R
+import com.example.bitesavers.customer.discovery.data.DiscoveryStoreUiModel
 import com.example.bitesavers.customer.discovery.data.DiscoveryUiState
+import com.example.bitesavers.customer.discovery.data.DiscoveryViewMode
 import com.example.bitesavers.customer.discovery.data.UserUiModel
 import com.example.bitesavers.customer.discovery.logic.DiscoveryViewModel
 import com.example.bitesavers.customer.discovery.logic.LocationUtils.fetchDeviceCoordinates
+import com.example.bitesavers.customer.discovery.ui.components.DiscoveryEmptyState
 import com.example.bitesavers.customer.discovery.ui.components.DiscoveryFilterRow
 import com.example.bitesavers.customer.discovery.ui.components.DiscoveryHeader
 import com.example.bitesavers.customer.discovery.ui.components.DiscoveryMapSection
-import com.example.bitesavers.customer.discovery.ui.components.DiscoveryOfferCard
 import com.example.bitesavers.customer.discovery.ui.components.DiscoverySearchBar
+import com.example.bitesavers.customer.discovery.ui.components.DiscoveryStoreCard
+import com.example.bitesavers.customer.sharedUI.OfferCard
 import com.example.bitesavers.data.model.DiscoveryCategory
 import com.example.bitesavers.data.model.OfferUiModel
-import com.example.bitesavers.data.model.UserRole
 import com.example.bitesavers.data.repository.SavedRepository
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @Composable
 fun DiscoveryRoute(
     viewModel: DiscoveryViewModel = viewModel(),
-    onOfferClick: (String) -> Unit = {}
+    onOfferClick: (String) -> Unit = {},
+    onStoreClick: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -117,8 +129,14 @@ fun DiscoveryRoute(
                 is DiscoveryUiEvent.OnCategorySelected ->
                     viewModel.onCategorySelected(event.category)
 
+                is DiscoveryUiEvent.OnViewModeSelected ->
+                    viewModel.onViewModeSelected(event.mode)
+
                 is DiscoveryUiEvent.OnOfferClicked ->
                     onOfferClick(event.offer.id)
+
+                is DiscoveryUiEvent.OnStoreClicked ->
+                    onStoreClick(event.store.id)
 
                 is DiscoveryUiEvent.OnMapMarkerClicked ->
                     viewModel.onMapMarkerClicked(event.offerId)
@@ -208,48 +226,111 @@ fun DiscoveryScreen(
                             onLocationResolved = onLocationResolved
                         )
 
+                        // Mode toggle bar between offers and stores
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                .padding(4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(
+                                        if (state.viewMode == DiscoveryViewMode.OFFERS) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0f)
+                                    )
+                                    .clickable { onEvent(DiscoveryUiEvent.OnViewModeSelected(DiscoveryViewMode.OFFERS)) }
+                                    .padding(vertical = 8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.discovery_tab_offers),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = if (state.viewMode == DiscoveryViewMode.OFFERS) MaterialTheme.colorScheme.onPrimary
+                                    else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(
+                                        if (state.viewMode == DiscoveryViewMode.STORES) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0f)
+                                    )
+                                    .clickable { onEvent(DiscoveryUiEvent.OnViewModeSelected(DiscoveryViewMode.STORES)) }
+                                    .padding(vertical = 8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.discovery_tab_stores),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = if (state.viewMode == DiscoveryViewMode.STORES) MaterialTheme.colorScheme.onPrimary
+                                    else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
                         Text(
                             text = stringResource(id = R.string.discovery_recommended_title),
                             style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(top = 8.dp)
+                            modifier = Modifier.padding(top = 4.dp)
                         )
                     }
                 }
 
-                // SECTION 3: EMPTY STATE OR THE FOOD CARDS
-                if (state.offers.isEmpty()) {
-                    item(span = { GridItemSpan(maxLineSpan) }) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 32.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = stringResource(id = R.string.discovery_empty_deals),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                // SECTION 3: EMPTY STATE OR THE FOOD/STORE CARDS
+                if (state.viewMode == DiscoveryViewMode.OFFERS) {
+                    if (state.offers.isEmpty()) {
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            DiscoveryEmptyState(
+                                onResetFilters = { onEvent(DiscoveryUiEvent.OnResetFilters) }
+                            )
+                        }
+                    } else {
+                        // Displays ALL active offers in the grid
+                        itemsIndexed(state.offers, key = { _, offer -> offer.id }) { index, offer ->
+                            val startPadding = if (index % 2 == 0) 16.dp else 0.dp
+                            val endPadding = if (index % 2 == 1) 16.dp else 0.dp
+
+                            OfferCard(
+                                offer = offer,
+                                isSaved = savedOfferIds.contains(offer.id),
+                                userRole = state.userRole,
+                                modifier = Modifier.padding(start = startPadding, end = endPadding),
+                                onClick = { clicked ->
+                                    onEvent(DiscoveryUiEvent.OnOfferClicked(clicked))
+                                },
+                                onToggleBookmark = { offerId ->
+                                    onEvent(DiscoveryUiEvent.OnToggleBookmark(offerId))
+                                }
                             )
                         }
                     }
                 } else {
-                    // Displays ALL active offers in the grid
-                    itemsIndexed(state.offers, key = { _, offer -> offer.id }) { index, offer ->
-                        val startPadding = if (index % 2 == 0) 16.dp else 0.dp
-                        val endPadding = if (index % 2 == 1) 16.dp else 0.dp
-
-                        DiscoveryOfferCard(
-                            offer = offer,
-                            isSaved = savedOfferIds.contains(offer.id),
-                            userRole = state.userRole,
-                            modifier = Modifier.padding(start = startPadding, end = endPadding),
-                            onClick = { clicked ->
-                                onEvent(DiscoveryUiEvent.OnOfferClicked(clicked))
-                            },
-                            onToggleBookmark = { offerId ->
-                                onEvent(DiscoveryUiEvent.OnToggleBookmark(offerId))
+                    if (state.stores.isEmpty()) {
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            DiscoveryEmptyState(
+                                onResetFilters = { onEvent(DiscoveryUiEvent.OnResetFilters) }
+                            )
+                        }
+                    } else {
+                        // Displays ALL active stores in the single column list
+                        items(state.stores, key = { it.id }, span = { GridItemSpan(maxLineSpan) }) { store ->
+                            Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                                DiscoveryStoreCard(
+                                    store = store,
+                                    onClick = { onEvent(DiscoveryUiEvent.OnStoreClicked(it)) }
+                                )
                             }
-                        )
+                        }
                     }
                 }
             }
@@ -262,9 +343,9 @@ fun DiscoveryScreen(
     }
 }
 
-@Preview(showBackground = true, name = "Discovery Screen Preview")
+@Preview(showBackground = true, name = "Discovery Screen Offers Preview")
 @Composable
-private fun DiscoveryScreenPreview() {
+private fun DiscoveryScreenOffersPreview() {
     BiteSaversTheme {
         DiscoveryScreen(
             state = DiscoveryUiState(
@@ -274,6 +355,7 @@ private fun DiscoveryScreenPreview() {
                     displayName = "Sarah Tan",
                     avatarInitials = "ST"
                 ),
+                viewMode = DiscoveryViewMode.OFFERS,
                 offers = listOf(
                     OfferUiModel(
                         id = "1",
@@ -292,6 +374,36 @@ private fun DiscoveryScreenPreview() {
                         liveTemperature = 25.0,
                         storageType = "ROOM_TEMP",
                         description = "Freshly baked egg tarts."
+                    )
+                )
+            ),
+            onEvent = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Discovery Screen Stores Preview")
+@Composable
+private fun DiscoveryScreenStoresPreview() {
+    BiteSaversTheme {
+        DiscoveryScreen(
+            state = DiscoveryUiState(
+                isLoading = false,
+                user = UserUiModel(
+                    greeting = "",
+                    displayName = "Sarah Tan",
+                    avatarInitials = "ST"
+                ),
+                viewMode = DiscoveryViewMode.STORES,
+                stores = listOf(
+                    DiscoveryStoreUiModel(
+                        id = "1",
+                        name = "Raja Uda Aroma Bakery",
+                        address = "Penang, Malaysia",
+                        rating = 4.8,
+                        operatingHours = "Today, 8:00 PM - 9:30 PM",
+                        activeOffersCount = 3,
+                        distanceKm = 0.3
                     )
                 )
             ),

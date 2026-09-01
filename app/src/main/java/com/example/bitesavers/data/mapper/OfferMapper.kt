@@ -42,22 +42,23 @@ fun OfferDto.toUiModel(store: StoreDto?): OfferUiModel {
     }
 
     return OfferUiModel(
-        id = id,
-        title = title,
-        storeName = store?.name ?: "Local Merchant",
+        id = this.id,
+        storeId = this.storeId ?: store?.id ?: "", // Maps foreign key store ID from Supabase
+        title = this.title,
+        storeName = store?.name ?: "Store",
         storeRating = store?.rating ?: 4.8,
-        imageResId = fallbackImageResId,
-        imageUrl = imageUrl,
-        discountPercent = calculatedDiscount,
-        currentPrice = discPrice,
-        originalPrice = origPrice,
-        quantityLeft = quantityAvailable ?: 0,
-        hoursToClose = calculatedHoursToClose,
-        category = mappedCategory,
-        isEligibleForNgoFree = isEligibleForNgoFree ?: false,
-        liveTemperature = 25.0,
-        storageType = "ROOM_TEMP",
-        description = description ?: "Fresh surplus food ready for rescue.",
+        imageUrl = this.imageUrl,
+        discountPercent = if (this.originalPrice > 0) {
+            (((this.originalPrice - this.discountedPrice) / this.originalPrice) * 100).toInt()
+        } else 0,
+        currentPrice = this.discountedPrice,
+        originalPrice = this.originalPrice,
+        distanceKm = 0.0,
+        quantityLeft = this.quantityAvailable,
+        hoursToClose = 2,
+        category = DiscoveryCategory.entries.find { it.name.equals(this.category, ignoreCase = true) }
+            ?: DiscoveryCategory.HOT_MEALS,
+        isEligibleForNgoFree = this.isEligibleForNgoFree,
         latitude = store?.latitude,
         longitude = store?.longitude
     )

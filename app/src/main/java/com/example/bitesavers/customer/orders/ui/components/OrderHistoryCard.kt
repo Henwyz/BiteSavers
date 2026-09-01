@@ -1,5 +1,6 @@
 package com.example.bitesavers.customer.orders.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,11 +12,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,6 +40,7 @@ import com.example.bitesavers.ui.theme.BiteSaversTheme
 fun OrderHistoryCard(
     order: CustomerOrderItemUiModel,
     onClick: () -> Unit,
+    onRateClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -126,16 +130,43 @@ fun OrderHistoryCard(
                     color = MaterialTheme.colorScheme.primary
                 )
             }
+
+            // Rate Order Action Button for unreviewed completed orders
+            if (order.status == OrderStatusType.COMPLETED && !order.isReviewed) {
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedButton(
+                    onClick = onRateClick,
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.primary
+                    ),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_star_outline),
+                        contentDescription = stringResource(id = R.string.cd_orders_rate_star),
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = stringResource(id = R.string.orders_rate_order_button),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
         }
     }
 }
 
 // ================= Previews =================
 
-@Preview(name = "Completed Order Card", showBackground = true)
+@Preview(name = "Completed Order Card - Needs Review", showBackground = true)
 @Composable
-private fun OrderHistoryCardCompletedPreview() {
-    BiteSaversTheme {
+private fun OrderHistoryCardNeedsReviewPreview() {
+    BiteSaversTheme(darkTheme = false) {
         Surface(modifier = Modifier.padding(16.dp)) {
             OrderHistoryCard(
                 order = CustomerOrderItemUiModel(
@@ -146,9 +177,35 @@ private fun OrderHistoryCardCompletedPreview() {
                     formattedDate = "10 Jul 2026",
                     totalPrice = 4.50,
                     moneySaved = 4.50,
-                    status = OrderStatusType.COMPLETED
+                    status = OrderStatusType.COMPLETED,
+                    isReviewed = false
                 ),
-                onClick = {}
+                onClick = {},
+                onRateClick = {}
+            )
+        }
+    }
+}
+
+@Preview(name = "Completed Order Card - Already Reviewed", showBackground = true)
+@Composable
+private fun OrderHistoryCardAlreadyReviewedPreview() {
+    BiteSaversTheme(darkTheme = false) {
+        Surface(modifier = Modifier.padding(16.dp)) {
+            OrderHistoryCard(
+                order = CustomerOrderItemUiModel(
+                    orderId = "1",
+                    shortOrderId = "#BS-0701",
+                    storeName = "Old Town Restaurant",
+                    itemName = "Nasi Lemak Set",
+                    formattedDate = "10 Jul 2026",
+                    totalPrice = 4.50,
+                    moneySaved = 4.50,
+                    status = OrderStatusType.COMPLETED,
+                    isReviewed = true
+                ),
+                onClick = {},
+                onRateClick = {}
             )
         }
     }
@@ -157,7 +214,7 @@ private fun OrderHistoryCardCompletedPreview() {
 @Preview(name = "Cancelled Order Card", showBackground = true)
 @Composable
 private fun OrderHistoryCardCancelledPreview() {
-    BiteSaversTheme {
+    BiteSaversTheme(darkTheme = false) {
         Surface(modifier = Modifier.padding(16.dp)) {
             OrderHistoryCard(
                 order = CustomerOrderItemUiModel(
@@ -168,9 +225,11 @@ private fun OrderHistoryCardCancelledPreview() {
                     formattedDate = "7 Jul 2026",
                     totalPrice = 3.50,
                     moneySaved = 3.50,
-                    status = OrderStatusType.CANCELLED
+                    status = OrderStatusType.CANCELLED,
+                    isReviewed = false
                 ),
-                onClick = {}
+                onClick = {},
+                onRateClick = {}
             )
         }
     }

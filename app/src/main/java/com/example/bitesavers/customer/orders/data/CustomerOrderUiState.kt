@@ -26,10 +26,10 @@ data class CustomerOrderItemUiModel(
     val storeName: String,
     val itemName: String,
     val formattedDate: String,
-
     val totalPrice: Double,
     val moneySaved: Double,
-    val status: OrderStatusType
+    val status: OrderStatusType,
+    val isReviewed: Boolean = false
 )
 
 /**
@@ -37,7 +37,7 @@ data class CustomerOrderItemUiModel(
  */
 data class CustomerOrdersUiState(
     val isLoading: Boolean = false,
-    val selectedTab: OrderTab = OrderTab.HISTORY,
+    val selectedTab: OrderTab = OrderTab.ACTIVE,
     val activeOrders: List<CustomerOrderItemUiModel> = emptyList(),
     val historyOrders: List<CustomerOrderItemUiModel> = emptyList(),
     val completedCount: Int = 0,

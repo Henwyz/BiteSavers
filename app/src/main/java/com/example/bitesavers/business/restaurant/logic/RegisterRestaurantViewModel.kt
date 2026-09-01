@@ -10,7 +10,6 @@ import com.example.bitesavers.data.remote.UserSession
 import com.example.bitesavers.data.remote.dto.StoreDto
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.launch
-import java.util.UUID
 
 class RegisterRestaurantViewModel : ViewModel() {
     var restaurantName by mutableStateOf("")
@@ -34,19 +33,21 @@ class RegisterRestaurantViewModel : ViewModel() {
                 .select()
                 .decodeList<StoreDto>()
 
-            // 2. Generate sequential ID like STORE001, STORE002...
+            // Generate sequential ID like STORE001, STORE002...
             val nextNumber = existingStores.size + 1
             val storeId = String.format("STORE%03d", nextNumber)
 
+            // Get the current logged-in user's ID to store in owner_id column
+            val currentUserId = UserSession.getUserId()
 
             val newStore = StoreDto(
                 id = storeId,
                 name = restaurantName.trim(),
                 address = address.trim(),
                 openingTime = openingTime,
-                closingTime = closingTime
+                closingTime = closingTime,
+                ownerId = currentUserId
             )
-
 
             SupabaseClient.client
                 .from("stores")

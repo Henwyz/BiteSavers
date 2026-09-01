@@ -15,5 +15,7 @@ data class OrderDto(
     @SerialName("is_ngo_free_claim") val isNgoFreeClaim: Boolean,
     @SerialName("payment_method") val paymentMethod: String,
     val status: String = "READY_FOR_PICKUP",
+    @SerialName("pickup_pin") val pickupPin: String? = null,
+    val remark: String? = null,
     @SerialName("created_at") val createdAt: String? = null
 )

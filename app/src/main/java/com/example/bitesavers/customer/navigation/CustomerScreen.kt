@@ -6,6 +6,10 @@ sealed class CustomerScreen(val route: String) {
     data object Saved : CustomerScreen("saved_screen")
     data object Profile : CustomerScreen("profile_screen")
 
+    data object StoreDetail : CustomerScreen("store_detail_screen/{storeId}") {
+        fun createRoute(storeId: String) = "store_detail_screen/$storeId"
+    }
+
     data object FoodDetail : CustomerScreen("food_detail/{offerId}") {
         fun createRoute(offerId: String) = "food_detail/$offerId"
     }

@@ -27,7 +27,7 @@ class LoginViewModel : ViewModel() {
     var isLoading by mutableStateOf(false)
         private set
 
-    // for the error state
+    // Error states
     var emailError by mutableStateOf<String?>(null)
         private set
     var passwordError by mutableStateOf<String?>(null)
@@ -35,24 +35,34 @@ class LoginViewModel : ViewModel() {
 
     fun updateEmail(value: String) {
         email = value
-        emailError = null // Clear error when typing
+        emailError = null
     }
 
     fun updatePassword(value: String) {
         password = value
-        passwordError = null // Clear error when typing
+        passwordError = null
     }
 
     fun updateSelectedRole(value: String) { selectedRole = value }
     fun toggleDropdown(expanded: Boolean) { isDropdownExpanded = expanded }
     fun togglePasswordVisibility() { passwordVisible = !passwordVisible }
 
+    private fun normalizeRole(role: String?): String {
+        return when (role?.trim()?.lowercase()) {
+            "customer", "consumer" -> "consumer"
+            "business", "merchant", "store" -> "business"
+            else -> role?.trim()?.lowercase().orEmpty()
+        }
+    }
+
     fun login(onSuccess: (isBusiness: Boolean) -> Unit) {
-        // this is use for reset previous errors
         emailError = null
         passwordError = null
 
-        val validationResult = LoginValidation.validate(email, password)
+        val inputEmail = email.trim()
+        val inputPassword = password
+
+        val validationResult = LoginValidation.validate(inputEmail, inputPassword)
         if (validationResult.hasErrors) {
             emailError = validationResult.emailError
             passwordError = validationResult.passwordError
@@ -62,9 +72,10 @@ class LoginViewModel : ViewModel() {
         viewModelScope.launch {
             isLoading = true
             try {
+                // Sign in with Supabase Auth
                 SupabaseClient.client.auth.signInWith(Email) {
-                    this.email = this@LoginViewModel.email.trim()
-                    this.password = this@LoginViewModel.password
+                    this.email = inputEmail
+                    this.password = inputPassword
                 }
 
                 val currentAuthUser = SupabaseClient.client.auth.currentUserOrNull()
@@ -73,6 +84,7 @@ class LoginViewModel : ViewModel() {
                     val authId = currentAuthUser.id
                     UserSession.setUserId(authId)
 
+                    // Fetch user details from public.users table
                     val profiles = SupabaseClient.client
                         .from("users")
                         .select {
@@ -83,15 +95,23 @@ class LoginViewModel : ViewModel() {
                         .decodeList<UserDto>()
 
                     val userProfile = profiles.firstOrNull()
-                    val isBusiness = userProfile?.role.equals("BUSINESS", ignoreCase = true)
-                            || selectedRole == "Business"
+                    val dbRole = normalizeRole(userProfile?.role)
+                    val chosenRole = normalizeRole(selectedRole)
 
-                    onSuccess(isBusiness)
+                    if (dbRole != chosenRole) {
+                        SupabaseClient.client.auth.signOut()
+                        UserSession.clear()
+                        emailError = "This account is registered as a ${userProfile?.role ?: "consumer"}, not a $selectedRole."
+                    } else {
+                        val isBusiness = dbRole == "business"
+                        onSuccess(isBusiness)
+                    }
                 } else {
-                    emailError = "Authentication failed."
+                    emailError = "Authentication failed. User session not found."
                 }
             } catch (e: Exception) {
                 val raw = e.localizedMessage.orEmpty()
+                android.util.Log.e("BiteSaversLogin", "Login error: ", e)
                 when {
                     raw.contains("Invalid login credentials", ignoreCase = true) -> {
                         emailError = "Email might not be registered or password is wrong"
