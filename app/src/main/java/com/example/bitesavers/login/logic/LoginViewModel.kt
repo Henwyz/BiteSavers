@@ -83,11 +83,18 @@ class LoginViewModel : ViewModel() {
                         .decodeList<UserDto>()
 
                     val userProfile = profiles.firstOrNull()
-                    val isBusiness = userProfile?.role.equals("BUSINESS", ignoreCase = true)
-                            || selectedRole == "Business"
+                    val dbRole = userProfile?.role?.lowercase() ?: "consumer"
+                    val chosenRole = selectedRole.lowercase()
 
-                    onSuccess(isBusiness)
-                } else {
+                    if (dbRole != chosenRole) {
+                        SupabaseClient.client.auth.signOut()
+                        UserSession.clear()
+                        emailError = "This account is registered as a $dbRole, not a $selectedRole."
+                    } else {
+                        val isBusiness = dbRole == "business"
+                        onSuccess(isBusiness)
+                    }
+                }else {
                     emailError = "Authentication failed."
                 }
             } catch (e: Exception) {

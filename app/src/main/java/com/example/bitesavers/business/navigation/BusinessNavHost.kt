@@ -36,6 +36,7 @@ fun BusinessNavHost(
     val inventoryViewModel: InventoryViewModel = viewModel()
     val dashboardViewModel: DashboardViewModel = viewModel()
 
+
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
