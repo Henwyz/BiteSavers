@@ -26,6 +26,7 @@ import com.example.bitesavers.business.inventory.ui.MyListingScreen
 import com.example.bitesavers.business.profile.ui.BusinessProfileScreen
 import com.example.bitesavers.business.restaurant.ui.RegisterRestaurantScreen
 import com.example.bitesavers.business.sharedUI.BusinessBottomNavigationBar
+import com.example.bitesavers.business.temperature.ui.AddBoxScreen
 import com.example.bitesavers.business.temperature.ui.TemperatureScreen
 
 @Composable
@@ -158,6 +159,17 @@ fun BusinessNavHost(
                         // Keep empty for now until verification screen is ready
                     },
                     onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            composable(BusinessScreen.AddBox.route) {
+                AddBoxScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onUnitAdded = { unitName, unitType ->
+                        // You can save/use unitName and unitType here if needed,
+                        // and then pop back to the temperature screen:
                         navController.popBackStack()
                     }
                 )
