@@ -399,13 +399,3 @@ fun LoginScreen(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun LoginScreenPreview() {
-    BiteSaversTheme {
-        LoginScreen(
-            onLoginSuccess = {},
-            onNavigateToSignUp = {}
-        )
-    }
-}

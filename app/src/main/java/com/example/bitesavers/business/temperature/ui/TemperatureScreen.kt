@@ -278,10 +278,3 @@ fun DetailedUnitCard(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun TemperatureScreenPreview() {
-    BiteSaversTheme {
-        TemperatureScreen(onBackClick = {})
-    }
-}

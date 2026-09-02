@@ -155,10 +155,3 @@ fun TermsScreen(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun TermsScreenPreview() {
-    BiteSaversTheme {
-        TermsScreen(onNavigateBack = {})
-    }
-}

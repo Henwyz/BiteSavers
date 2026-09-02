@@ -440,15 +440,3 @@ private fun signupFieldColors(isError: Boolean) = OutlinedTextFieldDefaults.colo
     focusedBorderColor = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
     unfocusedBorderColor = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline
 )
-
-@Preview(showBackground = true)
-@Composable
-fun SignUpScreenPreview() {
-    BiteSaversTheme {
-        SignUpScreen(
-            onSignUpSuccess = {},
-            onNavigateToLogin = {},
-            onNavigateToTerms = {}
-        )
-    }
-}
