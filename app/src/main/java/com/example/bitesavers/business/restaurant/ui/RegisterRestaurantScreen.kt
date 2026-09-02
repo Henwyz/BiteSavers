@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitesavers.business.restaurant.logic.RegisterRestaurantViewModel
-import com.example.bitesavers.ui.theme.BiteSaverColors
+import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @Composable
 fun RegisterRestaurantScreen(
@@ -26,7 +26,7 @@ fun RegisterRestaurantScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BiteSaverColors.HeaderGreen),
+            .background(Color(0xFF121A14)), // Dark background matching your theme
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(Modifier.height(30.dp))
@@ -34,15 +34,15 @@ fun RegisterRestaurantScreen(
             text = "Register Your Restaurant 🏪",
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
-            color = BiteSaverColors.White
+            color = Color.White
         )
         Spacer(Modifier.height(16.dp))
 
-        // Added verticalScroll so the page scrolls and nothing gets cut off!
+        // Scrollable container with dark surface style
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(BiteSaverColors.OffWhite)
+                .background(Color(0xFF121A14))
                 .verticalScroll(rememberScrollState())
                 .padding(20.dp)
         ) {
@@ -50,17 +50,21 @@ fun RegisterRestaurantScreen(
                 text = "Restaurant Name",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
-                color = BiteSaverColors.HeaderGreen
+                color = Color(0xFFA5D6A7)
             )
             OutlinedTextField(
                 value = viewModel.restaurantName,
                 onValueChange = { viewModel.updateRestaurantName(it) },
-                placeholder = { Text("e.g. BiteSaver Cafe") },
+                placeholder = { Text("e.g. BiteSaver Cafe", color = Color.Gray) },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = BiteSaverColors.SoftGreen,
-                    unfocusedContainerColor = BiteSaverColors.SoftGreen,
-                    focusedBorderColor = BiteSaverColors.PrimaryGreen,
-                    unfocusedBorderColor = BiteSaverColors.PrimaryGreen
+                    focusedContainerColor = Color(0xFF1E2A20),
+                    unfocusedContainerColor = Color(0xFF1E2A20),
+                    disabledContainerColor = Color(0xFF1E2A20),
+                    errorContainerColor = Color(0xFF1E2A20),
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    focusedBorderColor = Color(0xFFA5D6A7),
+                    unfocusedBorderColor = Color(0xFF2C3E30)
                 ),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(50),
@@ -73,17 +77,21 @@ fun RegisterRestaurantScreen(
                 text = "Address",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
-                color = BiteSaverColors.HeaderGreen
+                color = Color(0xFFA5D6A7)
             )
             OutlinedTextField(
                 value = viewModel.address,
                 onValueChange = { viewModel.updateAddress(it) },
-                placeholder = { Text("e.g. 123, Jalan Ampang") },
+                placeholder = { Text("e.g. 123, Jalan Ampang", color = Color.Gray) },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = BiteSaverColors.SoftGreen,
-                    unfocusedContainerColor = BiteSaverColors.SoftGreen,
-                    focusedBorderColor = BiteSaverColors.PrimaryGreen,
-                    unfocusedBorderColor = BiteSaverColors.PrimaryGreen
+                    focusedContainerColor = Color(0xFF1E2A20),
+                    unfocusedContainerColor = Color(0xFF1E2A20),
+                    disabledContainerColor = Color(0xFF1E2A20),
+                    errorContainerColor = Color(0xFF1E2A20),
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    focusedBorderColor = Color(0xFFA5D6A7),
+                    unfocusedBorderColor = Color(0xFF2C3E30)
                 ),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(50),
@@ -96,20 +104,24 @@ fun RegisterRestaurantScreen(
                 text = "Opening Time",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
-                color = BiteSaverColors.HeaderGreen
+                color = Color(0xFFA5D6A7)
             )
             OutlinedTextField(
                 value = viewModel.openingTime,
                 onValueChange = { viewModel.updateOpeningTime(it) },
-                placeholder = { Text("e.g. 09:00 AM") },
+                placeholder = { Text("e.g. 09:00 AM", color = Color.Gray) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(50),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = BiteSaverColors.SoftGreen,
-                    unfocusedContainerColor = BiteSaverColors.SoftGreen,
-                    focusedBorderColor = BiteSaverColors.PrimaryGreen,
-                    unfocusedBorderColor = BiteSaverColors.PrimaryGreen
+                    focusedContainerColor = Color(0xFF1E2A20),
+                    unfocusedContainerColor = Color(0xFF1E2A20),
+                    disabledContainerColor = Color(0xFF1E2A20),
+                    errorContainerColor = Color(0xFF1E2A20),
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    focusedBorderColor = Color(0xFFA5D6A7),
+                    unfocusedBorderColor = Color(0xFF2C3E30)
                 )
             )
 
@@ -119,17 +131,21 @@ fun RegisterRestaurantScreen(
                 text = "Closing Time",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
-                color = BiteSaverColors.HeaderGreen
+                color = Color(0xFFA5D6A7)
             )
             OutlinedTextField(
                 value = viewModel.closingTime,
                 onValueChange = { viewModel.updateClosingTime(it) },
-                placeholder = { Text("e.g. 10:00 PM") },
+                placeholder = { Text("e.g. 10:00 PM", color = Color.Gray) },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = BiteSaverColors.SoftGreen,
-                    unfocusedContainerColor = BiteSaverColors.SoftGreen,
-                    focusedBorderColor = BiteSaverColors.PrimaryGreen,
-                    unfocusedBorderColor = BiteSaverColors.PrimaryGreen
+                    focusedContainerColor = Color(0xFF1E2A20),
+                    unfocusedContainerColor = Color(0xFF1E2A20),
+                    disabledContainerColor = Color(0xFF1E2A20),
+                    errorContainerColor = Color(0xFF1E2A20),
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    focusedBorderColor = Color(0xFFA5D6A7),
+                    unfocusedBorderColor = Color(0xFF2C3E30)
                 ),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(50),
@@ -150,14 +166,15 @@ fun RegisterRestaurantScreen(
                     .height(50.dp),
                 shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = BiteSaverColors.PrimaryGreen
+                    containerColor = Color(0xFFA5D6A7),
+                    disabledContainerColor = Color(0xFFA5D6A7).copy(alpha = 0.5f)
                 )
             ) {
                 Text(
                     text = "Save & Continue",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = BiteSaverColors.White
+                    color = Color(0xFF121A14)
                 )
             }
 
@@ -169,7 +186,7 @@ fun RegisterRestaurantScreen(
 @Preview(showBackground = true)
 @Composable
 fun RegisterRestaurantScreenPreview() {
-    com.example.bitesavers.ui.theme.BiteSaversTheme {
+    BiteSaversTheme {
         RegisterRestaurantScreen(
             onRestaurantRegistered = {}
         )
