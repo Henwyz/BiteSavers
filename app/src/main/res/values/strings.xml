@@ -470,7 +470,7 @@
     <string name="total_amount_label">Total Amount</string>
     <string name="status_label">Status</string>
     <string name="btn_success">Success</string>
-    <string name="btn_cancel">Cancel Order</string>
+    <string name="btn_cancel">Cancel</string>
     <string name="btn_delete_record">Delete Record</string>
     <string name="pin_mismatch_error">Invalid PIN. Please check customer code.</string>
     <string name="verification_success_title">Pickup Successful</string>
@@ -478,8 +478,33 @@
     <string name="dialog_ok">OK</string>
     <string name="delete_confirm_title">Delete Record?</string>
     <string name="delete_confirm_desc">Are you sure you want to permanently delete this order record from Supabase?</string>
-    <string name="delete_action">Delete</string>
+    <string name="delete_action2">Delete</string>
     <string name="back_label">Back</string>
+
+    <!-- Business Cancel Screen Strings -->
+    <string name="cancel_screen_title">Cancel Order</string>
+    <string name="cancel_reason_header">Reason for Cancellation</string>
+    <string name="reason_out_of_stock">Item Out of Stock / Damaged</string>
+    <string name="reason_no_show">Customer No-Show / Overdue</string>
+    <string name="reason_store_closed">Store Closed Early</string>
+    <string name="reason_other">Other</string>
+    <string name="other_reason_hint">Please describe the specific issue (max 1000 characters)</string>
+    <string name="cash_refund_warning_title">Cash Payment Notice</string>
+    <string name="cash_refund_warning_desc">This customer chose Cash on Pickup. If any cash was already collected, please refund the amount of RM %.2f manually in person.</string>
+    <string name="online_refund_notice">Paid via %1$s. System will process refund to customer.</string>
+    <string name="btn_confirm_cancel">Confirm Cancellation</string>
+    <string name="cancel_dialog_title">Order Cancelled</string>
+    <string name="cancel_dialog_desc">Order has been cancelled, refunded, and the customer has been notified.</string>
+    <string name="select_reason_error">Please select a cancellation reason.</string>
+    <string name="other_reason_empty_error">Please provide a reason in the text box.</string>
+
+    <!-- Refund Method Formats & Labels -->
+    <string name="refund_method_label">Refund Channel</string>
+    <string name="refund_method_bitesaver">BiteSavers Pay (Wallet Balance)</string>
+    <string name="refund_method_credit_card">Credit Card (Automated Gateway)</string>
+    <string name="refund_method_cash">Cash on Pickup (Manual In-Person)</string>
+    <string name="bitesaver_refund_flow_desc">Merchant wallet will be deducted RM %.2f, and customer wallet will be credited RM %.2f.</string>
+    <string name="general_refund_mock_desc">Transaction marked as Refunded via %1$s. No direct wallet deduction required.</string>
 
     <!-- Order Item & Card Strings -->
     <string name="order_id_prefix">Order #</string>

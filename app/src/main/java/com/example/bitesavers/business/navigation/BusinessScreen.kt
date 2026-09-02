@@ -15,4 +15,8 @@ sealed class BusinessScreen(val route: String) {
         // Generates the destination route filled with the concrete order ID
         fun createRoute(orderId: String): String = "business_verification/$orderId"
     }
+
+    object CancelOrder : BusinessScreen("business_cancel/{orderId}") {
+        fun createRoute(orderId: String): String = "business_cancel/$orderId"
+    }
 }

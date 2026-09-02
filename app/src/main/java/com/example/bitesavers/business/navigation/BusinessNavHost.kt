@@ -21,6 +21,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.bitesavers.business.analytics.ui.AnalyticsScreen
 import com.example.bitesavers.business.dashboard.logic.DashboardViewModel
+import com.example.bitesavers.business.dashboard.ui.BusinessCancelScreen
 import com.example.bitesavers.business.dashboard.ui.BusinessHomeScreen
 import com.example.bitesavers.business.dashboard.ui.BusinessOrdersScreen
 import com.example.bitesavers.business.dashboard.ui.BusinessVerificationScreen
@@ -240,14 +241,31 @@ fun BusinessNavHost(
                     onNavigateBack = {
                         navController.popBackStack()
                     },
-                    onNavigateToCancel = { id ->
-                        // Reserved for cancel screen navigation
-                        // navController.navigate("business_cancel/$id")
+                    onNavigateToCancel = { targetOrderId ->
+                        navController.navigate(BusinessScreen.CancelOrder.createRoute(targetOrderId))
                     },
                     onVerificationCompleted = {
                         // Pop back to refresh and display order status
                         dashboardViewModel.fetchOrdersFromSupabase()
                         navController.popBackStack()
+                    }
+                )
+            }
+
+            // 10. Business Cancel Order
+            composable(
+                route = BusinessScreen.CancelOrder.route,
+                arguments = listOf(navArgument("orderId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val orderId = backStackEntry.arguments?.getString("orderId").orEmpty()
+
+                BusinessCancelScreen(
+                    orderId = orderId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onCancelCompleted = {
+                        // Refresh orders and pop back to order lists
+                        dashboardViewModel.fetchOrdersFromSupabase()
+                        navController.popBackStack(BusinessScreen.BusinessOrders.route, inclusive = false)
                     }
                 )
             }

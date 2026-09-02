@@ -370,7 +370,7 @@ fun BusinessVerificationScreen(
                     }
                 ) {
                     Text(
-                        text = stringResource(R.string.delete_action),
+                        text = stringResource(R.string.delete_action2),
                         color = MaterialTheme.colorScheme.error
                     )
                 }
