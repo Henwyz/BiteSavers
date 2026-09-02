@@ -23,7 +23,7 @@ import com.example.bitesavers.ui.theme.BiteSaversTheme
 @Composable
 fun FoodDetailTagsRow(
     distanceKm: Double,
-    rating: Double = 4.8,
+    rating: Double? = 4.8,
     weightKg: Double = 0.4,
     modifier: Modifier = Modifier
 ) {

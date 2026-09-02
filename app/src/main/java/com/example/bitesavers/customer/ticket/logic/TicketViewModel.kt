@@ -33,6 +33,9 @@ class TicketViewModel(
     private val _uiState = MutableStateFlow(TicketUiState(isLoading = true))
     val uiState: StateFlow<TicketUiState> = _uiState.asStateFlow()
 
+    // Tracks if review prompt has already been shown or dismissed to prevent repeating popups
+    private var hasPromptedReview = false
+
     init {
         val orderId: String? = savedStateHandle.get<String>("orderId")
         if (!orderId.isNullOrBlank()) {
@@ -49,9 +52,12 @@ class TicketViewModel(
                 // Handled at navigation level
             }
             is TicketUiEvent.OnDismissReviewSheet -> {
+                // Mark as dismissed so the observer loop does not re-open it
+                hasPromptedReview = true
                 _uiState.update { it.copy(showReviewSheet = false) }
             }
             is TicketUiEvent.OnSubmitReview -> {
+                hasPromptedReview = true
                 submitOrderReview(event.rating, event.comment)
             }
         }
@@ -80,6 +86,11 @@ class TicketViewModel(
 
                 val isCompleted = order.status.equals("COMPLETED", ignoreCase = true)
                 val alreadyReviewed = !order.remark.isNullOrBlank() && order.remark.contains("Rating:")
+                val shouldShowReview = isCompleted && !alreadyReviewed && !hasPromptedReview
+
+                if (shouldShowReview) {
+                    hasPromptedReview = true
+                }
 
                 _uiState.update {
                     it.copy(
@@ -97,7 +108,7 @@ class TicketViewModel(
                         orderStatus = order.status,
                         isCompleted = isCompleted,
                         isReviewSubmitted = alreadyReviewed,
-                        showReviewSheet = isCompleted && !alreadyReviewed,
+                        showReviewSheet = shouldShowReview,
                         isLoading = false
                     )
                 }
@@ -113,9 +124,9 @@ class TicketViewModel(
             while (isActive) {
                 delay(3000)
 
-                // If already completed and the review sheet was already triggered or dismissed, stop polling
-                if (_uiState.value.isCompleted && (_uiState.value.isReviewSubmitted || _uiState.value.showReviewSheet)) {
-                    continue
+                // If already completed in UI, stop running network requests
+                if (_uiState.value.isCompleted) {
+                    break
                 }
 
                 val order = orderRepository.fetchOrderById(orderId)
@@ -123,15 +134,22 @@ class TicketViewModel(
                     val isCompleted = order.status.equals("COMPLETED", ignoreCase = true)
                     val alreadyReviewed = !order.remark.isNullOrBlank() && order.remark.contains("Rating:")
 
-                    // Updates ticket state and opens review sheet without triggering duplicate system banners
-                    if (isCompleted && !alreadyReviewed && !_uiState.value.isReviewSubmitted) {
+                    // Updates ticket state and opens review sheet once
+                    if (isCompleted) {
+                        val triggerReview = !alreadyReviewed && !hasPromptedReview
+                        if (triggerReview) {
+                            hasPromptedReview = true
+                        }
+
                         _uiState.update {
                             it.copy(
                                 orderStatus = "COMPLETED",
                                 isCompleted = true,
-                                showReviewSheet = true
+                                showReviewSheet = triggerReview
                             )
                         }
+                        // Order is completed, observer can finish
+                        break
                     }
                 }
             }
@@ -187,7 +205,7 @@ class TicketViewModel(
                 pin = "7667",
                 orderStatus = "COMPLETED",
                 isCompleted = true,
-                showReviewSheet = true,
+                showReviewSheet = false,
                 isLoading = false
             )
         }

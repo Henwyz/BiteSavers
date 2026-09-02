@@ -9,6 +9,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.bitesavers.data.remote.UserSession
+import com.example.bitesavers.data.repository.NotificationRepository
 import com.example.bitesavers.data.repository.OfferRepository
 import com.example.bitesavers.data.repository.OrderRepository
 import com.example.bitesavers.navigation.AppNavHost
@@ -23,6 +24,7 @@ class MainActivity : ComponentActivity() {
 
     private val orderRepository: OrderRepository = OrderRepository()
     private val offerRepository: OfferRepository = OfferRepository()
+    private val notificationRepository: NotificationRepository = NotificationRepository()
 
     companion object {
         // Shared state flow observed by AppNavHost to handle notification click navigation
@@ -84,11 +86,22 @@ class MainActivity : ComponentActivity() {
                                 val orderId = order.id.orEmpty()
                                 val offer = offerRepository.fetchOfferById(order.offerId)
                                 val storeName = offer?.storeName ?: "BiteSavers Store"
+                                val shortId = "BS-" + orderId.takeLast(5).uppercase()
 
+                                // Shows the system status bar banner alert
                                 OrderNotificationHelper.showOrderCompletedNotification(
                                     context = applicationContext,
                                     orderId = orderId,
                                     storeName = storeName
+                                )
+
+                                // Persists the completed notification into the remote user_notifications table
+                                notificationRepository.insertNotification(
+                                    id = "NOTIF_${System.currentTimeMillis()}_${orderId.takeLast(4)}",
+                                    userId = userId,
+                                    orderId = orderId,
+                                    title = "Order Completed! 🎉",
+                                    message = "Order $shortId has been picked up from $storeName. Tap to view ticket."
                                 )
 
                                 // Mark banner as shown so it does not repeat

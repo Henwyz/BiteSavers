@@ -46,6 +46,9 @@ class RegisterRestaurantViewModel : ViewModel() {
                 address = address.trim(),
                 openingTime = openingTime,
                 closingTime = closingTime,
+                cleanupEndTime = "22:30:00",
+                latitude = 5.4674,
+                longitude = 100.2790,
                 ownerId = currentUserId
             )
 
