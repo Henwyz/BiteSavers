@@ -7,7 +7,12 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bitesavers.business.inventory.data.ListingItem
+import com.example.bitesavers.business.inventory.data.toDto
+import com.example.bitesavers.business.inventory.data.toListingItem
 import com.example.bitesavers.data.remote.SupabaseClient
+import com.example.bitesavers.data.remote.UserSession
+import com.example.bitesavers.data.remote.dto.OfferDto
+import com.example.bitesavers.data.remote.dto.StoreDto
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.Dispatchers
@@ -16,8 +21,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.Dispatcher
 import java.io.ByteArrayOutputStream
+import java.text.SimpleDateFormat
+import java.util.Locale
 import java.util.UUID
 
 
@@ -27,8 +33,63 @@ class InventoryViewModel : ViewModel() {
 
     var selectedItemForEdit by mutableStateOf<ListingItem?>(null)
 
+    var currentStoreId: String = ""
+        private set
+
+    var defaultPickupStart by mutableStateOf("")
+        private set
+    var defaultPickupEnd by mutableStateOf("")
+        private set
+
     init {
-        fetchListings()
+        initStoreAndFetchListings()
+    }
+
+    private fun initStoreAndFetchListings() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val userId = UserSession.getUserId()
+            if (userId.isNotBlank()) {
+                try {
+                    val storeList = SupabaseClient.client.from("stores")
+                        .select {
+                            filter {
+                                eq("owner_id", userId)
+                            }
+                        }
+                        .decodeList<StoreDto>()
+
+                    val store = storeList.firstOrNull()
+                    if (store != null) {
+                        currentStoreId = store.id
+                        store.closingTime?.let { defaultPickupStart = formatTo12Hour(it) }
+                        store.cleanupEndTime?.let { defaultPickupEnd = formatTo12Hour(it) }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+
+            // Fallback if no store is matched for this user ID
+            if (currentStoreId.isBlank()) {
+                try {
+                    val storeList = SupabaseClient.client.from("stores")
+                        .select()
+                        .decodeList<StoreDto>()
+
+                    val defaultStore = storeList.firstOrNull()
+                    if (defaultStore != null) {
+                        currentStoreId = defaultStore.id
+                        defaultStore.closingTime?.let { defaultPickupStart = formatTo12Hour(it) }
+                        defaultStore.cleanupEndTime?.let { defaultPickupEnd = formatTo12Hour(it) }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    currentStoreId = "11111111-1111-1111-1111-111111111111"
+                }
+            }
+
+            fetchListings()
+        }
     }
 
     fun fetchListings() {
@@ -36,12 +97,30 @@ class InventoryViewModel : ViewModel() {
             try {
                 val result = SupabaseClient.client
                     .from("offers")
-                    .select()
-                    .decodeList<ListingItem>()
-                _listings.value = result
+                    .select {
+                        if (currentStoreId.isNotBlank()) {
+                            filter {
+                                eq("store_id", currentStoreId)
+                            }
+                        }
+                    }
+                    .decodeList<OfferDto>()
+
+                _listings.value = result.map { it.toListingItem(defaultPickupStart, defaultPickupEnd) }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
+        }
+    }
+
+    private fun formatTo12Hour(time24: String): String {
+        return try {
+            val parser = SimpleDateFormat("HH:mm:ss", Locale.US)
+            val formatter = SimpleDateFormat("hh:mm a", Locale.US)
+            val date = parser.parse(time24)
+            if (date != null) formatter.format(date) else time24
+        } catch (_: Exception) {
+            time24
         }
     }
 
@@ -63,7 +142,10 @@ class InventoryViewModel : ViewModel() {
     }
 
     fun addListing(item: ListingItem) {
-        _listings.value = listOf(item) + _listings.value
+        val targetId = if (item.id.isBlank()) UUID.randomUUID().toString() else item.id
+        val localItem = item.copy(id = targetId, storeId = currentStoreId)
+
+        _listings.value = listOf(localItem) + _listings.value
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -76,24 +158,22 @@ class InventoryViewModel : ViewModel() {
                     }
                 }
 
-                val itemToInsert = item.copy(
-                    id = if (item.id.isBlank()) UUID.randomUUID().toString() else item.id,
-                    imageUrl = finalImageUrl,
-                    imageBitmap = null
-                )
+                val dtoToInsert = localItem.copy(imageUrl = finalImageUrl).toDto(currentStoreId)
 
                 SupabaseClient.client
                     .from("offers")
-                    .insert(itemToInsert)
+                    .insert(dtoToInsert)
 
                 fetchListings()
             } catch (e: Exception) {
-                e.printStackTrace()
+                android.util.Log.e("SUPABASE_INSERT_ERROR", "Failed to insert: ${e.message}", e)
             }
         }
     }
 
     fun updateListing(item: ListingItem) {
+        _listings.value = _listings.value.map { if (it.id == item.id) item else it }
+
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 var finalImageUrl = item.imageUrl
@@ -105,14 +185,11 @@ class InventoryViewModel : ViewModel() {
                     }
                 }
 
-                val itemToUpdate = item.copy(
-                    imageUrl = finalImageUrl,
-                    imageBitmap = null
-                )
+                val dtoToUpdate = item.copy(imageUrl = finalImageUrl).toDto(currentStoreId)
 
                 SupabaseClient.client
                     .from("offers")
-                    .update(itemToUpdate) {
+                    .update(dtoToUpdate) {
                         filter {
                             eq("id", item.id)
                         }
@@ -120,12 +197,14 @@ class InventoryViewModel : ViewModel() {
 
                 fetchListings()
             } catch (e: Exception) {
-                e.printStackTrace()
+                android.util.Log.e("SUPABASE_UPDATE_ERROR", "Failed to update: ${e.message}", e)
             }
         }
     }
 
     fun deleteListing(itemId: String) {
+        _listings.value = _listings.value.filterNot { it.id == itemId }
+
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 SupabaseClient.client

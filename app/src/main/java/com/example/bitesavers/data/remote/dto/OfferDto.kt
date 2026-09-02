@@ -16,6 +16,8 @@ data class OfferDto(
     @SerialName("weight_kg") val weightKg: Double = 0.5,
     @SerialName("quantity_available") val quantityAvailable: Int = 0,
     @SerialName("is_eligible_for_ngo_free") val isEligibleForNgoFree: Boolean = false,
+    @SerialName("pickup_start") val pickupStart: String? = null,
+    @SerialName("pickup_end") val pickupEnd: String? = null,
     val status: String = "ACTIVE",
     @SerialName("image_url") val imageUrl: String? = null,
     @SerialName("created_at") val createdAt: String? = null
