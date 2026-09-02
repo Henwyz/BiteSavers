@@ -95,16 +95,19 @@ fun AddFoodScreen(
     var showImagePick by remember { mutableStateOf(false) }
     var showFullImagePreview by remember { mutableStateOf(false) }
 
-    LaunchedEffect(editingItem) {
+    LaunchedEffect(editingItem, viewModel.defaultPickupStart, viewModel.defaultPickupEnd) {
         foodName = editingItem?.name ?: ""
         description = editingItem?.description ?: ""
         category = editingItem?.category ?: "Bakery"
-        originalPrice = editingItem?.originalPrice?.toString() ?: ""
-        discountPrice = editingItem?.discountPrice?.toString() ?: ""
-        quantity = editingItem?.quantity?.toString() ?: ""
+        originalPrice = editingItem?.originalPrice?.let { if (it > 0) it.toString() else "" } ?: ""
+        discountPrice = editingItem?.discountPrice?.let { if (it > 0) it.toString() else "" } ?: ""
+        quantity = editingItem?.quantity?.let { if (it > 0) it.toString() else "" } ?: ""
         weightKg = editingItem?.weightKg?.toString() ?: ""
-        pickupStartTime = editingItem?.pickupStart ?: "05:00 PM"
-        pickupEndTime = editingItem?.pickupEnd ?: "07:00 PM"
+
+        // Use editing item's time, or fall back to store's actual closing/cleanup hours
+        pickupStartTime = editingItem?.pickupStart ?: viewModel.defaultPickupStart
+        pickupEndTime = editingItem?.pickupEnd ?: viewModel.defaultPickupEnd
+
         myFoodImage = editingItem?.imageBitmap
     }
 

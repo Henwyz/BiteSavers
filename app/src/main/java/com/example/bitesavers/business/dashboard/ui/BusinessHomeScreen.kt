@@ -75,14 +75,16 @@ fun BusinessHomeScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
+                    // Bind dynamic current date from ViewModel
                     Text(
-                        text = "Friday, 28 Aug 2026",
+                        text = viewModel.currentDateFormatted,
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                     )
                     Spacer(modifier = Modifier.height(2.dp))
+                    // Bind resolved store name from ViewModel
                     Text(
-                        text = "Madam Lim Bakery",
+                        text = viewModel.storeName,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimary
@@ -110,8 +112,9 @@ fun BusinessHomeScreen(
                             ),
                         contentAlignment = Alignment.Center
                     ) {
+                        // Display dynamically generated 2-letter store initials
                         Text(
-                            text = "ML",
+                            text = viewModel.storeInitials,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onTertiaryContainer
