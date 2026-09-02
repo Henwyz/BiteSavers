@@ -48,6 +48,7 @@ import com.example.bitesavers.R
 import com.example.bitesavers.customer.discovery.data.DiscoveryStoreUiModel
 import com.example.bitesavers.customer.discovery.data.DiscoveryUiState
 import com.example.bitesavers.customer.discovery.data.DiscoveryViewMode
+import com.example.bitesavers.customer.discovery.data.NotificationUiModel
 import com.example.bitesavers.customer.discovery.data.UserUiModel
 import com.example.bitesavers.customer.discovery.logic.DiscoveryViewModel
 import com.example.bitesavers.customer.discovery.logic.LocationUtils.fetchDeviceCoordinates
@@ -67,7 +68,8 @@ import com.example.bitesavers.ui.theme.BiteSaversTheme
 fun DiscoveryRoute(
     viewModel: DiscoveryViewModel = viewModel(),
     onOfferClick: (String) -> Unit = {},
-    onStoreClick: (String) -> Unit = {}
+    onStoreClick: (String) -> Unit = {},
+    onOrderClick: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -75,6 +77,7 @@ fun DiscoveryRoute(
     // 🔄 Automatically reload live inventory every time the user comes back to this screen
     LifecycleResumeEffect(Unit) {
         viewModel.loadOffers()
+        viewModel.refreshNotifications()
         onPauseOrDispose { }
     }
 
@@ -118,7 +121,6 @@ fun DiscoveryRoute(
     DiscoveryScreen(
         state = uiState,
         onLocationResolved = { lat, lng ->
-            // Forwards map engine GPS fix to recalculate distance from real location
             viewModel.updateUserLocation(lat, lng)
         },
         onEvent = { event ->
@@ -147,9 +149,14 @@ fun DiscoveryRoute(
                 is DiscoveryUiEvent.OnRoleChanged ->
                     viewModel.onUserRoleChanged(event.role)
 
-                is DiscoveryUiEvent.OnNotificationClicked -> {
-                    // TODO: navigate to notifications
-                }
+                is DiscoveryUiEvent.OnOpenNotifications ->
+                    viewModel.markAllNotificationsAsRead()
+
+                is DiscoveryUiEvent.OnClearAllNotifications ->
+                    viewModel.clearAllNotifications()
+
+                is DiscoveryUiEvent.OnNotificationClicked ->
+                    onOrderClick(event.orderId)
 
                 is DiscoveryUiEvent.OnResetFilters ->
                     viewModel.onResetFilters()
@@ -172,7 +179,6 @@ fun DiscoveryScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
 
-        // 🟢 If the whole page is initially loading, show a centered spinner
         if (state.isLoading) {
             CircularProgressIndicator(
                 modifier = Modifier.align(Alignment.Center),
@@ -187,10 +193,20 @@ fun DiscoveryScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
 
-                // SECTION 1: THE HEADER
+                // SECTION 1: THE HEADER WITH NOTIFICATION BELL
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     DiscoveryHeader(
-                        user = state.user
+                        user = state.user,
+                        notifications = state.notifications,
+                        onOpenNotifications = {
+                            onEvent(DiscoveryUiEvent.OnOpenNotifications)
+                        },
+                        onClearAllNotifications = {
+                            onEvent(DiscoveryUiEvent.OnClearAllNotifications)
+                        },
+                        onNotificationItemClick = { orderId ->
+                            onEvent(DiscoveryUiEvent.OnNotificationClicked(orderId))
+                        }
                     )
                 }
 
@@ -213,7 +229,6 @@ fun DiscoveryScreen(
                             onCategorySelected = { onEvent(DiscoveryUiEvent.OnCategorySelected(it)) }
                         )
 
-                        // Restricts the carousel inside the map card to a max of 3 items
                         DiscoveryMapSection(
                             markers = state.nearbyMarkers,
                             offers = state.offers.take(3),
@@ -295,7 +310,6 @@ fun DiscoveryScreen(
                             )
                         }
                     } else {
-                        // Displays ALL active offers in the grid
                         itemsIndexed(state.offers, key = { _, offer -> offer.id }) { index, offer ->
                             val startPadding = if (index % 2 == 0) 16.dp else 0.dp
                             val endPadding = if (index % 2 == 1) 16.dp else 0.dp
@@ -322,7 +336,6 @@ fun DiscoveryScreen(
                             )
                         }
                     } else {
-                        // Displays ALL active stores in the single column list
                         items(state.stores, key = { it.id }, span = { GridItemSpan(maxLineSpan) }) { store ->
                             Box(modifier = Modifier.padding(horizontal = 16.dp)) {
                                 DiscoveryStoreCard(
@@ -354,6 +367,16 @@ private fun DiscoveryScreenOffersPreview() {
                     greeting = "",
                     displayName = "Sarah Tan",
                     avatarInitials = "ST"
+                ),
+                notifications = listOf(
+                    NotificationUiModel(
+                        id = "1",
+                        orderId = "order_123",
+                        title = "Order Ready!",
+                        message = "Your food rescue order is ready for pickup.",
+                        timestamp = "10m ago",
+                        isRead = false
+                    )
                 ),
                 viewMode = DiscoveryViewMode.OFFERS,
                 offers = listOf(

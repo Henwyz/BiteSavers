@@ -12,6 +12,7 @@ import com.example.bitesavers.data.mapper.toUiModel
 import com.example.bitesavers.data.remote.UserSession
 import com.example.bitesavers.data.repository.ProfileRepository
 import com.example.bitesavers.data.repository.UserRepository
+import io.github.jan.supabase.gotrue.auth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -363,6 +364,22 @@ class ProfileViewModel : ViewModel() {
                 loadProfileData(userId)
             } catch (e: Exception) {
                 _loadError.value = "Couldn't disable NGO account: ${e.message}"
+            }
+        }
+    }
+
+    // Signs out user, wipes persistent session from disk, and invalidates Supabase auth
+    fun signOut(onSignedOut: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                // Clear Supabase authentication session
+                com.example.bitesavers.data.remote.SupabaseClient.client.auth.signOut()
+            } catch (e: Exception) {
+                android.util.Log.e("ProfileViewModel", "Supabase signOut error: ${e.message}")
+            } finally {
+                // Wipes local disk and memory session
+                UserSession.clear()
+                onSignedOut()
             }
         }
     }

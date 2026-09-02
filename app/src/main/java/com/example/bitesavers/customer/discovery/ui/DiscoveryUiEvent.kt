@@ -14,7 +14,9 @@ sealed interface DiscoveryUiEvent {
     data class OnStoreClicked(val store: DiscoveryStoreUiModel) : DiscoveryUiEvent
     data class OnToggleBookmark(val offerId: String) : DiscoveryUiEvent
     data class OnRoleChanged(val role: UserRole) : DiscoveryUiEvent
-    data object OnNotificationClicked : DiscoveryUiEvent
+    data object OnOpenNotifications : DiscoveryUiEvent
+    data object OnClearAllNotifications : DiscoveryUiEvent
+    data class OnNotificationClicked(val orderId: String) : DiscoveryUiEvent
     data class OnMapMarkerClicked(val offerId: String?) : DiscoveryUiEvent
     data class OnMapOfferNavigate(val offerId: String) : DiscoveryUiEvent
     data object OnResetFilters : DiscoveryUiEvent

@@ -1,7 +1,8 @@
 package com.example.bitesavers.customer.ticket.logic
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bitesavers.customer.ticket.data.TicketUiState
 import com.example.bitesavers.customer.ticket.ui.TicketUiEvent
@@ -21,8 +22,9 @@ import kotlinx.coroutines.withContext
 import kotlin.math.abs
 
 class TicketViewModel(
+    application: Application,
     private val savedStateHandle: SavedStateHandle
-) : ViewModel() {
+) : AndroidViewModel(application) {
 
     private val offerRepository: OfferRepository = OfferRepository()
     private val orderRepository: OrderRepository = OrderRepository()
@@ -30,6 +32,9 @@ class TicketViewModel(
 
     private val _uiState = MutableStateFlow(TicketUiState(isLoading = true))
     val uiState: StateFlow<TicketUiState> = _uiState.asStateFlow()
+
+    // Tracks if review prompt has already been shown or dismissed to prevent repeating popups
+    private var hasPromptedReview = false
 
     init {
         val orderId: String? = savedStateHandle.get<String>("orderId")
@@ -47,9 +52,12 @@ class TicketViewModel(
                 // Handled at navigation level
             }
             is TicketUiEvent.OnDismissReviewSheet -> {
+                // Mark as dismissed so the observer loop does not re-open it
+                hasPromptedReview = true
                 _uiState.update { it.copy(showReviewSheet = false) }
             }
             is TicketUiEvent.OnSubmitReview -> {
+                hasPromptedReview = true
                 submitOrderReview(event.rating, event.comment)
             }
         }
@@ -78,6 +86,11 @@ class TicketViewModel(
 
                 val isCompleted = order.status.equals("COMPLETED", ignoreCase = true)
                 val alreadyReviewed = !order.remark.isNullOrBlank() && order.remark.contains("Rating:")
+                val shouldShowReview = isCompleted && !alreadyReviewed && !hasPromptedReview
+
+                if (shouldShowReview) {
+                    hasPromptedReview = true
+                }
 
                 _uiState.update {
                     it.copy(
@@ -95,7 +108,7 @@ class TicketViewModel(
                         orderStatus = order.status,
                         isCompleted = isCompleted,
                         isReviewSubmitted = alreadyReviewed,
-                        showReviewSheet = isCompleted && !alreadyReviewed,
+                        showReviewSheet = shouldShowReview,
                         isLoading = false
                     )
                 }
@@ -105,15 +118,15 @@ class TicketViewModel(
         }
     }
 
-    // Continuously polls until the order is COMPLETED and handled
+    // Continuously polls until the order is COMPLETED and updates the ticket UI
     private fun startOrderStatusObserver(orderId: String) {
         viewModelScope.launch {
             while (isActive) {
                 delay(3000)
 
-                // If already completed and the review sheet was already triggered or dismissed, stop polling
-                if (_uiState.value.isCompleted && (_uiState.value.isReviewSubmitted || _uiState.value.showReviewSheet)) {
-                    continue
+                // If already completed in UI, stop running network requests
+                if (_uiState.value.isCompleted) {
+                    break
                 }
 
                 val order = orderRepository.fetchOrderById(orderId)
@@ -121,14 +134,22 @@ class TicketViewModel(
                     val isCompleted = order.status.equals("COMPLETED", ignoreCase = true)
                     val alreadyReviewed = !order.remark.isNullOrBlank() && order.remark.contains("Rating:")
 
-                    if (isCompleted && !alreadyReviewed && !_uiState.value.isReviewSubmitted) {
+                    // Updates ticket state and opens review sheet once
+                    if (isCompleted) {
+                        val triggerReview = !alreadyReviewed && !hasPromptedReview
+                        if (triggerReview) {
+                            hasPromptedReview = true
+                        }
+
                         _uiState.update {
                             it.copy(
                                 orderStatus = "COMPLETED",
                                 isCompleted = true,
-                                showReviewSheet = true
+                                showReviewSheet = triggerReview
                             )
                         }
+                        // Order is completed, observer can finish
+                        break
                     }
                 }
             }
@@ -184,7 +205,7 @@ class TicketViewModel(
                 pin = "7667",
                 orderStatus = "COMPLETED",
                 isCompleted = true,
-                showReviewSheet = true,
+                showReviewSheet = false,
                 isLoading = false
             )
         }

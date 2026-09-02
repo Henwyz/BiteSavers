@@ -1,103 +1,123 @@
 package com.example.bitesavers
 
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue // Needed for by
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.navigation.compose.currentBackStackEntryAsState // Needed to track the current screen
-import androidx.navigation.compose.rememberNavController
-import com.example.bitesavers.business.navigation.BusinessNavHost
-import com.example.bitesavers.business.sharedUI.BusinessBottomNavigationBar
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.bitesavers.data.remote.UserSession
+import com.example.bitesavers.data.repository.NotificationRepository
+import com.example.bitesavers.data.repository.OfferRepository
+import com.example.bitesavers.data.repository.OrderRepository
 import com.example.bitesavers.navigation.AppNavHost
-import com.example.bitesavers.sharedUI.CustomerBottomNavigationBar
 import com.example.bitesavers.ui.theme.BiteSaversTheme
+import com.example.bitesavers.util.OrderNotificationHelper
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+
+    private val orderRepository: OrderRepository = OrderRepository()
+    private val offerRepository: OfferRepository = OfferRepository()
+    private val notificationRepository: NotificationRepository = NotificationRepository()
+
+    companion object {
+        // Shared state flow observed by AppNavHost to handle notification click navigation
+        val pendingOrderIdRoute = MutableStateFlow<String?>(null)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // 1. Initialize persistent storage and restore any previously saved session
+        UserSession.init(applicationContext)
+
+        // Handles notification click if the app was launched from the notification bar
+        handleNotificationIntent(intent)
+
+        // Global in-app status observer: monitors active orders across any screen while the app is open
+        startGlobalOrderObserver()
+
         setContent {
             BiteSaversTheme {
                 AppNavHost()
-                //dead code, refined in the below version
-                /*
-                val navController = rememberNavController()
+            }
+        }
+    }
 
-                // 1. Observe the current route the user is on
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentRoute = navBackStackEntry?.destination?.route
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        // Handles notification click if the app was already running in the background/foreground
+        handleNotificationIntent(intent)
+    }
 
-                // 2. Make a list of screens that are allowed to have the bottom bar
-                val bottomBarRoutes = listOf(
-                    Screen.Discovery.route,
-                    Screen.Orders.route,
-                    Screen.Saved.route,
-                    Screen.Profile.route
-                )
-                */
+    private fun handleNotificationIntent(intent: Intent?) {
+        val orderId = intent?.getStringExtra("EXTRA_ORDER_ID")
+        if (!orderId.isNullOrBlank()) {
+            pendingOrderIdRoute.value = orderId
+        }
+    }
 
-                //start of temp add
-                // TEMP: there's no login/role routing yet (that's Member 3's
-                // Auth module). Once it exists, replace this with the real
-                // logged-in user's role instead of a hardcoded toggle —
-                // check with Member 3 before merging this file, since
-                // they'll likely need to touch this exact spot too.
-//                var isBusinessMode by remember { mutableStateOf(false) }
-//
-//                // Sync the active session ID when mode changes
-//                LaunchedEffect(isBusinessMode) {
-//                    if (isBusinessMode) {
-//                        UserSession.setUserId("b1") // Merchant / Store owner user ID
-//                    } else {
-//                        UserSession.setUserId("u2") // Customer user ID
-//                    }
-//                }
-//
-//                if (isBusinessMode) {
-//                    val businessNavController = rememberNavController()
-//                    Scaffold(
-//                        modifier = Modifier.fillMaxSize(),
-//                        bottomBar = { BusinessBottomNavigationBar(navController = businessNavController) }
-//                    ) { innerPadding ->
-//                        BusinessNavHost(
-//                            navController = businessNavController,
-//                            modifier = Modifier.padding(innerPadding)
-//                        )
-//                    }
-//                } else {
-//                    val navController = rememberNavController()
-//                    val navBackStackEntry by navController.currentBackStackEntryAsState()
-//                    val currentRoute = navBackStackEntry?.destination?.route
-//                    val bottomBarRoutes = listOf(
-//                        Screen.Discovery.route,
-//                        Screen.Orders.route,
-//                        Screen.Saved.route,
-//                        Screen.Profile.route
-//                    )
-////end of temp add
-//
-//                    Scaffold(
-//                        modifier = Modifier.fillMaxSize(),
-//                        bottomBar = {
-//                            // 3. Only draw the bottom bar if the current screen is in our list!
-//                            if (currentRoute in bottomBarRoutes) {
-//                                CustomerBottomNavigationBar(navController = navController)
-//                            }
-//                        }
-//                    ) { innerPadding ->
-//                        AppNavHost(
-//                            navController = navController,
-//                            modifier = Modifier.padding(innerPadding)
-//                        )
-//                    }
+    // Continuously checks user orders while MainActivity is in STARTED state
+    private fun startGlobalOrderObserver() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                while (isActive) {
+                    val userId = UserSession.getUserId()
+                    if (userId.isNotBlank()) {
+                        try {
+                            val orders = orderRepository.fetchOrdersByUserId(userId)
+                            val notifiedBannerIds = UserSession.getNotifiedBannerOrderIds()
+
+                            // Detect completed orders that have not yet had a system notification banner shown
+                            val newlyCompletedOrders = orders.filter { order ->
+                                !order.id.isNullOrBlank() &&
+                                        order.status.equals("COMPLETED", ignoreCase = true) &&
+                                        !notifiedBannerIds.contains(order.id)
+                            }
+
+                            for (order in newlyCompletedOrders) {
+                                val orderId = order.id.orEmpty()
+                                val offer = offerRepository.fetchOfferById(order.offerId)
+                                val storeName = offer?.storeName ?: "BiteSavers Store"
+                                val shortId = "BS-" + orderId.takeLast(5).uppercase()
+
+                                // Shows the system status bar banner alert
+                                OrderNotificationHelper.showOrderCompletedNotification(
+                                    context = applicationContext,
+                                    orderId = orderId,
+                                    storeName = storeName
+                                )
+
+                                // Persists the completed notification into the remote user_notifications table
+                                notificationRepository.insertNotification(
+                                    id = "NOTIF_${System.currentTimeMillis()}_${orderId.takeLast(4)}",
+                                    userId = userId,
+                                    orderId = orderId,
+                                    title = "Order Completed! 🎉",
+                                    message = "Order $shortId has been picked up from $storeName. Tap to view ticket."
+                                )
+
+                                // Mark banner as shown so it does not repeat
+                                UserSession.markBannerAsShown(orderId)
+
+                                // Immediately signal DiscoveryViewModel to refresh the bell badge count
+                                UserSession.notifyNewOrderUpdate()
+                            }
+                        } catch (e: Exception) {
+                            Log.e("MainActivity", "Global order observer error: ${e.message}")
+                        }
+                    }
+
+                    // Polls every 4 seconds while the app is actively in the foreground
+                    delay(4000)
+                }
             }
         }
     }

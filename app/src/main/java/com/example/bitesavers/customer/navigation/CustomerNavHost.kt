@@ -6,10 +6,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -18,6 +20,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.bitesavers.MainActivity
 import com.example.bitesavers.customer.checkout.ui.CheckoutRoute
 import com.example.bitesavers.customer.details.logic.FoodDetailViewModel
 import com.example.bitesavers.customer.details.ui.FoodDetailRoute
@@ -51,6 +54,15 @@ fun CustomerNavHost(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    // Listens for incoming notification banner clicks to route straight to the active ticket
+    val pendingOrderId by MainActivity.pendingOrderIdRoute.collectAsStateWithLifecycle()
+    LaunchedEffect(pendingOrderId) {
+        pendingOrderId?.let { targetOrderId ->
+            navController.navigate(CustomerScreen.Ticket.createRoute(targetOrderId))
+            MainActivity.pendingOrderIdRoute.value = null
+        }
+    }
+
     // Define top-level destinations that should display the bottom navigation bar
     val showBottomBar = currentRoute in listOf(
         CustomerScreen.Discovery.route,
@@ -80,6 +92,9 @@ fun CustomerNavHost(
                     },
                     onStoreClick = { storeId ->
                         navController.navigate(CustomerScreen.StoreDetail.createRoute(storeId))
+                    },
+                    onOrderClick = { orderId ->
+                        navController.navigate(CustomerScreen.Ticket.createRoute(orderId))
                     }
                 )
             }

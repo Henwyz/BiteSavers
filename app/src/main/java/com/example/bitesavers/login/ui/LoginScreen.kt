@@ -60,7 +60,7 @@ fun LoginScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BiteSaverColors.HeaderGreen),
+            .background(Color(0xFF121A14)), // Dark background matching your friend's theme
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
@@ -81,7 +81,7 @@ fun LoginScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(BiteSaverColors.HeaderGreen.copy(alpha = 0.75f))
+                    .background(Color(0xFF121A14).copy(alpha = 0.85f))
             )
 
             Column(
@@ -93,7 +93,7 @@ fun LoginScreen(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_leaf),
                         contentDescription = null,
-                        tint = BiteSaverColors.DiscountOrange,
+                        tint = Color(0xFFA5D6A7),
                         modifier = Modifier.size(28.dp)
                     )
 
@@ -103,7 +103,7 @@ fun LoginScreen(
                         text = stringResource(R.string.app_name),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
-                        color = BiteSaverColors.TextOnDark
+                        color = Color.White
                     )
                 }
 
@@ -112,7 +112,7 @@ fun LoginScreen(
                 Text(
                     text = stringResource(R.string.login_tagline),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = BiteSaverColors.TextOnDark.copy(alpha = 0.9f)
+                    color = Color(0xFFB0BEC5)
                 )
             }
         }
@@ -120,15 +120,15 @@ fun LoginScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(BiteSaverColors.SoftGreen),
+                .background(Color(0xFF121A14)),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(24.dp),
-                colors = CardDefaults.cardColors(containerColor = BiteSaverColors.OffWhite),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E2A20)), // Dark card surface
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
 
                 Column(
@@ -140,7 +140,7 @@ fun LoginScreen(
                         text = stringResource(R.string.welcome_back),
                         fontSize = 26.sp,
                         fontWeight = FontWeight.Bold,
-                        color = BiteSaverColors.HeaderGreen,
+                        color = Color.White,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
 
@@ -149,7 +149,7 @@ fun LoginScreen(
                         text = stringResource(R.string.login_email_label),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        color = BiteSaverColors.HeaderGreen,
+                        color = Color(0xFFA5D6A7),
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
 
@@ -160,7 +160,7 @@ fun LoginScreen(
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_mail),
                                 contentDescription = stringResource(R.string.cd_email_icon),
-                                tint = BiteSaverColors.HeaderGreen,
+                                tint = Color(0xFFA5D6A7),
                                 modifier = Modifier.size(20.dp)
                             )
                         },
@@ -168,16 +168,16 @@ fun LoginScreen(
                         shape = RoundedCornerShape(50),
                         isError = viewModel.emailError != null,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = BiteSaverColors.SoftGreen,
-                            unfocusedContainerColor = BiteSaverColors.SoftGreen,
-                            focusedTextColor = Color.Black,
-                            unfocusedTextColor = Color.Black,
+                            focusedContainerColor = Color(0xFF121A14),
+                            unfocusedContainerColor = Color(0xFF121A14),
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
                             errorBorderColor = Color.Red,
                             errorCursorColor = Color.Red,
-                            focusedPlaceholderColor = Color.DarkGray,
-                            unfocusedPlaceholderColor = Color.DarkGray,
-                            focusedBorderColor = if (viewModel.emailError != null) Color.Red else BiteSaverColors.PrimaryGreen,
-                            unfocusedBorderColor = if (viewModel.emailError != null) Color.Red else BiteSaverColors.PrimaryGreen
+                            focusedPlaceholderColor = Color.Gray,
+                            unfocusedPlaceholderColor = Color.Gray,
+                            focusedBorderColor = if (viewModel.emailError != null) Color.Red else Color(0xFFA5D6A7),
+                            unfocusedBorderColor = if (viewModel.emailError != null) Color.Red else Color(0xFF2C3E30)
                         ),
                         singleLine = true
                     )
@@ -199,7 +199,7 @@ fun LoginScreen(
                         text = stringResource(R.string.login_password_label),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        color = BiteSaverColors.HeaderGreen,
+                        color = Color(0xFFA5D6A7),
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
 
@@ -210,7 +210,7 @@ fun LoginScreen(
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_password),
                                 contentDescription = stringResource(R.string.cd_password_icon),
-                                tint = BiteSaverColors.HeaderGreen,
+                                tint = Color(0xFFA5D6A7),
                                 modifier = Modifier.size(20.dp)
                             )
                         },
@@ -221,7 +221,7 @@ fun LoginScreen(
                                         id = if (viewModel.passwordVisible) R.drawable.ic_show else R.drawable.ic_hide
                                     ),
                                     contentDescription = stringResource(R.string.cd_toggle_password),
-                                    tint = BiteSaverColors.TextSecondary,
+                                    tint = Color(0xFFB0BEC5),
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -231,16 +231,16 @@ fun LoginScreen(
                         shape = RoundedCornerShape(50),
                         isError = viewModel.passwordError != null,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = BiteSaverColors.SoftGreen,
-                            unfocusedContainerColor = BiteSaverColors.SoftGreen,
-                            focusedTextColor = Color.Black,
-                            unfocusedTextColor = Color.Black,
+                            focusedContainerColor = Color(0xFF121A14),
+                            unfocusedContainerColor = Color(0xFF121A14),
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
                             errorBorderColor = Color.Red,
                             errorCursorColor = Color.Red,
-                            focusedPlaceholderColor = Color.DarkGray,
-                            unfocusedPlaceholderColor = Color.DarkGray,
-                            focusedBorderColor = if (viewModel.passwordError != null) Color.Red else BiteSaverColors.PrimaryGreen,
-                            unfocusedBorderColor = if (viewModel.passwordError != null) Color.Red else BiteSaverColors.PrimaryGreen
+                            focusedPlaceholderColor = Color.Gray,
+                            unfocusedPlaceholderColor = Color.Gray,
+                            focusedBorderColor = if (viewModel.passwordError != null) Color.Red else Color(0xFFA5D6A7),
+                            unfocusedBorderColor = if (viewModel.passwordError != null) Color.Red else Color(0xFF2C3E30)
                         ),
                         singleLine = true
                     )
@@ -262,7 +262,7 @@ fun LoginScreen(
                         text = stringResource(R.string.account_type_label),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        color = BiteSaverColors.HeaderGreen,
+                        color = Color(0xFFA5D6A7),
                         modifier = Modifier.padding(bottom = 6.dp)
                     )
 
@@ -279,7 +279,7 @@ fun LoginScreen(
                                 Icon(
                                     painter = painterResource(id = R.drawable.ic_home),
                                     contentDescription = stringResource(R.string.cd_account_icon),
-                                    tint = BiteSaverColors.HeaderGreen,
+                                    tint = Color(0xFFA5D6A7),
                                     modifier = Modifier.size(20.dp)
                                 )
                             },
@@ -291,22 +291,23 @@ fun LoginScreen(
                                 .fillMaxWidth(),
                             shape = RoundedCornerShape(50),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = BiteSaverColors.SoftGreen,
-                                unfocusedContainerColor = BiteSaverColors.SoftGreen,
-                                focusedTextColor = Color.Black,
-                                unfocusedTextColor = Color.Black,
-                                errorTextColor = Color.Black,
-                                focusedBorderColor = BiteSaverColors.PrimaryGreen,
-                                unfocusedBorderColor = BiteSaverColors.PrimaryGreen
+                                focusedContainerColor = Color(0xFF121A14),
+                                unfocusedContainerColor = Color(0xFF121A14),
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White,
+                                errorTextColor = Color.White,
+                                focusedBorderColor = Color(0xFFA5D6A7),
+                                unfocusedBorderColor = Color(0xFF2C3E30)
                             )
                         )
 
                         ExposedDropdownMenu(
                             expanded = viewModel.isDropdownExpanded,
-                            onDismissRequest = { viewModel.toggleDropdown(false) }
+                            onDismissRequest = { viewModel.toggleDropdown(false) },
+                            modifier = Modifier.background(Color(0xFF1E2A20))
                         ) {
                             DropdownMenuItem(
-                                text = { Text(stringResource(R.string.role_consumer)) },
+                                text = { Text(stringResource(R.string.role_consumer), color = Color.White) },
                                 onClick = {
                                     viewModel.updateSelectedRole("Consumer")
                                     viewModel.toggleDropdown(false)
@@ -314,7 +315,7 @@ fun LoginScreen(
                                 contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
                             )
                             DropdownMenuItem(
-                                text = { Text(stringResource(R.string.role_business)) },
+                                text = { Text(stringResource(R.string.role_business), color = Color.White) },
                                 onClick = {
                                     viewModel.updateSelectedRole("Business")
                                     viewModel.toggleDropdown(false)
@@ -334,7 +335,7 @@ fun LoginScreen(
                             text = stringResource(R.string.forgot_password),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = BiteSaverColors.PrimaryGreen,
+                            color = Color(0xFFA5D6A7),
                             modifier = Modifier.clickable { /* Handle click */ }
                         )
                     }
@@ -352,12 +353,12 @@ fun LoginScreen(
                             .height(50.dp),
                         shape = RoundedCornerShape(50),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = BiteSaverColors.PrimaryGreen
+                            containerColor = Color(0xFFA5D6A7)
                         )
                     ) {
                         if (viewModel.isLoading) {
                             CircularProgressIndicator(
-                                color = BiteSaverColors.White,
+                                color = Color(0xFF121A14),
                                 modifier = Modifier.size(24.dp),
                                 strokeWidth = 2.dp
                             )
@@ -366,7 +367,7 @@ fun LoginScreen(
                                 text = stringResource(R.string.log_in_button),
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = BiteSaverColors.White
+                                color = Color(0xFF121A14)
                             )
                         }
                     }
@@ -382,14 +383,14 @@ fun LoginScreen(
                         Text(
                             text = stringResource(R.string.no_account_yet),
                             fontSize = 13.sp,
-                            color = BiteSaverColors.TextSecondary
+                            color = Color(0xFFB0BEC5)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = stringResource(R.string.sign_up_free),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
-                            color = BiteSaverColors.PrimaryGreen,
+                            color = Color(0xFFA5D6A7),
                             modifier = Modifier.clickable { onNavigateToSignUp() }
                         )
                     }

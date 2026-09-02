@@ -117,12 +117,14 @@ fun DiscoveryStoreCard(
                         modifier = Modifier.weight(1f)
                     )
                     Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(R.string.store_rating_format, store.rating),
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp
-                    )
+                    store.rating?.let {
+                        Text(
+                            text = stringResource(R.string.store_rating_format, it),
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(6.dp))
