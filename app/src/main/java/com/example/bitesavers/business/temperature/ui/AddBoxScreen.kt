@@ -32,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -66,12 +67,12 @@ fun AddBoxScreen(
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_arrow_back),
-                    contentDescription = "Back",
+                    contentDescription = stringResource(R.string.cd_back_button),
                     tint = MaterialTheme.colorScheme.secondary
                 )
             }
             Text(
-                text = "Add Storage Box",
+                text = stringResource(R.string.add_storage_box),
                 color = MaterialTheme.colorScheme.onSecondary,
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp
@@ -95,7 +96,7 @@ fun AddBoxScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "Configure ESP32 Sensor Unit",
+                        text = stringResource(R.string.configure_esp32_sensor),
                         color = MaterialTheme.colorScheme.onBackground,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp
@@ -106,7 +107,7 @@ fun AddBoxScreen(
                     OutlinedTextField(
                         value = boxCode,
                         onValueChange = { boxCode = it },
-                        label = { Text("Box Code / Name (e.g., Fridge-01)") },
+                        label = { Text(stringResource(R.string.box_code_hint)) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -120,7 +121,7 @@ fun AddBoxScreen(
                     Spacer(modifier = Modifier.height(20.dp))
 
                     Text(
-                        text = "Storage Type",
+                        text = stringResource(R.string.storage_type_label),
                         color = MaterialTheme.colorScheme.onBackground,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp
@@ -133,13 +134,13 @@ fun AddBoxScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         TypeSelectionCard(
-                            title = "Refrigerator",
+                            title = stringResource(R.string.type_refrigerator),
                             isSelected = storageType.equals("Refrigerator", ignoreCase = true),
                             onClick = { storageType = "Refrigerator" },
                             modifier = Modifier.weight(1f)
                         )
                         TypeSelectionCard(
-                            title = "Hot Box",
+                            title = stringResource(R.string.type_hot_box),
                             isSelected = storageType.equals("Hot Box", ignoreCase = true),
                             onClick = { storageType = "Hot Box" },
                             modifier = Modifier.weight(1f)
@@ -166,7 +167,7 @@ fun AddBoxScreen(
                     enabled = boxCode.isNotBlank()
                 ) {
                     Text(
-                        text = "Save & Connect Unit",
+                        text = stringResource(R.string.save_and_connect_unit),
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp
                     )

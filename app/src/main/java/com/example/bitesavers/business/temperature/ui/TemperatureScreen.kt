@@ -62,6 +62,9 @@ fun TemperatureScreen(
     var boxToDeleteId by remember { mutableStateOf<String?>(null) }
     var boxToDeleteName by remember { mutableStateOf("") }
 
+    val warningText = stringResource(R.string.status_warning)
+    val normalText = stringResource(R.string.status_normal)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -110,7 +113,7 @@ fun TemperatureScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
-                        contentDescription = "Add Storage Unit",
+                        contentDescription = stringResource(R.string.add_storage_unit_cd),
                         modifier = Modifier.size(28.dp)
                     )
                 }
@@ -187,7 +190,7 @@ fun TemperatureScreen(
                 // Render real storage boxes dynamically
                 if (viewModel.units.isEmpty()) {
                     Text(
-                        text = "No storage boxes connected yet. Tap + to add one.",
+                        text = stringResource(R.string.no_storage_boxes_connected),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 13.sp,
                         modifier = Modifier.padding(vertical = 16.dp)
@@ -199,7 +202,7 @@ fun TemperatureScreen(
                             name = box.boxCode,
                             type = box.storageType,
                             temp = "${box.currentTemperature}° C",
-                            status = if (isWarning) "Warning" else "Normal",
+                            status = if (isWarning) warningText else normalText,
                             isWarning = isWarning,
                             isSelected = box.id == currentSelected?.id,
                             onClick = { viewModel.selectUnit(box) },
@@ -220,10 +223,10 @@ fun TemperatureScreen(
         AlertDialog(
             onDismissRequest = { boxToDeleteId = null },
             title = {
-                Text(text = "Delete Storage Box?")
+                Text(text = stringResource(R.string.delete_storage_box_title))
             },
             text = {
-                Text(text = "Are you sure you want to remove '$boxToDeleteName'? ")
+                Text(text = stringResource(R.string.delete_storage_box_message, boxToDeleteName))
             },
             confirmButton = {
                 TextButton(
@@ -235,14 +238,14 @@ fun TemperatureScreen(
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Delete", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.delete_action), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(
                     onClick = { boxToDeleteId = null }
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel_action))
                 }
             }
         )
@@ -348,7 +351,7 @@ fun DetailedUnitCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete Box",
+                        contentDescription = stringResource(R.string.delete_box_cd),
                         tint = MaterialTheme.colorScheme.error,
                         modifier = Modifier.size(20.dp)
                     )

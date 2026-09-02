@@ -468,12 +468,38 @@
     <string name="status_pending">Pending</string>
     <string name="ngo_badge">NGO Claim</string>
 
-    <!-- Restaurant Onboarding -->
-    <string name="register_restaurant_title">Register Your Restaurant 🏪</string>
-    <string name="restaurant_name">Restaurant Name</string>
-    <string name="address">Address</string>
-    <string name="opening_time">Opening Time</string>
-    <string name="closing_time">Closing Time</string>
+    <!-- General & Back -->
+    <string name="temperature_monitor">Temperature Monitor</string>
+    <string name="esp32_live_sensor">ESP32 Live Sensor</string>
+    <string name="live">LIVE</string>
+    <string name="select_a_unit">Select a Unit</string>
+    <string name="all_connected_units">All Connected Units</string>
+
+    <!-- Register Restaurant Screen -->
+    <string name="register_restaurant_title">Register Restaurant 🏪</string>
+    <string name="choose_store_photo_source">Choose Store Photo Source</string>
+    <string name="take_photo">Take Photo</string>
+    <string name="choose_from_gallery">Choose from Gallery</string>
+    <string name="restaurant_name_label">Restaurant Name</string>
+    <string name="restaurant_name_hint">e.g. BiteSaver Cafe</string>
+    <string name="contact_phone_label">Contact Phone Number</string>
+    <string name="contact_phone_hint">e.g. 0123456789</string>
+    <string name="address_label">Address</string>
+    <string name="address_hint">e.g. 123, Jalan Ampang</string>
+    <string name="use_default_penang_fallback">Use Default Penang Fallback</string>
+    <string name="ssm_number_label">12-Digit SSM Business Number</string>
+    <string name="ssm_number_hint">Enter 12-digit registration code</string>
+    <string name="store_banner_label">Store Front / Banner Image</string>
+    <string name="store_photo_attached">Store Photo Attached ✓</string>
+    <string name="take_upload_store_photo">Take or Upload Store Photo</string>
+    <string name="ssm_doc_label">SSM Certificate Document</string>
+    <string name="ssm_doc_uploaded">SSM Document Uploaded ✓</string>
+    <string name="upload_ssm_doc">Upload SSM Document (PDF/Image)</string>
+    <string name="opening_time_label">Opening Time</string>
+    <string name="closing_time_label">Closing Time</string>
+    <string name="cleanup_end_time_label">Cleanup End Time</string>
+    <string name="cleanup_end_time_hint">e.g. 22:30</string>
+    <string name="restaurant_verification_note">Note: New registrations require review and verification (is_verified = false) before approval.</string>
     <string name="save_and_continue">Save &amp; Continue</string>
 
     <!-- Listings & Surplus Food Form -->
@@ -513,22 +539,25 @@
     <string name="btn_retake_change">Retake / Change</string>
     <string name="btn_close">Close</string>
 
-    <!-- ESP32 Temperature Hardware -->
-    <string name="temperature_monitor">Temperature Monitor</string>
-    <string name="esp32_live_sensor">ESP32 Live Sensor</string>
-    <string name="live">LIVE</string>
-    <string name="all_connected_units">All Connected Units</string>
-    <string name="select_a_unit">Select a unit</string>
+    <!-- Add Box Screen -->
     <string name="add_storage_box">Add Storage Box</string>
-    <string name="esp32_hardware_setup">ESP32 Hardware Setup</string>
-    <string name="add_box_description">Enter the name of your new refrigerator or hot box connected to your temperature sensor.</string>
-    <string name="box_name_hint">Box Name (e.g. Refrigerator C)</string>
-    <string name="storage_category">Storage Category</string>
-    <string name="cold_storage">Cold Storage</string>
-    <string name="warm_storage">Warm Storage</string>
-    <string name="refrigerator">Refrigerator</string>
-    <string name="hot_box">Hot Box</string>
+    <string name="configure_esp32_sensor">Configure ESP32 Sensor Unit</string>
+    <string name="box_code_hint">Box Code / Name (e.g., Fridge-01)</string>
+    <string name="storage_type_label">Storage Type</string>
+    <string name="type_refrigerator">Refrigerator</string>
+    <string name="type_hot_box">Hot Box</string>
     <string name="save_and_connect_unit">Save &amp; Connect Unit</string>
+    <string name="add_storage_unit_cd">Add Storage Unit</string>
+
+    <!-- Temperature Screen -->
+    <string name="no_storage_boxes_connected">No storage boxes connected yet. Tap + to add one.</string>
+    <string name="status_warning">Warning</string>
+    <string name="status_normal">Normal</string>
+    <string name="delete_storage_box_title">Delete Storage Box?</string>
+    <string name="delete_storage_box_message">Are you sure you want to remove \'%s\'? </string>
+    <string name="delete_action">Delete</string>
+    <string name="cancel_action">Cancel</string>
+    <string name="delete_box_cd">Delete Box</string>
 
     <!-- Business Analytics & Profile -->
     <string name="analytics_title">Analytics</string>
