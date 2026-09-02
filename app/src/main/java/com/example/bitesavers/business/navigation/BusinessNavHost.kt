@@ -13,14 +13,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.bitesavers.business.analytics.ui.AnalyticsScreen
 import com.example.bitesavers.business.dashboard.logic.DashboardViewModel
 import com.example.bitesavers.business.dashboard.ui.BusinessHomeScreen
 import com.example.bitesavers.business.dashboard.ui.BusinessOrdersScreen
+import com.example.bitesavers.business.dashboard.ui.BusinessVerificationScreen
 import com.example.bitesavers.business.inventory.logic.InventoryViewModel
 import com.example.bitesavers.business.inventory.ui.AddFoodScreen
 import com.example.bitesavers.business.inventory.ui.MyListingScreen
@@ -103,6 +106,10 @@ fun BusinessNavHost(
                     },
                     onNavigateToOrders = {
                         navController.navigate(BusinessScreen.BusinessOrders.route)
+                    },
+
+                    onNavigateToVerification = { orderId ->
+                        navController.navigate(BusinessScreen.Verification.createRoute(orderId))
                     }
                 )
             }
@@ -170,7 +177,7 @@ fun BusinessNavHost(
                 BusinessOrdersScreen(
                     orders = orders,
                     onOrderClick = { orderId ->
-                        // Keep empty for now until verification screen is ready
+                        navController.navigate(BusinessScreen.Verification.createRoute(orderId))
                     },
                     onNavigateBack = {
                         navController.popBackStack()
@@ -182,6 +189,34 @@ fun BusinessNavHost(
                 AddBoxScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onUnitAdded = { unitName, unitType ->
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            // 9. Business Verification Check
+            composable(
+                route = BusinessScreen.Verification.route,
+                arguments = listOf(
+                    navArgument("orderId") {
+                        type = NavType.StringType
+                    }
+                )
+            ) { backStackEntry ->
+                val orderId = backStackEntry.arguments?.getString("orderId").orEmpty()
+
+                BusinessVerificationScreen(
+                    orderId = orderId,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onNavigateToCancel = { id ->
+                        // Reserved for cancel screen navigation
+                        // navController.navigate("business_cancel/$id")
+                    },
+                    onVerificationCompleted = {
+                        // Pop back to refresh and display order status
+                        dashboardViewModel.fetchOrdersFromSupabase()
                         navController.popBackStack()
                     }
                 )

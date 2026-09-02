@@ -49,6 +49,7 @@ fun BusinessHomeScreen(
     onNavigateToAddFood: () -> Unit = {},
     onNavigateToListings: () -> Unit = {},
     onNavigateToOrders: () -> Unit = {},
+    onNavigateToVerification: (String) -> Unit = {},
     onNavigateToAnalytics: () -> Unit = {},
     onNavigateToTemperature: () -> Unit = {}
 ) {
@@ -257,7 +258,8 @@ fun BusinessHomeScreen(
                 RecentOrderCard(
                     order = order,
                     onClick = { clickedOrderId ->
-
+                        // Navigate to Verification screen passing clicked order id
+                        onNavigateToVerification(clickedOrderId)
                     }
                 )
             }

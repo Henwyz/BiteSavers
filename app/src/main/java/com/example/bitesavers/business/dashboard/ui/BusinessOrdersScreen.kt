@@ -18,10 +18,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import com.example.bitesavers.R
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
@@ -63,7 +66,7 @@ fun BusinessOrdersScreen(
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val tabTitles = listOf(
         stringResource(R.string.tab_all),
-        stringResource(R.string.tab_pending),
+        stringResource(R.string.tab_readyforpickup),
         stringResource(R.string.tab_completed),
         stringResource(R.string.tab_cancelled)
     )
@@ -71,7 +74,8 @@ fun BusinessOrdersScreen(
     // Filter orders safely by Supabase database status values
     val filteredOrders = remember(selectedTabIndex, orders) {
         when (selectedTabIndex) {
-            1 -> orders.filter { it.status.equals("READY_FOR_PICKUP", ignoreCase = true) }
+            1 -> orders.filter { it.status.equals("READY_FOR_PICKUP", ignoreCase = true) ||
+                                 it.status.equals("PENDING", ignoreCase = true)}
             2 -> orders.filter { it.status.equals("COMPLETED", ignoreCase = true) }
             3 -> orders.filter { it.status.equals("CANCELLED", ignoreCase = true) }
             else -> orders
@@ -91,21 +95,11 @@ fun BusinessOrdersScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .background(
-                                    MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f),
-                                    CircleShape
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "<",
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                fontSize = 14.sp
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back_label),
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

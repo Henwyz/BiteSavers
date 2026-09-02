@@ -454,10 +454,32 @@
     <!-- Business Orders & Verification Strings -->
     <string name="title_all_orders">Customer Orders</string>
     <string name="tab_all">All</string>
-    <string name="tab_pending">Pending</string>
+    <string name="tab_readyforpickup">Ready for Pickup</string>
     <string name="tab_completed">Completed</string>
     <string name="tab_cancelled">Cancelled</string>
     <string name="empty_orders_msg">No orders found</string>
+
+    <!-- Business Verification Strings -->
+    <string name="verification_title">Order Verification</string>
+    <string name="pickup_pin_label">Pickup PIN</string>
+    <string name="enter_4_digit_pin">Enter 4-digit customer PIN</string>
+    <string name="pin_verified">Verified</string>
+    <string name="order_details_header">Order Details</string>
+    <string name="customer_label">Customer</string>
+    <string name="quantity_label">Quantity</string>
+    <string name="total_amount_label">Total Amount</string>
+    <string name="status_label">Status</string>
+    <string name="btn_success">Success</string>
+    <string name="btn_cancel">Cancel Order</string>
+    <string name="btn_delete_record">Delete Record</string>
+    <string name="pin_mismatch_error">Invalid PIN. Please check customer code.</string>
+    <string name="verification_success_title">Pickup Successful</string>
+    <string name="verification_success_desc">Order has been verified and marked as completed.</string>
+    <string name="dialog_ok">OK</string>
+    <string name="delete_confirm_title">Delete Record?</string>
+    <string name="delete_confirm_desc">Are you sure you want to permanently delete this order record from Supabase?</string>
+    <string name="delete_action">Delete</string>
+    <string name="back_label">Back</string>
 
     <!-- Order Item & Card Strings -->
     <string name="order_id_prefix">Order #</string>
