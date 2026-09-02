@@ -37,6 +37,10 @@ class DashboardViewModel : ViewModel() {
         private set
     var currentDateFormatted by mutableStateOf("")
         private set
+    var hasCheckedStore by mutableStateOf(false)
+        private set
+    var requiresRegistration by mutableStateOf(false)
+        private set
 
     init {
         // Format device date dynamically (e.g. Wednesday, 2 Sep 2026)
@@ -66,22 +70,27 @@ class DashboardViewModel : ViewModel() {
                         currentStoreId = myStore.id
                         storeName = myStore.name.ifBlank { "My Store" }
                         storeInitials = computeInitials(storeName)
+                        requiresRegistration = false
                     } else {
                         // Fallback state for newly registered accounts without a store profile
                         currentStoreId = ""
                         storeName = "New Store"
                         storeInitials = "NS"
+                        requiresRegistration = true // Triggers automatic jump to registration screen
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
                     storeName = "My Store"
                     storeInitials = "MS"
+                    requiresRegistration = false
                 }
             } else {
                 storeName = "Guest Merchant"
                 storeInitials = "GM"
+                requiresRegistration = false
             }
 
+            hasCheckedStore = true
             // Fetch live orders filtered strictly by the resolved store ID
             fetchOrdersFromSupabase()
         }

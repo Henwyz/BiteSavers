@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -41,6 +42,19 @@ fun BusinessNavHost(
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
+    // Check store registration status from ViewModel
+    val hasChecked = dashboardViewModel.hasCheckedStore
+    val needsRegistration = dashboardViewModel.requiresRegistration
+
+    // Automatically navigate new accounts to the Register Restaurant screen
+    LaunchedEffect(hasChecked, needsRegistration) {
+        if (hasChecked && needsRegistration && currentRoute != BusinessScreen.RegisterRestaurant.route) {
+            navController.navigate(BusinessScreen.RegisterRestaurant.route) {
+                popUpTo(BusinessScreen.Home.route) { inclusive = true }
+            }
+        }
+    }
 
     val showBottomBar = currentRoute in listOf(
         BusinessScreen.Home.route,
@@ -168,8 +182,6 @@ fun BusinessNavHost(
                 AddBoxScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onUnitAdded = { unitName, unitType ->
-                        // You can save/use unitName and unitType here if needed,
-                        // and then pop back to the temperature screen:
                         navController.popBackStack()
                     }
                 )
