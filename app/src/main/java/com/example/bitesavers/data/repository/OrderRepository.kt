@@ -128,13 +128,12 @@ class OrderRepository {
         try {
             client.from("orders")
                 .select {
-                    filter {
-                        eq("user_id", userId)
-                    }
+                    filter { eq("user_id", userId) }
+                    order("created_at", io.github.jan.supabase.postgrest.query.Order.DESCENDING)
                 }
                 .decodeList<OrderDto>()
         } catch (e: Exception) {
-            Log.e("OrderRepository", "fetchOrdersByUserId error for $userId: ${e.message}", e)
+            Log.e("OrderRepository", "fetchOrdersByUserId error: ${e.message}", e)
             emptyList()
         }
     }

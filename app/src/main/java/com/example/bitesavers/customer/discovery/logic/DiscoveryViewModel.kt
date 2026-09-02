@@ -12,8 +12,8 @@ import com.example.bitesavers.data.model.DiscoveryCategory
 import com.example.bitesavers.data.model.OfferUiModel
 import com.example.bitesavers.data.model.UserRole
 import com.example.bitesavers.data.remote.UserSession
+import com.example.bitesavers.data.repository.NotificationRepository
 import com.example.bitesavers.data.repository.OfferRepository
-import com.example.bitesavers.data.repository.OrderRepository
 import com.example.bitesavers.data.repository.SavedRepository
 import com.example.bitesavers.data.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +28,7 @@ class DiscoveryViewModel : ViewModel() {
     private val repository: OfferRepository = OfferRepository()
     private val savedRepository: SavedRepository = SavedRepository()
     private val userRepository: UserRepository = UserRepository()
-    private val orderRepository: OrderRepository = OrderRepository()
+    private val notificationRepository: NotificationRepository = NotificationRepository()
 
     // Master list of all offers fetched from Supabase (kept private in memory)
     private var allOffers: List<OfferUiModel> = emptyList()
@@ -63,7 +63,7 @@ class DiscoveryViewModel : ViewModel() {
                     // Load bookmarks for this active user
                     savedRepository.loadUserSavedOffers(userId)
 
-                    // Fetches active order updates and populates in-app notifications
+                    // Refresh notifications for active user
                     loadUserNotifications(userId)
                 }
             }
@@ -74,46 +74,30 @@ class DiscoveryViewModel : ViewModel() {
     private fun observeRealtimeNotificationEvents() {
         viewModelScope.launch {
             UserSession.notificationRefreshEvent.collectLatest {
-                refreshNotifications()
+                val userId = UserSession.getUserId()
+                if (userId.isNotBlank()) {
+                    loadUserNotifications(userId)
+                }
             }
         }
     }
 
-    // Converts user orders into in-app notification items, respecting read & cleared persistence
+    // Fetches notifications directly from the remote database table
     private fun loadUserNotifications(userId: String) {
         viewModelScope.launch {
             try {
-                val orders = orderRepository.fetchOrdersByUserId(userId)
-                val readNotificationIds = UserSession.getReadNotificationIds()
-                val clearedNotificationIds = UserSession.getClearedNotificationIds()
-
-                // Filters out null IDs and user-dismissed notifications
-                val notifications = orders
-                    .filter { !it.id.isNullOrBlank() && !clearedNotificationIds.contains(it.id) }
-                    .take(5)
-                    .map { order ->
-                        val validOrderId = order.id.orEmpty()
-                        val isDone = order.status.equals("COMPLETED", ignoreCase = true)
-                        val shortId = "BS-" + validOrderId.takeLast(5).uppercase()
-
-                        // A notification is marked as read only if it exists in persistent disk storage
-                        val isRead = readNotificationIds.contains(validOrderId)
-
-                        NotificationUiModel(
-                            id = validOrderId,
-                            orderId = validOrderId,
-                            title = if (isDone) "Order Completed! 🎉" else "Pickup Ready 📦",
-                            message = if (isDone) {
-                                "Order $shortId has been picked up. Tap to view ticket."
-                            } else {
-                                "Order $shortId is awaiting pickup. Tap to view your PIN."
-                            },
-                            timestamp = if (isDone) "Completed" else "Active",
-                            isRead = isRead
-                        )
-                    }
-
-                _uiState.update { it.copy(notifications = notifications) }
+                val dtoList = notificationRepository.fetchUserNotifications(userId)
+                val mapped = dtoList.map { dto ->
+                    NotificationUiModel(
+                        id = dto.id,
+                        orderId = dto.orderId.orEmpty(),
+                        title = dto.title,
+                        message = dto.message,
+                        timestamp = "Recent",
+                        isRead = dto.isRead
+                    )
+                }
+                _uiState.update { it.copy(notifications = mapped) }
             } catch (e: Exception) {
                 android.util.Log.e("DiscoveryVM", "Failed to load notifications: ${e.message}")
             }
@@ -195,7 +179,7 @@ class DiscoveryViewModel : ViewModel() {
                     id = firstOffer.storeId.ifBlank { firstOffer.id },
                     name = storeName,
                     address = "Penang, Malaysia",
-                    rating = firstOffer.storeRating,
+                    rating = firstOffer.storeRating ?: 0.0,
                     imageUrl = firstOffer.imageUrl,
                     operatingHours = firstOffer.pickupWindow,
                     activeOffersCount = storeOffers.size,
@@ -407,24 +391,32 @@ class DiscoveryViewModel : ViewModel() {
         }
     }
 
-    // Persists the current notification IDs to disk and updates in-memory state
+    // Updates unread notifications as read on the backend database and locally in UI
     fun markAllNotificationsAsRead() {
-        val currentIds = _uiState.value.notifications.map { it.id }.toSet()
-        UserSession.markNotificationIdsAsRead(currentIds)
+        val unreadIds = _uiState.value.notifications.filter { !it.isRead }.map { it.id }
+        if (unreadIds.isEmpty()) return
 
-        _uiState.update { current ->
-            val cleared = current.notifications.map { it.copy(isRead = true) }
-            current.copy(notifications = cleared)
+        viewModelScope.launch {
+            notificationRepository.markAsRead(unreadIds)
+            _uiState.update { current ->
+                val readList = current.notifications.map { it.copy(isRead = true) }
+                current.copy(notifications = readList)
+            }
         }
     }
 
-    // Clears all notifications permanently from disk and UI state
+    // Deletes all notifications for the active user directly from Supabase
     fun clearAllNotifications() {
-        val currentIds = _uiState.value.notifications.map { it.id }.toSet()
-        UserSession.clearAllNotifications(currentIds)
+        val userId = UserSession.getUserId()
+        if (userId.isBlank()) return
 
-        _uiState.update { current ->
-            current.copy(notifications = emptyList())
+        viewModelScope.launch {
+            val isSuccess = notificationRepository.clearAllNotifications(userId)
+            if (isSuccess) {
+                _uiState.update { current ->
+                    current.copy(notifications = emptyList())
+                }
+            }
         }
     }
 }

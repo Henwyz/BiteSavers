@@ -14,9 +14,7 @@ object UserSession {
     private const val PREFS_NAME = "bitesaver_user_session"
     private const val KEY_USER_ID = "saved_user_id"
     private const val KEY_USER_ROLE = "saved_user_role"
-    private const val KEY_READ_NOTIFICATION_IDS = "saved_read_notification_ids"
     private const val KEY_NOTIFIED_BANNER_IDS = "saved_notified_banner_ids"
-    private const val KEY_CLEARED_NOTIFICATION_IDS = "saved_cleared_notification_ids"
 
     // Holds Android SharedPreferences instance once initialized
     private var sharedPreferences: SharedPreferences? = null
@@ -68,13 +66,13 @@ object UserSession {
         sharedPreferences?.edit()
             ?.putString(KEY_USER_ID, userId)
             ?.putString(KEY_USER_ROLE, role)
-            ?.apply()
+            ?.commit()
     }
 
     // Retain original method so existing repositories continue working seamlessly
     fun setUserId(userId: String) {
         _currentUserId.value = userId
-        sharedPreferences?.edit()?.putString(KEY_USER_ID, userId)?.apply()
+        sharedPreferences?.edit()?.putString(KEY_USER_ID, userId)?.commit()
     }
 
     fun getUserId(): String = _currentUserId.value
@@ -86,7 +84,8 @@ object UserSession {
      */
     fun getNotifiedBannerOrderIds(): Set<String> {
         val prefs = sharedPreferences ?: return emptySet()
-        return prefs.getStringSet(KEY_NOTIFIED_BANNER_IDS, emptySet()) ?: emptySet()
+        val saved = prefs.getStringSet(KEY_NOTIFIED_BANNER_IDS, emptySet()) ?: emptySet()
+        return HashSet(saved)
     }
 
     /**
@@ -94,47 +93,9 @@ object UserSession {
      */
     fun markBannerAsShown(orderId: String) {
         val prefs = sharedPreferences ?: return
-        val currentSet = getNotifiedBannerOrderIds().toMutableSet()
-        currentSet.add(orderId)
-        prefs.edit()?.putStringSet(KEY_NOTIFIED_BANNER_IDS, currentSet)?.apply()
-    }
-
-    /**
-     * Returns the set of notification order IDs that the user has already opened and read in the dialog.
-     */
-    fun getReadNotificationIds(): Set<String> {
-        val prefs = sharedPreferences ?: return emptySet()
-        return prefs.getStringSet(KEY_READ_NOTIFICATION_IDS, emptySet()) ?: emptySet()
-    }
-
-    /**
-     * Persists read notification IDs to disk so the counter remains accurate across screen transitions.
-     */
-    fun markNotificationIdsAsRead(newIds: Set<String>) {
-        val prefs = sharedPreferences ?: return
-        val currentSet = getReadNotificationIds().toMutableSet()
-        currentSet.addAll(newIds)
-        prefs.edit()?.putStringSet(KEY_READ_NOTIFICATION_IDS, currentSet)?.apply()
-    }
-
-    /**
-     * Returns IDs of notifications that the user explicitly chose to clear/dismiss.
-     */
-    fun getClearedNotificationIds(): Set<String> {
-        val prefs = sharedPreferences ?: return emptySet()
-        return prefs.getStringSet(KEY_CLEARED_NOTIFICATION_IDS, emptySet()) ?: emptySet()
-    }
-
-    /**
-     * Persists dismissed notification IDs so they no longer appear in the dialog list.
-     */
-    fun clearAllNotifications(idsToClear: Set<String>) {
-        val prefs = sharedPreferences ?: return
-        val currentSet = getClearedNotificationIds().toMutableSet()
-        currentSet.addAll(idsToClear)
-        prefs.edit()?.putStringSet(KEY_CLEARED_NOTIFICATION_IDS, currentSet)?.apply()
-        // Also mark them read
-        markNotificationIdsAsRead(idsToClear)
+        val updatedSet = HashSet(getNotifiedBannerOrderIds())
+        updatedSet.add(orderId)
+        prefs.edit()?.putStringSet(KEY_NOTIFIED_BANNER_IDS, updatedSet)?.commit()
     }
 
     /**
@@ -154,6 +115,6 @@ object UserSession {
         // Wipe the saved keys from the device
         sharedPreferences?.edit()
             ?.clear()
-            ?.apply()
+            ?.commit()
     }
 }

@@ -8,7 +8,7 @@ data class OfferUiModel(
     val storeId: String = "",
     val title: String,
     val storeName: String,
-    val storeRating: Double = 4.8,
+    val storeRating: Double? = 4.8,
     @DrawableRes val imageResId: Int = R.drawable.ic_launcher_foreground,
     val imageUrl: String? = null,
     val discountPercent: Int = 0,

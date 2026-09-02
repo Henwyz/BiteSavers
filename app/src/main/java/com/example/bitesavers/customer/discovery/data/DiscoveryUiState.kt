@@ -15,7 +15,7 @@ data class DiscoveryStoreUiModel(
     val id: String,
     val name: String,
     val address: String,
-    val rating: Double = 4.8,
+    val rating: Double? = 4.8,
     val imageUrl: String? = null,
     val operatingHours: String = "",
     val activeOffersCount: Int = 0,
