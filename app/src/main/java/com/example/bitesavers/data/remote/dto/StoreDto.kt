@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class StoreDto(
     @SerialName("id")
-    val id: String,
+    val id: String = "",
 
     @SerialName("owner_id")
     val ownerId: String? = null,

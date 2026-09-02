@@ -30,6 +30,10 @@ class DiscoveryViewModel : ViewModel() {
     private val userRepository: UserRepository = UserRepository()
     private val notificationRepository: NotificationRepository = NotificationRepository()
 
+    // Default regional coordinates centered on Penang, Malaysia
+    private val defaultLatitude = 5.4674
+    private val defaultLongitude = 100.2790
+
     // Master list of all offers fetched from Supabase (kept private in memory)
     private var allOffers: List<OfferUiModel> = emptyList()
 
@@ -49,15 +53,34 @@ class DiscoveryViewModel : ViewModel() {
     }
 
     // Listens to UserSession changes dynamically
+    // Listens to UserSession changes dynamically
+    // Listens to UserSession changes dynamically
+    // Listens to UserSession changes dynamically
     private fun observeUserSessionChanges() {
         viewModelScope.launch {
             UserSession.currentUserId.collectLatest { userId ->
                 if (userId.isNotBlank()) {
                     val profile = userRepository.fetchUserProfile(userId)
-                    if (profile != null) {
-                        _uiState.update { current ->
-                            current.copy(user = profile)
-                        }
+
+                    // Safely parses the saved session role into the UserRole enum
+                    val parsedRole = try {
+                        UserRole.valueOf(UserSession.getUserRole().uppercase())
+                    } catch (e: Exception) {
+                        UserRole.CONSUMER
+                    }
+
+                    val updatedCategories = if (parsedRole == UserRole.NGO) {
+                        (_uiState.value.availableCategories + DiscoveryCategory.FREE).distinct()
+                    } else {
+                        _uiState.value.availableCategories.filterNot { it == DiscoveryCategory.FREE }
+                    }
+
+                    _uiState.update { current ->
+                        current.copy(
+                            user = profile ?: current.user,
+                            userRole = parsedRole,
+                            availableCategories = updatedCategories
+                        )
                     }
 
                     // Load bookmarks for this active user
@@ -135,8 +158,8 @@ class DiscoveryViewModel : ViewModel() {
                 // Filter them and generate map markers & stores
                 _uiState.update { current ->
                     val visibleOffers = applyFilters(current, allOffers)
-                    val baseLat = userLatitude ?: 3.1390
-                    val baseLng = userLongitude ?: 101.6869
+                    val baseLat = userLatitude ?: defaultLatitude
+                    val baseLng = userLongitude ?: defaultLongitude
                     val visibleStores = deriveStoresFromOffers(visibleOffers, baseLat, baseLng)
                     val generatedMarkers = groupOffersByStore(visibleOffers, baseLat, baseLng)
 
@@ -175,10 +198,13 @@ class DiscoveryViewModel : ViewModel() {
                     firstOffer.distanceKm
                 }
 
+                // Resolves genuine store ID, eliminating incorrect fallback to offer ID
+                val trueStoreId = firstOffer.storeId.ifBlank { "store_01" }
+
                 DiscoveryStoreUiModel(
-                    id = firstOffer.storeId.ifBlank { firstOffer.id },
+                    id = trueStoreId,
                     name = storeName,
-                    address = "Penang, Malaysia",
+                    address = firstOffer.description.takeIf { !it.isNullOrBlank() } ?: "Penang, Malaysia",
                     rating = firstOffer.storeRating ?: 0.0,
                     imageUrl = firstOffer.imageUrl,
                     operatingHours = firstOffer.pickupWindow,
@@ -215,8 +241,11 @@ class DiscoveryViewModel : ViewModel() {
                     "RM %.2f".format(firstOffer.currentPrice)
                 }
 
+                // Pin target navigates using the authentic store ID
+                val markerStoreId = firstOffer.storeId.ifBlank { "store_01" }
+
                 NearbyDealMarkerUiModel(
-                    storeId = firstOffer.id,
+                    storeId = markerStoreId,
                     storeName = entry.key,
                     labelText = label,
                     latitude = pinLat,
@@ -237,8 +266,8 @@ class DiscoveryViewModel : ViewModel() {
         _uiState.update { current ->
             val updated = current.copy(searchQuery = query)
             val filtered = applyFilters(updated, allOffers)
-            val baseLat = userLatitude ?: 3.1390
-            val baseLng = userLongitude ?: 101.6869
+            val baseLat = userLatitude ?: defaultLatitude
+            val baseLng = userLongitude ?: defaultLongitude
             updated.copy(
                 offers = filtered,
                 stores = deriveStoresFromOffers(filtered, baseLat, baseLng),
@@ -251,8 +280,8 @@ class DiscoveryViewModel : ViewModel() {
         _uiState.update { current ->
             val updated = current.copy(selectedCategory = category)
             val filtered = applyFilters(updated, allOffers)
-            val baseLat = userLatitude ?: 3.1390
-            val baseLng = userLongitude ?: 101.6869
+            val baseLat = userLatitude ?: defaultLatitude
+            val baseLng = userLongitude ?: defaultLongitude
             updated.copy(
                 offers = filtered,
                 stores = deriveStoresFromOffers(filtered, baseLat, baseLng),
@@ -283,8 +312,8 @@ class DiscoveryViewModel : ViewModel() {
                 ) DiscoveryCategory.ALL else current.selectedCategory
             )
             val filtered = applyFilters(updated, allOffers)
-            val baseLat = userLatitude ?: 3.1390
-            val baseLng = userLongitude ?: 101.6869
+            val baseLat = userLatitude ?: defaultLatitude
+            val baseLng = userLongitude ?: defaultLongitude
             updated.copy(
                 offers = filtered,
                 stores = deriveStoresFromOffers(filtered, baseLat, baseLng),
@@ -293,6 +322,7 @@ class DiscoveryViewModel : ViewModel() {
         }
     }
 
+    // Applies search queries, role-based visibility, and rescue claim window criteria
     private fun applyFilters(state: DiscoveryUiState, sourceList: List<OfferUiModel>): List<OfferUiModel> {
         val query = state.searchQuery.trim().lowercase()
         val currentLat = userLatitude
@@ -301,7 +331,7 @@ class DiscoveryViewModel : ViewModel() {
         val filteredSequence = sourceList.asSequence()
             .filter { offer ->
                 if (state.userRole == UserRole.CONSUMER) {
-                    offer.hoursToClose > 1
+                    offer.hoursToClose > 0
                 } else {
                     true
                 }
@@ -314,6 +344,7 @@ class DiscoveryViewModel : ViewModel() {
                     DiscoveryCategory.DESSERTS -> offer.category == DiscoveryCategory.DESSERTS
                     DiscoveryCategory.BEVERAGES -> offer.category == DiscoveryCategory.BEVERAGES
                     DiscoveryCategory.FREE -> {
+                        // Unpurchased rescue items become free to NGOs during final hour before pickup ends
                         state.userRole == UserRole.NGO &&
                                 offer.hoursToClose <= 1 &&
                                 offer.isEligibleForNgoFree
@@ -329,8 +360,8 @@ class DiscoveryViewModel : ViewModel() {
         return if (currentLat != null && currentLng != null) {
             filteredSequence
                 .map { offer ->
-                    val offerLat = offer.latitude ?: 3.1390
-                    val offerLng = offer.longitude ?: 101.6869
+                    val offerLat = offer.latitude ?: defaultLatitude
+                    val offerLng = offer.longitude ?: defaultLongitude
                     val dist = LocationUtils.calculateDistanceKm(currentLat, currentLng, offerLat, offerLng)
                     offer.copy(distanceKm = dist)
                 }
@@ -374,8 +405,8 @@ class DiscoveryViewModel : ViewModel() {
                 selectedCategory = DiscoveryCategory.ALL
             )
             val filtered = applyFilters(updated, allOffers)
-            val baseLat = userLatitude ?: 3.1390
-            val baseLng = userLongitude ?: 101.6869
+            val baseLat = userLatitude ?: defaultLatitude
+            val baseLng = userLongitude ?: defaultLongitude
             updated.copy(
                 offers = filtered,
                 stores = deriveStoresFromOffers(filtered, baseLat, baseLng),

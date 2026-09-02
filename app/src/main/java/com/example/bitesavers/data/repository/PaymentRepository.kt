@@ -12,6 +12,9 @@ import kotlinx.coroutines.withContext
 class PaymentRepository {
     private val client = SupabaseClient.client
 
+    // Generates clean, human-readable ID for payment methods matching the Supabase text ID schema
+    private fun generatePaymentMethodId(): String = "pm_${System.currentTimeMillis().toString().takeLast(6)}"
+
     // 1. Fetch current wallet balance for the actively logged in user
     suspend fun fetchWalletBalance(): Double = withContext(Dispatchers.IO) {
         val uid = UserSession.getUserId()
@@ -57,7 +60,7 @@ class PaymentRepository {
         }
     }
 
-    // 4. Save a new Bank Card for the active user
+    // 4. Save a new Bank Card for the active user with a standardized pm_ prefix ID
     suspend fun saveBankCard(
         cardHolder: String,
         lastFourDigits: String,
@@ -75,6 +78,7 @@ class PaymentRepository {
             }
 
             val card = PaymentMethodDto(
+                id = generatePaymentMethodId(),
                 userId = uid,
                 type = "BANK_CARD",
                 cardHolder = cardHolder,
@@ -123,11 +127,12 @@ class PaymentRepository {
         }
     }
 
-    // 7. Link Touch 'n Go / eWallet for active user
+    // 7. Link Touch 'n Go / eWallet for active user with a standardized pm_ prefix ID
     suspend fun linkEWallet(phoneNumber: String): Boolean = withContext(Dispatchers.IO) {
         val uid = UserSession.getUserId()
         try {
             val newMethod = PaymentMethodDto(
+                id = generatePaymentMethodId(),
                 userId = uid,
                 type = "TNG_EWALLET",
                 linkedPhone = phoneNumber,

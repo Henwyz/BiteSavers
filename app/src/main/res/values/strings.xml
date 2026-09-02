@@ -597,4 +597,7 @@
     <string name="notifications_empty_subtitle">We will let you know when your orders are ready or completed.</string>
     <string name="notifications_action_mark_all_read">Mark all as read</string>
     <string name="notifications_action_clear_all">Clear all</string>
+
+    <string name="action_back">Back</string>
+    <string name="store_whatsapp_not_installed">WhatsApp is not installed on this device</string>
 </resources>

@@ -66,7 +66,7 @@ object OrderNotificationHelper {
         val intent = Intent(context, MainActivity::class.java).apply {
             // Re-uses existing activity if already open instead of launching duplicate instances
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            // Attach the orderId so MainActivity knows which order ticket to open
+            // Attach the clean orderId so MainActivity knows which order ticket to open
             putExtra("EXTRA_ORDER_ID", orderId)
         }
 
@@ -81,8 +81,9 @@ object OrderNotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Format a readable short ID (e.g., "#BS-A1B2")
-        val shortId = "#BS-" + orderId.takeLast(4).uppercase()
+        // Formats clean display tag (e.g., ord_1001 -> #BS-1001)
+        val cleanSuffix = orderId.removePrefix("ord_").takeLast(6).uppercase()
+        val shortId = "#BS-$cleanSuffix"
 
         // Fetch strings with dynamic parameters (storeName and shortId) from strings.xml
         val title = context.getString(R.string.notification_order_completed_title)

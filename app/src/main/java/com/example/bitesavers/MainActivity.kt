@@ -86,7 +86,9 @@ class MainActivity : ComponentActivity() {
                                 val orderId = order.id.orEmpty()
                                 val offer = offerRepository.fetchOfferById(order.offerId)
                                 val storeName = offer?.storeName ?: "BiteSavers Store"
-                                val shortId = "BS-" + orderId.takeLast(5).uppercase()
+
+                                // Strips the database table prefix while preserving all actual order numbers
+                                val shortId = "BS-" + orderId.removePrefix("ord_").uppercase()
 
                                 // Shows the system status bar banner alert
                                 OrderNotificationHelper.showOrderCompletedNotification(
@@ -95,9 +97,8 @@ class MainActivity : ComponentActivity() {
                                     storeName = storeName
                                 )
 
-                                // Persists the completed notification into the remote user_notifications table
+                                // Persists the completed notification into remote user_notifications table with standard notif_ prefix
                                 notificationRepository.insertNotification(
-                                    id = "NOTIF_${System.currentTimeMillis()}_${orderId.takeLast(4)}",
                                     userId = userId,
                                     orderId = orderId,
                                     title = "Order Completed! 🎉",

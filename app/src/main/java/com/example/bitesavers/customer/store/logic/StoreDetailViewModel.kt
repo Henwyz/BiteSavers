@@ -14,6 +14,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 // Manages state for the restaurant detail screen including store info and active offers
 class StoreDetailViewModel : ViewModel() {
@@ -44,8 +47,8 @@ class StoreDetailViewModel : ViewModel() {
             try {
                 val storeDto = repository.getStoreById(storeId)
                 if (storeDto != null) {
-                    val openTime = storeDto.openingTime ?: "8:30 AM"
-                    val closeTime = storeDto.closingTime ?: "9:00 PM"
+                    val openFormatted = formatTimeDisplay(storeDto.openingTime) ?: "08:00 AM"
+                    val closeFormatted = formatTimeDisplay(storeDto.closingTime) ?: "09:30 PM"
 
                     val storeUi = StoreDetailUiModel(
                         id = storeDto.id,
@@ -53,7 +56,7 @@ class StoreDetailViewModel : ViewModel() {
                         address = storeDto.address ?: "Location not specified",
                         rating = storeDto.rating,
                         contactPhone = storeDto.contactPhone,
-                        operatingHours = "Mon – Sun: $openTime - $closeTime",
+                        operatingHours = "Mon – Sun: $openFormatted - $closeFormatted",
                         imageUrl = storeDto.imageUrl
                     )
 
@@ -63,8 +66,17 @@ class StoreDetailViewModel : ViewModel() {
                             (((dto.originalPrice - dto.discountedPrice) / dto.originalPrice) * 100).toInt()
                         } else 0
 
+                        val pickupStart = formatTimeDisplay(dto.pickupStart) ?: "08:00 PM"
+                        val pickupEnd = formatTimeDisplay(dto.pickupEnd) ?: "10:00 PM"
+                        val remainingHours = calculateHoursToClose(dto.pickupEnd)
+
+                        val catEnum = runCatching {
+                            DiscoveryCategory.valueOf(dto.category.uppercase())
+                        }.getOrDefault(DiscoveryCategory.HOT_MEALS)
+
                         OfferUiModel(
                             id = dto.id,
+                            storeId = storeDto.id,
                             title = dto.title,
                             storeName = storeDto.name,
                             storeRating = storeDto.rating,
@@ -75,9 +87,9 @@ class StoreDetailViewModel : ViewModel() {
                             originalPrice = dto.originalPrice,
                             distanceKm = 0.0,
                             quantityLeft = dto.quantityAvailable,
-                            hoursToClose = 2,
-                            pickupWindow = "Today, $openTime - $closeTime",
-                            category = DiscoveryCategory.BAKERY,
+                            hoursToClose = remainingHours,
+                            pickupWindow = "Today, $pickupStart - $pickupEnd",
+                            category = catEnum,
                             isEligibleForNgoFree = dto.isEligibleForNgoFree,
                             storageType = "HOT",
                             description = dto.description ?: "Fresh surplus food ready for rescue.",
@@ -109,6 +121,50 @@ class StoreDetailViewModel : ViewModel() {
                     )
                 }
             }
+        }
+    }
+
+    // Converts Supabase 24-hour SQL time string (e.g. 21:30:00 or 21:30) to user-friendly 12-hour AM/PM format
+    private fun formatTimeDisplay(timeStr: String?): String? {
+        if (timeStr.isNullOrBlank()) return null
+        val patterns = arrayOf("HH:mm:ss", "HH:mm", "h:mm a")
+        for (pattern in patterns) {
+            try {
+                val parser = SimpleDateFormat(pattern, Locale.getDefault())
+                parser.isLenient = false
+                val date = parser.parse(timeStr.trim())
+                if (date != null) {
+                    val formatter = SimpleDateFormat("h:mm a", Locale.getDefault())
+                    return formatter.format(date)
+                }
+            } catch (_: Exception) {
+                // Try next pattern candidate
+            }
+        }
+        return timeStr
+    }
+
+    // Computes difference between current system time and pickup_end time window
+    private fun calculateHoursToClose(pickupEndStr: String?): Int {
+        if (pickupEndStr.isNullOrBlank()) return 2
+        return try {
+            val parser = SimpleDateFormat("HH:mm", Locale.getDefault())
+            val targetDate = parser.parse(pickupEndStr.trim().take(5)) ?: return 2
+
+            val now = Calendar.getInstance()
+            val endCalendar = Calendar.getInstance().apply {
+                time = targetDate
+                set(Calendar.YEAR, now.get(Calendar.YEAR))
+                set(Calendar.MONTH, now.get(Calendar.MONTH))
+                set(Calendar.DAY_OF_MONTH, now.get(Calendar.DAY_OF_MONTH))
+            }
+
+            val diffMillis = endCalendar.timeInMillis - now.timeInMillis
+            val diffMinutes = diffMillis / (1000 * 60)
+
+            if (diffMinutes <= 0) 0 else (diffMinutes / 60.0).toInt().coerceAtLeast(1)
+        } catch (_: Exception) {
+            2
         }
     }
 

@@ -12,6 +12,9 @@ class NotificationRepository {
 
     private val client = SupabaseClient.client
 
+    // Generates human-readable ID matching Supabase text ID convention (e.g. notif_172530)
+    private fun generateNotificationId(): String = "notif_${System.currentTimeMillis().toString().takeLast(6)}"
+
     suspend fun fetchUserNotifications(userId: String): List<NotificationDto> = withContext(Dispatchers.IO) {
         try {
             client.from("user_notifications")
@@ -27,16 +30,17 @@ class NotificationRepository {
         }
     }
 
+    // Inserts a new user notification with an auto-generated notif_ prefix ID if none is supplied
     suspend fun insertNotification(
-        id: String,
         userId: String,
-        orderId: String,
         title: String,
-        message: String
+        message: String,
+        orderId: String? = null,
+        id: String = generateNotificationId()
     ): Boolean = withContext(Dispatchers.IO) {
         try {
             val dto = NotificationDto(
-                id = id,
+                id = id.ifBlank { generateNotificationId() },
                 userId = userId,
                 orderId = orderId,
                 title = title,
