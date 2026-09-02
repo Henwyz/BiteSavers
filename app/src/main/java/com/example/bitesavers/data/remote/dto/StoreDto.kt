@@ -16,6 +16,9 @@ data class StoreDto(
     @SerialName("closing_time") val closingTime: String? = null,
     @SerialName("cleanup_end_time") val cleanupEndTime: String? = null,
     @SerialName("image_url") val imageUrl: String? = null,
-    @SerialName("owner_id") val ownerId: String? = null
+    @SerialName("owner_id") val ownerId: String? = null,
+    @SerialName("ssm_number") val ssmNumber: String? = null,
+    @SerialName("ssm_document_url") val ssmDocumentUrl: String? = null,
+    @SerialName("is_verified") val isVerified: Boolean = false
 
 )

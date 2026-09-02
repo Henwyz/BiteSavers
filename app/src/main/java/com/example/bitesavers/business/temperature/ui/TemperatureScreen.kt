@@ -26,6 +26,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,7 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitesavers.R
 import com.example.bitesavers.business.temperature.logic.TemperatureViewModel
-import com.example.bitesavers.ui.theme.BiteSaverColors
+import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @Composable
 fun TemperatureScreen(
@@ -51,133 +52,143 @@ fun TemperatureScreen(
 ) {
     val currentSelected = viewModel.selectedUnit
 
-    Scaffold(
-        containerColor = Color(0xFF121A14),
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onAddUnitClick,
-                containerColor = Color(0xFFA5D6A7),
-                contentColor = Color(0xFF121A14),
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.padding(bottom = 8.dp, end = 8.dp)
+    // Reverting to the green header layout and softgreen background style from Terms/Dashboard screens
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.secondary) // HeaderGreen equivalent
+    ) {
+        // Top Header Section
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            IconButton(
+                onClick = onBackClick,
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(MaterialTheme.colorScheme.surface, CircleShape)
             ) {
                 Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add Storage Unit",
-                    modifier = Modifier.size(28.dp)
+                    painter = painterResource(id = R.drawable.ic_arrow_back),
+                    contentDescription = stringResource(R.string.cd_back_button),
+                    tint = MaterialTheme.colorScheme.secondary
                 )
             }
+            Text(
+                text = stringResource(R.string.temperature_monitor),
+                color = MaterialTheme.colorScheme.onSecondary,
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp
+            )
+            Box(modifier = Modifier.size(40.dp)) // Spacer to center title balance
         }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-                .verticalScroll(rememberScrollState())
-        ) {
-            // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                IconButton(
-                    onClick = onBackClick,
-                    modifier = Modifier
-                        .size(40.dp)
-                        .background(BiteSaverColors.White, CircleShape)
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Main Body Content with SoftGreen background
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.background, // SoftGreen equivalent
+            floatingActionButton = {
+                FloatingActionButton(
+                    onClick = onAddUnitClick,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.padding(bottom = 8.dp, end = 8.dp)
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_arrow_back),
-                        contentDescription = stringResource(R.string.cd_back_button),
-                        tint = BiteSaverColors.HeaderGreen
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add Storage Unit",
+                        modifier = Modifier.size(28.dp)
                     )
                 }
-                Text(
-                    text = stringResource(R.string.temperature_monitor),
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-                Box(modifier = Modifier.size(40.dp))
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Hero Live Status Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E2A20))
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .verticalScroll(rememberScrollState())
             ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                // Hero Live Status Card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(
-                            text = stringResource(R.string.esp32_live_sensor),
-                            color = Color(0xFFA5D6A7),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Box(
-                            modifier = Modifier
-                                .background(Color(0xFF2E7D32), shape = RoundedCornerShape(8.dp))
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = stringResource(R.string.live),
-                                color = Color.White,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold
+                                text = stringResource(R.string.esp32_live_sensor),
+                                color = MaterialTheme.colorScheme.primary,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium
                             )
+                            Box(
+                                modifier = Modifier
+                                    .background(MaterialTheme.colorScheme.primaryContainer, shape = RoundedCornerShape(8.dp))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.live),
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = currentSelected?.temperature ?: "--\u00B0 C",
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontSize = 48.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "${currentSelected?.name ?: stringResource(R.string.select_a_unit)} • ${currentSelected?.type ?: ""}",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 12.sp
+                        )
                     }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = currentSelected?.temperature ?: "--\u00B0 C",
-                        color = Color.White,
-                        fontSize = 48.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "${currentSelected?.name ?: stringResource(R.string.select_a_unit)} • ${currentSelected?.type ?: ""}",
-                        color = Color(0xFFB0BEC5),
-                        fontSize = 12.sp
-                    )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-            Text(
-                text = stringResource(R.string.all_connected_units),
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Render list dynamically
-            viewModel.units.forEach { unit ->
-                DetailedUnitCard(
-                    name = unit.name,
-                    type = unit.type,
-                    temp = unit.temperature,
-                    status = unit.status,
-                    isWarning = unit.isWarning,
-                    isSelected = unit.id == currentSelected?.id,
-                    onClick = { viewModel.selectUnit(unit) }
+                Text(
+                    text = stringResource(R.string.all_connected_units),
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
                 )
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Render list dynamically
+                viewModel.units.forEach { unit ->
+                    DetailedUnitCard(
+                        name = unit.name,
+                        type = unit.type,
+                        temp = unit.temperature,
+                        status = unit.status,
+                        isWarning = unit.isWarning,
+                        isSelected = unit.id == currentSelected?.id,
+                        onClick = { viewModel.selectUnit(unit) }
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
             }
         }
     }
@@ -199,9 +210,9 @@ fun DetailedUnitCard(
             .clickable { onClick() },
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) Color(0xFF26382B) else Color(0xFF1E2A20)
+            containerColor = if (isSelected) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface
         ),
-        border = if (isSelected) BorderStroke(1.5.dp, Color(0xFFA5D6A7)) else null
+        border = if (isSelected) BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else null
     ) {
         Row(
             modifier = Modifier
@@ -214,26 +225,26 @@ fun DetailedUnitCard(
                 Box(
                     modifier = Modifier
                         .size(42.dp)
-                        .background(Color(0xFF2C3E30), shape = RoundedCornerShape(10.dp)),
+                        .background(MaterialTheme.colorScheme.background, shape = RoundedCornerShape(10.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.Thermostat,
                         contentDescription = null,
-                        tint = if (isWarning) Color(0xFFFFB74D) else Color(0xFFA5D6A7)
+                        tint = if (isWarning) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
                     )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
                         text = name,
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp
                     )
                     Text(
                         text = type,
-                        color = Color(0xFF90A4AE),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 12.sp
                     )
                 }
@@ -242,7 +253,7 @@ fun DetailedUnitCard(
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = temp,
-                    color = if (isWarning) Color(0xFFFFB74D) else Color.White,
+                    color = if (isWarning) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp
                 )
@@ -250,14 +261,14 @@ fun DetailedUnitCard(
                 Box(
                     modifier = Modifier
                         .background(
-                            color = if (isWarning) Color(0xFF3E2723) else Color(0xFF1B3822),
+                            color = if (isWarning) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer,
                             shape = RoundedCornerShape(6.dp)
                         )
                         .padding(horizontal = 8.dp, vertical = 2.dp)
                 ) {
                     Text(
                         text = status,
-                        color = if (isWarning) Color(0xFFFFAB91) else Color(0xFFA5D6A7),
+                        color = if (isWarning) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onPrimaryContainer,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -267,8 +278,10 @@ fun DetailedUnitCard(
     }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFF121A14)
+@Preview(showBackground = true)
 @Composable
 fun TemperatureScreenPreview() {
-    TemperatureScreen(onBackClick = {})
+    BiteSaversTheme {
+        TemperatureScreen(onBackClick = {})
+    }
 }

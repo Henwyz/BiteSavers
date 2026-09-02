@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -38,6 +40,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -47,7 +50,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitesavers.R
 import com.example.bitesavers.login.logic.LoginViewModel
-import com.example.bitesavers.ui.theme.BiteSaverColors
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -60,10 +62,11 @@ fun LoginScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF121A14)), // Dark background matching your friend's theme
+            .background(MaterialTheme.colorScheme.secondary),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
+        // Top Banner Header
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -78,10 +81,11 @@ fun LoginScreen(
                     .blur(1.dp)
             )
 
+            // Fixed: Using a dark translucent overlay instead of theme secondary color so text is visible in dark mode
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFF121A14).copy(alpha = 0.85f))
+                    .background(Color.Black.copy(alpha = 0.6f))
             )
 
             Column(
@@ -93,7 +97,7 @@ fun LoginScreen(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_leaf),
                         contentDescription = null,
-                        tint = Color(0xFFA5D6A7),
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(28.dp)
                     )
 
@@ -109,28 +113,32 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(6.dp))
 
+                // Fixed: High-contrast white text so it clearly shows over the dark overlay in any mode
                 Text(
                     text = stringResource(R.string.login_tagline),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFFB0BEC5)
+                    fontFamily = FontFamily.Default,
+                    color = Color.White.copy(alpha = 0.9f)
                 )
             }
         }
 
+        // Form Content Section
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFF121A14)),
+                .background(MaterialTheme.colorScheme.background)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(24.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E2A20)), // Dark card surface
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                shape = RoundedCornerShape(24.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
-
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -140,7 +148,7 @@ fun LoginScreen(
                         text = stringResource(R.string.welcome_back),
                         fontSize = 26.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
 
@@ -148,9 +156,9 @@ fun LoginScreen(
                     Text(
                         text = stringResource(R.string.login_email_label),
                         fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFA5D6A7),
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(bottom = 4.dp, top = 4.dp)
                     )
 
                     OutlinedTextField(
@@ -160,7 +168,7 @@ fun LoginScreen(
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_mail),
                                 contentDescription = stringResource(R.string.cd_email_icon),
-                                tint = Color(0xFFA5D6A7),
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(20.dp)
                             )
                         },
@@ -168,39 +176,35 @@ fun LoginScreen(
                         shape = RoundedCornerShape(50),
                         isError = viewModel.emailError != null,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color(0xFF121A14),
-                            unfocusedContainerColor = Color(0xFF121A14),
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            errorBorderColor = Color.Red,
-                            errorCursorColor = Color.Red,
-                            focusedPlaceholderColor = Color.Gray,
-                            unfocusedPlaceholderColor = Color.Gray,
-                            focusedBorderColor = if (viewModel.emailError != null) Color.Red else Color(0xFFA5D6A7),
-                            unfocusedBorderColor = if (viewModel.emailError != null) Color.Red else Color(0xFF2C3E30)
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
                         ),
                         singleLine = true
                     )
 
                     if (viewModel.emailError != null) {
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = viewModel.emailError!!,
-                            color = Color.Red,
-                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.error,
+                            fontSize = 11.sp,
                             modifier = Modifier.padding(start = 16.dp)
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     // Password Field
                     Text(
                         text = stringResource(R.string.login_password_label),
                         fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFA5D6A7),
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(bottom = 4.dp, top = 4.dp)
                     )
 
                     OutlinedTextField(
@@ -210,7 +214,7 @@ fun LoginScreen(
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_password),
                                 contentDescription = stringResource(R.string.cd_password_icon),
-                                tint = Color(0xFFA5D6A7),
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(20.dp)
                             )
                         },
@@ -221,7 +225,7 @@ fun LoginScreen(
                                         id = if (viewModel.passwordVisible) R.drawable.ic_show else R.drawable.ic_hide
                                     ),
                                     contentDescription = stringResource(R.string.cd_toggle_password),
-                                    tint = Color(0xFFB0BEC5),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -231,39 +235,35 @@ fun LoginScreen(
                         shape = RoundedCornerShape(50),
                         isError = viewModel.passwordError != null,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color(0xFF121A14),
-                            unfocusedContainerColor = Color(0xFF121A14),
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            errorBorderColor = Color.Red,
-                            errorCursorColor = Color.Red,
-                            focusedPlaceholderColor = Color.Gray,
-                            unfocusedPlaceholderColor = Color.Gray,
-                            focusedBorderColor = if (viewModel.passwordError != null) Color.Red else Color(0xFFA5D6A7),
-                            unfocusedBorderColor = if (viewModel.passwordError != null) Color.Red else Color(0xFF2C3E30)
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
                         ),
                         singleLine = true
                     )
 
                     if (viewModel.passwordError != null) {
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = viewModel.passwordError!!,
-                            color = Color.Red,
-                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.error,
+                            fontSize = 11.sp,
                             modifier = Modifier.padding(start = 16.dp)
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     // Account Type Dropdown
                     Text(
                         text = stringResource(R.string.account_type_label),
                         fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFA5D6A7),
-                        modifier = Modifier.padding(bottom = 6.dp)
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(bottom = 4.dp, top = 4.dp)
                     )
 
                     ExposedDropdownMenuBox(
@@ -279,7 +279,7 @@ fun LoginScreen(
                                 Icon(
                                     painter = painterResource(id = R.drawable.ic_home),
                                     contentDescription = stringResource(R.string.cd_account_icon),
-                                    tint = Color(0xFFA5D6A7),
+                                    tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(20.dp)
                                 )
                             },
@@ -291,23 +291,22 @@ fun LoginScreen(
                                 .fillMaxWidth(),
                             shape = RoundedCornerShape(50),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = Color(0xFF121A14),
-                                unfocusedContainerColor = Color(0xFF121A14),
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White,
-                                errorTextColor = Color.White,
-                                focusedBorderColor = Color(0xFFA5D6A7),
-                                unfocusedBorderColor = Color(0xFF2C3E30)
+                                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline
                             )
                         )
 
                         ExposedDropdownMenu(
                             expanded = viewModel.isDropdownExpanded,
                             onDismissRequest = { viewModel.toggleDropdown(false) },
-                            modifier = Modifier.background(Color(0xFF1E2A20))
+                            modifier = Modifier.background(MaterialTheme.colorScheme.surface)
                         ) {
                             DropdownMenuItem(
-                                text = { Text(stringResource(R.string.role_consumer), color = Color.White) },
+                                text = { Text(stringResource(R.string.role_consumer), color = MaterialTheme.colorScheme.onSurface) },
                                 onClick = {
                                     viewModel.updateSelectedRole("Consumer")
                                     viewModel.toggleDropdown(false)
@@ -315,7 +314,7 @@ fun LoginScreen(
                                 contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
                             )
                             DropdownMenuItem(
-                                text = { Text(stringResource(R.string.role_business), color = Color.White) },
+                                text = { Text(stringResource(R.string.role_business), color = MaterialTheme.colorScheme.onSurface) },
                                 onClick = {
                                     viewModel.updateSelectedRole("Business")
                                     viewModel.toggleDropdown(false)
@@ -335,7 +334,7 @@ fun LoginScreen(
                             text = stringResource(R.string.forgot_password),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFFA5D6A7),
+                            color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.clickable { /* Handle click */ }
                         )
                     }
@@ -353,26 +352,26 @@ fun LoginScreen(
                             .height(50.dp),
                         shape = RoundedCornerShape(50),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFA5D6A7)
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
                         )
                     ) {
                         if (viewModel.isLoading) {
                             CircularProgressIndicator(
-                                color = Color(0xFF121A14),
-                                modifier = Modifier.size(24.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(20.dp),
                                 strokeWidth = 2.dp
                             )
                         } else {
                             Text(
                                 text = stringResource(R.string.log_in_button),
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF121A14)
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     // Navigate to Sign Up Row
                     Row(
@@ -383,19 +382,17 @@ fun LoginScreen(
                         Text(
                             text = stringResource(R.string.no_account_yet),
                             fontSize = 13.sp,
-                            color = Color(0xFFB0BEC5)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = stringResource(R.string.sign_up_free),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFFA5D6A7),
+                            color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.clickable { onNavigateToSignUp() }
                         )
                     }
-
-                    Spacer(Modifier.height(20.dp))
                 }
             }
         }

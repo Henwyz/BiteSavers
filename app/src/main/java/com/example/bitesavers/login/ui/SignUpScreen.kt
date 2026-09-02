@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -44,7 +43,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
@@ -68,7 +66,7 @@ fun SignUpScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF121A14)) // Dark background theme
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Spacer(Modifier.height(10.dp))
         Row(
@@ -81,12 +79,12 @@ fun SignUpScreen(
                 onClick = onNavigateToLogin,
                 modifier = Modifier
                     .size(40.dp)
-                    .background(Color(0xFF1E2A20), CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_arrow_back),
                     contentDescription = stringResource(R.string.cd_back_button),
-                    tint = Color(0xFFA5D6A7)
+                    tint = MaterialTheme.colorScheme.primary
                 )
             }
 
@@ -94,7 +92,7 @@ fun SignUpScreen(
 
             Text(
                 text = stringResource(R.string.create_account),
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onBackground,
                 style = MaterialTheme.typography.titleMedium,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
@@ -106,7 +104,7 @@ fun SignUpScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFF121A14))
+                .background(MaterialTheme.colorScheme.background)
                 .padding(horizontal = 16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
@@ -122,7 +120,7 @@ fun SignUpScreen(
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E2A20)), // Dark card surface
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 shape = RoundedCornerShape(24.dp)
             ) {
                 Column(modifier = Modifier
@@ -134,7 +132,7 @@ fun SignUpScreen(
                         text = stringResource(R.string.full_name),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFA5D6A7),
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
 
@@ -153,27 +151,12 @@ fun SignUpScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(50),
                         isError = viewModel.fullNameError != null,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color(0xFF121A14),
-                            unfocusedContainerColor = Color(0xFF121A14),
-                            disabledContainerColor = Color(0xFF121A14),
-                            errorContainerColor = Color(0xFF121A14),
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            errorTextColor = Color.White,
-                            disabledTextColor = Color.White,
-                            focusedPlaceholderColor = Color.Gray,
-                            unfocusedPlaceholderColor = Color.Gray,
-                            errorBorderColor = Color.Red,
-                            errorCursorColor = Color.Red,
-                            focusedBorderColor = if (viewModel.fullNameError != null) Color.Red else Color(0xFFA5D6A7),
-                            unfocusedBorderColor = if (viewModel.fullNameError != null) Color.Red else Color(0xFF2C3E30)
-                        ),
+                        colors = signupFieldColors(isError = viewModel.fullNameError != null),
                         singleLine = true
                     )
                     viewModel.fullNameError?.let { error ->
                         Spacer(Modifier.height(4.dp))
-                        Text(text = error, color = Color.Red, fontSize = 12.sp, modifier = Modifier.padding(start = 16.dp))
+                        Text(text = error, color = MaterialTheme.colorScheme.error, fontSize = 12.sp, modifier = Modifier.padding(start = 16.dp))
                     }
 
                     Spacer(Modifier.height(15.dp))
@@ -183,7 +166,7 @@ fun SignUpScreen(
                         text = stringResource(R.string.email_address),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFA5D6A7),
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
 
@@ -195,68 +178,11 @@ fun SignUpScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(50),
                         isError = viewModel.emailError != null,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color(0xFF121A14),
-                            unfocusedContainerColor = Color(0xFF121A14),
-                            disabledContainerColor = Color(0xFF121A14),
-                            errorContainerColor = Color(0xFF121A14),
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            errorTextColor = Color.White,
-                            disabledTextColor = Color.White,
-                            focusedPlaceholderColor = Color.Gray,
-                            unfocusedPlaceholderColor = Color.Gray,
-                            errorBorderColor = Color.Red,
-                            errorCursorColor = Color.Red,
-                            focusedBorderColor = if (viewModel.emailError != null) Color.Red else Color(0xFFA5D6A7),
-                            unfocusedBorderColor = if (viewModel.emailError != null) Color.Red else Color(0xFF2C3E30)
-                        )
+                        colors = signupFieldColors(isError = viewModel.emailError != null)
                     )
                     viewModel.emailError?.let { error ->
                         Spacer(Modifier.height(4.dp))
-                        Text(text = error, color = Color.Red, fontSize = 12.sp, modifier = Modifier.padding(start = 16.dp))
-                    }
-
-                    Spacer(Modifier.height(15.dp))
-
-                    // Contact number
-                    Text(
-                        text = stringResource(R.string.contact_number),
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFA5D6A7),
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
-
-                    OutlinedTextField(
-                        value = viewModel.phoneNumber,
-                        onValueChange = { viewModel.updatePhoneNumber(it) },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                        placeholder = { Text(stringResource(R.string.signup_placeholder_phone)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(50),
-                        isError = viewModel.phoneError != null,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color(0xFF121A14),
-                            unfocusedContainerColor = Color(0xFF121A14),
-                            disabledContainerColor = Color(0xFF121A14),
-                            errorContainerColor = Color(0xFF121A14),
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            errorTextColor = Color.White,
-                            disabledTextColor = Color.White,
-                            focusedPlaceholderColor = Color.Gray,
-                            unfocusedPlaceholderColor = Color.Gray,
-                            errorBorderColor = Color.Red,
-                            errorCursorColor = Color.Red,
-                            focusedBorderColor = if (viewModel.phoneError != null) Color.Red else Color(0xFFA5D6A7),
-                            unfocusedBorderColor = if (viewModel.phoneError != null) Color.Red else Color(0xFF2C3E30)
-                        )
-                    )
-                    viewModel.phoneError?.let { error ->
-                        Spacer(Modifier.height(4.dp))
-                        Text(text = error, color = Color.Red, fontSize = 12.sp, modifier = Modifier.padding(start = 16.dp))
+                        Text(text = error, color = MaterialTheme.colorScheme.error, fontSize = 12.sp, modifier = Modifier.padding(start = 16.dp))
                     }
 
                     Spacer(Modifier.height(15.dp))
@@ -266,7 +192,7 @@ fun SignUpScreen(
                         text = stringResource(R.string.password),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFA5D6A7),
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
 
@@ -282,7 +208,7 @@ fun SignUpScreen(
                                         id = if (passwordVisible) R.drawable.ic_show else R.drawable.ic_hide
                                     ),
                                     contentDescription = stringResource(R.string.cd_toggle_password),
-                                    tint = Color(0xFFB0BEC5),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -290,27 +216,12 @@ fun SignUpScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(50),
                         isError = viewModel.passwordError != null,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color(0xFF121A14),
-                            unfocusedContainerColor = Color(0xFF121A14),
-                            disabledContainerColor = Color(0xFF121A14),
-                            errorContainerColor = Color(0xFF121A14),
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            errorTextColor = Color.White,
-                            disabledTextColor = Color.White,
-                            focusedPlaceholderColor = Color.Gray,
-                            unfocusedPlaceholderColor = Color.Gray,
-                            errorBorderColor = Color.Red,
-                            errorCursorColor = Color.Red,
-                            focusedBorderColor = if (viewModel.passwordError != null) Color.Red else Color(0xFFA5D6A7),
-                            unfocusedBorderColor = if (viewModel.passwordError != null) Color.Red else Color(0xFF2C3E30)
-                        ),
+                        colors = signupFieldColors(isError = viewModel.passwordError != null),
                         singleLine = true
                     )
                     viewModel.passwordError?.let { error ->
                         Spacer(Modifier.height(4.dp))
-                        Text(text = error, color = Color.Red, fontSize = 12.sp, modifier = Modifier.padding(start = 16.dp))
+                        Text(text = error, color = MaterialTheme.colorScheme.error, fontSize = 12.sp, modifier = Modifier.padding(start = 16.dp))
                     }
 
                     Spacer(Modifier.height(15.dp))
@@ -320,7 +231,7 @@ fun SignUpScreen(
                         text = stringResource(R.string.confirm_password),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFA5D6A7),
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
 
@@ -339,32 +250,17 @@ fun SignUpScreen(
                                         id = if (confirmPasswordVisible) R.drawable.ic_show else R.drawable.ic_hide
                                     ),
                                     contentDescription = stringResource(R.string.cd_toggle_password),
-                                    tint = Color(0xFFB0BEC5),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
                         },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color(0xFF121A14),
-                            unfocusedContainerColor = Color(0xFF121A14),
-                            disabledContainerColor = Color(0xFF121A14),
-                            errorContainerColor = Color(0xFF121A14),
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            errorTextColor = Color.White,
-                            disabledTextColor = Color.White,
-                            focusedPlaceholderColor = Color.Gray,
-                            unfocusedPlaceholderColor = Color.Gray,
-                            errorBorderColor = Color.Red,
-                            errorCursorColor = Color.Red,
-                            focusedBorderColor = if (viewModel.confirmPasswordError != null) Color.Red else Color(0xFFA5D6A7),
-                            unfocusedBorderColor = if (viewModel.confirmPasswordError != null) Color.Red else Color(0xFF2C3E30)
-                        ),
+                        colors = signupFieldColors(isError = viewModel.confirmPasswordError != null),
                         singleLine = true
                     )
                     viewModel.confirmPasswordError?.let { error ->
                         Spacer(Modifier.height(4.dp))
-                        Text(text = error, color = Color.Red, fontSize = 12.sp, modifier = Modifier.padding(start = 16.dp))
+                        Text(text = error, color = MaterialTheme.colorScheme.error, fontSize = 12.sp, modifier = Modifier.padding(start = 16.dp))
                     }
 
                     Spacer(Modifier.height(8.dp))
@@ -377,16 +273,16 @@ fun SignUpScreen(
                             checked = viewModel.termsAccepted,
                             onCheckedChange = { viewModel.updateTermsAccepted(it) },
                             colors = CheckboxDefaults.colors(
-                                checkedColor = Color(0xFFA5D6A7),
-                                uncheckedColor = Color(0xFFB0BEC5),
-                                checkmarkColor = Color(0xFF121A14)
+                                checkedColor = MaterialTheme.colorScheme.primary,
+                                uncheckedColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                checkmarkColor = MaterialTheme.colorScheme.onPrimary
                             )
                         )
 
                         Text(
                             text = stringResource(R.string.terms_agreement),
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFFB0BEC5)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
 
                         Spacer(modifier = Modifier.width(4.dp))
@@ -395,7 +291,7 @@ fun SignUpScreen(
                             text = stringResource(R.string.terms_policy),
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFFA5D6A7),
+                            color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.clickable {
                                 onNavigateToTerms()
                             }
@@ -406,7 +302,7 @@ fun SignUpScreen(
                         Spacer(Modifier.height(8.dp))
                         Text(
                             text = viewModel.generalError.orEmpty(),
-                            color = Color.Red,
+                            color = MaterialTheme.colorScheme.error,
                             fontSize = 12.sp,
                             modifier = Modifier.padding(start = 16.dp)
                         )
@@ -426,15 +322,15 @@ fun SignUpScreen(
                             .height(50.dp),
                         shape = RoundedCornerShape(50),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFA5D6A7),
-                            disabledContainerColor = Color(0xFFA5D6A7).copy(alpha = 0.5f),
-                            contentColor = Color(0xFF121A14),
-                            disabledContentColor = Color(0xFF121A14).copy(alpha = 0.8f)
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                            disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                         )
                     ) {
                         if (viewModel.isLoading) {
                             CircularProgressIndicator(
-                                color = Color(0xFF121A14),
+                                color = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier.size(24.dp),
                                 strokeWidth = 2.dp
                             )
@@ -442,8 +338,7 @@ fun SignUpScreen(
                             Text(
                                 text = stringResource(R.string.create_account),
                                 fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF121A14)
+                                fontWeight = FontWeight.Bold
                             )
                         }
                     }
@@ -458,14 +353,14 @@ fun SignUpScreen(
                         Text(
                             text = stringResource(R.string.already_have_account),
                             fontSize = 13.sp,
-                            color = Color(0xFFB0BEC5)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(Modifier.width(4.dp))
                         Text(
                             text = stringResource(R.string.sign_in),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFFA5D6A7),
+                            color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.clickable { onNavigateToLogin() }
                         )
                     }
@@ -484,12 +379,12 @@ private fun RoleSegmentedToggle(
         modifier = Modifier
             .fillMaxWidth()
             .height(48.dp)
-            .background(Color(0xFF1E2A20), RoundedCornerShape(50))
+            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(50))
             .padding(4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         val consumerBg by animateColorAsState(
-            if (!isBusiness) Color(0xFFA5D6A7) else Color.Transparent, label = "ConsumerBg"
+            if (!isBusiness) MaterialTheme.colorScheme.primary else Color.Transparent, label = "ConsumerBg"
         )
         Box(
             modifier = Modifier
@@ -503,12 +398,12 @@ private fun RoleSegmentedToggle(
                 text = stringResource(R.string.role_toggle_consumer),
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp,
-                color = if (!isBusiness) Color(0xFF121A14) else Color(0xFFB0BEC5)
+                color = if (!isBusiness) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
         val businessBg by animateColorAsState(
-            if (isBusiness) Color(0xFFA5D6A7) else Color.Transparent, label = "BusinessBg"
+            if (isBusiness) MaterialTheme.colorScheme.primary else Color.Transparent, label = "BusinessBg"
         )
         Box(
             modifier = Modifier
@@ -522,11 +417,29 @@ private fun RoleSegmentedToggle(
                 text = stringResource(R.string.role_toggle_business),
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp,
-                color = if (isBusiness) Color(0xFF121A14) else Color(0xFFB0BEC5)
+                color = if (isBusiness) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
 }
+
+@Composable
+private fun signupFieldColors(isError: Boolean) = OutlinedTextFieldDefaults.colors(
+    focusedContainerColor = MaterialTheme.colorScheme.background,
+    unfocusedContainerColor = MaterialTheme.colorScheme.background,
+    disabledContainerColor = MaterialTheme.colorScheme.background,
+    errorContainerColor = MaterialTheme.colorScheme.background,
+    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+    errorTextColor = MaterialTheme.colorScheme.onSurface,
+    disabledTextColor = MaterialTheme.colorScheme.onSurface,
+    focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+    unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+    errorBorderColor = MaterialTheme.colorScheme.error,
+    errorCursorColor = MaterialTheme.colorScheme.error,
+    focusedBorderColor = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+    unfocusedBorderColor = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline
+)
 
 @Preview(showBackground = true)
 @Composable
