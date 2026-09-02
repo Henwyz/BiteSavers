@@ -82,7 +82,6 @@ class LoginViewModel : ViewModel() {
 
                 if (currentAuthUser != null) {
                     val authId = currentAuthUser.id
-                    UserSession.setUserId(authId)
 
                     // Fetch user details from public.users table
                     val profiles = SupabaseClient.client
@@ -100,9 +99,12 @@ class LoginViewModel : ViewModel() {
 
                     if (dbRole != chosenRole) {
                         SupabaseClient.client.auth.signOut()
+                        // Clears any partial session from memory and disk
                         UserSession.clear()
                         emailError = "This account is registered as a ${userProfile?.role ?: "consumer"}, not a $selectedRole."
                     } else {
+                        // Persists the authenticated user credentials and role permanently to device storage
+                        UserSession.saveSession(userId = authId, role = dbRole)
                         val isBusiness = dbRole == "business"
                         onSuccess(isBusiness)
                     }

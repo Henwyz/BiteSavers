@@ -122,4 +122,20 @@ class OrderRepository {
             emptyList()
         }
     }
+
+    // Fetches orders for a specific user ID to populate notifications and order history
+    suspend fun fetchOrdersByUserId(userId: String): List<OrderDto> = withContext(Dispatchers.IO) {
+        try {
+            client.from("orders")
+                .select {
+                    filter {
+                        eq("user_id", userId)
+                    }
+                }
+                .decodeList<OrderDto>()
+        } catch (e: Exception) {
+            Log.e("OrderRepository", "fetchOrdersByUserId error for $userId: ${e.message}", e)
+            emptyList()
+        }
+    }
 }

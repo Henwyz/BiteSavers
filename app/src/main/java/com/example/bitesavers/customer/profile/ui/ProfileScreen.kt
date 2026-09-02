@@ -82,7 +82,12 @@ fun ProfileScreen(
         onRegisterAsNgoClick = onRegisterAsNgoClick,
         onViewNgoDetailsClick = onViewNgoDetailsClick,
         onPaymentMethodsClick = onPaymentMethodsClick,
-        onSignOutClick = onSignOutClick,
+        // Clears Supabase session and removes local persisted login before popping back to login screen
+        onSignOutClick = {
+            viewModel.signOut {
+                onSignOutClick()
+            }
+        },
         onPrivacySecurityClick = onPrivacySecurityClick,
         onHelpSupportClick = onHelpSupportClick,
         onAboutClick = onAboutClick

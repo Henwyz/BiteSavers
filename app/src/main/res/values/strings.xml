@@ -141,6 +141,14 @@
     <string name="store_rating_format">★ %1$.1f</string>
     <string name="store_error_loading">Failed to load store details: %1$s</string>
 
+    <!-- Discovery In-App Notification Center -->
+    <string name="notifications_popup_title">Notifications</string>
+    <string name="notifications_empty_state">No new notifications</string>
+    <string name="notifications_button_content_desc">View notifications</string>
+    <string name="notifications_close_button">Close</string>
+
+    <string name="notifications_clear_all_button">Clear All</string>
+
     <!-- ================================================================= -->
     <!-- 4. FOOD DETAIL & SMART BOX SAFETY                                 -->
     <!-- ================================================================= -->
@@ -224,6 +232,13 @@
     <string name="error_invalid_cvv">CVV must be 3 digits</string>
     <string name="error_invalid_phone">Enter a valid 9–11 digit mobile number</string>
     <string name="error_invalid_otp">Enter a complete 6-digit verification code</string>
+
+    <!-- Checkout Payment Method Section Header -->
+    <string name="checkout_payment_method_title">Payment Method</string>
+
+    <!-- Payment Methods Screen Titles -->
+    <string name="payment_bitesaver_pay">BiteSaver Pay</string>
+    <string name="payment_tng_title">Touch \'n Go eWallet</string>
 
     <!-- ================================================================= -->
     <!-- 7. PAYMENT METHODS MANAGEMENT & TOP UP                            -->
@@ -567,4 +582,19 @@
     <string name="about_sdg_title">SDG Alignment</string>
     <string name="about_sdg_body">This app supports UN Sustainable Development Goal 12 (Responsible Consumption and Production) and Goal 2 (Zero Hunger).</string>
     <string name="about_version_label">Version 1.0.0 (MVP)</string>
+
+    <!-- ================================================================= -->
+    <!-- NOTIFICATIONS (SYSTEM & IN-APP)                                   -->
+    <!-- ================================================================= -->
+    <string name="notification_channel_orders_name">Order Status Updates</string>
+    <string name="notification_channel_orders_desc">Alerts when order status changes to completed</string>
+    <string name="notification_order_completed_title">Order Completed! 🎉</string>
+    <string name="notification_order_completed_short">Your pickup at %1$s (%2$s) is complete. Tap to leave a rating!</string>
+    <string name="notification_order_completed_long">Your food rescue from %1$s (%2$s) has been collected. Tap here to rate your surplus experience and see your environmental impact!</string>
+
+    <string name="notifications_screen_title">Notifications</string>
+    <string name="notifications_empty_title">No notifications yet</string>
+    <string name="notifications_empty_subtitle">We will let you know when your orders are ready or completed.</string>
+    <string name="notifications_action_mark_all_read">Mark all as read</string>
+    <string name="notifications_action_clear_all">Clear all</string>
 </resources>

@@ -39,9 +39,19 @@ data class NearbyDealMarkerUiModel(
     val offers: List<OfferUiModel> = emptyList()
 )
 
+data class NotificationUiModel(
+    val id: String,
+    val orderId: String,
+    val title: String,
+    val message: String,
+    val timestamp: String,
+    val isRead: Boolean = false
+)
+
 data class DiscoveryUiState(
     val user: UserUiModel = UserUiModel(),
     val searchQuery: String = "",
+    val notifications: List<NotificationUiModel> = emptyList(),
     val selectedCategory: DiscoveryCategory = DiscoveryCategory.ALL, // <-- Change here: removed '?' and set default to ALL
     val availableCategories: List<DiscoveryCategory> = listOf(
         DiscoveryCategory.ALL,
@@ -62,3 +72,4 @@ data class DiscoveryUiState(
     val userLatitude: Double? = null,
     val userLongitude: Double? = null
 )
+

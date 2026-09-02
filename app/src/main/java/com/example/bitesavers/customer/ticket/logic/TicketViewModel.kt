@@ -1,7 +1,8 @@
 package com.example.bitesavers.customer.ticket.logic
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bitesavers.customer.ticket.data.TicketUiState
 import com.example.bitesavers.customer.ticket.ui.TicketUiEvent
@@ -21,8 +22,9 @@ import kotlinx.coroutines.withContext
 import kotlin.math.abs
 
 class TicketViewModel(
+    application: Application,
     private val savedStateHandle: SavedStateHandle
-) : ViewModel() {
+) : AndroidViewModel(application) {
 
     private val offerRepository: OfferRepository = OfferRepository()
     private val orderRepository: OrderRepository = OrderRepository()
@@ -105,7 +107,7 @@ class TicketViewModel(
         }
     }
 
-    // Continuously polls until the order is COMPLETED and handled
+    // Continuously polls until the order is COMPLETED and updates the ticket UI
     private fun startOrderStatusObserver(orderId: String) {
         viewModelScope.launch {
             while (isActive) {
@@ -121,6 +123,7 @@ class TicketViewModel(
                     val isCompleted = order.status.equals("COMPLETED", ignoreCase = true)
                     val alreadyReviewed = !order.remark.isNullOrBlank() && order.remark.contains("Rating:")
 
+                    // Updates ticket state and opens review sheet without triggering duplicate system banners
                     if (isCompleted && !alreadyReviewed && !_uiState.value.isReviewSubmitted) {
                         _uiState.update {
                             it.copy(
