@@ -30,6 +30,7 @@ import com.example.bitesavers.business.inventory.ui.MyListingScreen
 import com.example.bitesavers.business.profile.ui.BusinessProfileScreen
 import com.example.bitesavers.business.restaurant.ui.RegisterRestaurantScreen
 import com.example.bitesavers.business.sharedUI.BusinessBottomNavigationBar
+import com.example.bitesavers.business.temperature.logic.TemperatureViewModel
 import com.example.bitesavers.business.temperature.ui.AddBoxScreen
 import com.example.bitesavers.business.temperature.ui.TemperatureScreen
 
@@ -41,7 +42,7 @@ fun BusinessNavHost(
 ) {
     val inventoryViewModel: InventoryViewModel = viewModel()
     val dashboardViewModel: DashboardViewModel = viewModel()
-
+    val temperatureViewModel: TemperatureViewModel = viewModel()
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -161,7 +162,17 @@ fun BusinessNavHost(
 
             // 7. TEMPERATURE MONITOR SCREEN
             composable(BusinessScreen.Temperature.route) {
+                val currentStoreId = dashboardViewModel.currentStoreId ?: ""
+
+                LaunchedEffect(currentStoreId) {
+                    if (currentStoreId.isNotBlank()) {
+                        temperatureViewModel.fetchUnitsForStore(currentStoreId)
+                    }
+                }
+
                 TemperatureScreen(
+                    viewModel = temperatureViewModel,
+                    storeId = currentStoreId,
                     onBackClick = { navController.popBackStack() },
                     onAddUnitClick = {
                         navController.navigate(BusinessScreen.AddBox.route)
@@ -169,7 +180,26 @@ fun BusinessNavHost(
                 )
             }
 
-            // 8. CHECK CUSTOMER ORDER SCREEN
+            // 8. ADD BOX SCREEN
+            composable(BusinessScreen.AddBox.route) {
+                AddBoxScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onUnitAdded = { unitName, unitType ->
+                        val currentStoreId = dashboardViewModel.currentStoreId ?: ""
+
+                        temperatureViewModel.addNewBox(
+                            storeId = currentStoreId,
+                            boxCode = unitName,
+                            storageType = unitType,
+                            onSuccess = {
+                                // Automatically saved, list updated
+                            }
+                        )
+                    }
+                )
+            }
+
+            // 9. CHECK CUSTOMER ORDER SCREEN
             composable(BusinessScreen.BusinessOrders.route) {
                 // Collect the existing recentOrders flow from your DashboardViewModel
                 val orders by dashboardViewModel.recentOrders.collectAsState()

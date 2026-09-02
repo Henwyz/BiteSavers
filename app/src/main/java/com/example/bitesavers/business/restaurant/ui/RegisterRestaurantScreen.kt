@@ -23,14 +23,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitesavers.R
 import com.example.bitesavers.business.restaurant.logic.RegisterRestaurantViewModel
-import com.example.bitesavers.ui.theme.BiteSaversTheme
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -78,7 +76,7 @@ fun RegisterRestaurantScreen(
                     .padding(horizontal = 24.dp, vertical = 16.dp)
             ) {
                 Text(
-                    text = "Choose Store Photo Source",
+                    text = stringResource(R.string.choose_store_photo_source),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -103,7 +101,7 @@ fun RegisterRestaurantScreen(
                 ) {
                     Text(text = "📸", fontSize = 20.sp)
                     Spacer(modifier = Modifier.width(16.dp))
-                    Text(text = "Take Photo", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
+                    Text(text = stringResource(R.string.take_photo), fontSize = 16.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
                 }
 
                 Row(
@@ -118,7 +116,7 @@ fun RegisterRestaurantScreen(
                 ) {
                     Text(text = "🖼️", fontSize = 20.sp)
                     Spacer(modifier = Modifier.width(16.dp))
-                    Text(text = "Choose from Gallery", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
+                    Text(text = stringResource(R.string.choose_from_gallery), fontSize = 16.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
                 }
                 Spacer(modifier = Modifier.height(24.dp))
             }
@@ -153,7 +151,7 @@ fun RegisterRestaurantScreen(
             }
 
             Text(
-                text = "Register Restaurant 🏪",
+                text = stringResource(R.string.register_restaurant_title),
                 color = MaterialTheme.colorScheme.onSecondary,
                 style = MaterialTheme.typography.titleMedium,
                 fontSize = 20.sp,
@@ -165,7 +163,7 @@ fun RegisterRestaurantScreen(
 
         Spacer(Modifier.height(8.dp))
 
-        // Form Body Content with SoftGreen / Background Color Container
+        // Form Body Content with Background Color Container
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -174,11 +172,11 @@ fun RegisterRestaurantScreen(
                 .padding(20.dp)
         ) {
             // Restaurant Name
-            FormLabel("Restaurant Name")
+            FormLabel(stringResource(R.string.restaurant_name_label))
             OutlinedTextField(
                 value = viewModel.restaurantName,
                 onValueChange = { viewModel.updateRestaurantName(it) },
-                placeholder = { Text("e.g. BiteSaver Cafe", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                placeholder = { Text(stringResource(R.string.restaurant_name_hint), color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 colors = textFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(50),
@@ -188,11 +186,11 @@ fun RegisterRestaurantScreen(
             Spacer(Modifier.height(16.dp))
 
             // Contact Phone
-            FormLabel("Contact Phone Number")
+            FormLabel(stringResource(R.string.contact_phone_label))
             OutlinedTextField(
                 value = viewModel.contactPhone,
                 onValueChange = { viewModel.updateContactPhone(it) },
-                placeholder = { Text("e.g. 0123456789", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                placeholder = { Text(stringResource(R.string.contact_phone_hint), color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 colors = textFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
@@ -203,11 +201,11 @@ fun RegisterRestaurantScreen(
             Spacer(Modifier.height(16.dp))
 
             // Address & Geocoding Fallback Option
-            FormLabel("Address")
+            FormLabel(stringResource(R.string.address_label))
             OutlinedTextField(
                 value = viewModel.address,
                 onValueChange = { viewModel.updateAddress(it) },
-                placeholder = { Text("e.g. 123, Jalan Ampang", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                placeholder = { Text(stringResource(R.string.address_hint), color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 colors = textFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(30),
@@ -219,17 +217,17 @@ fun RegisterRestaurantScreen(
                 modifier = Modifier.align(Alignment.End),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("Use Default Penang Fallback", fontSize = 11.sp)
+                Text(stringResource(R.string.use_default_penang_fallback), fontSize = 11.sp)
             }
 
             Spacer(Modifier.height(10.dp))
 
             // 12-Digit SSM Number
-            FormLabel("12-Digit SSM Business Number")
+            FormLabel(stringResource(R.string.ssm_number_label))
             OutlinedTextField(
                 value = viewModel.ssmNumber,
                 onValueChange = { if (it.length <= 12) viewModel.updateSsmNumber(it) },
-                placeholder = { Text("Enter 12-digit registration code", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                placeholder = { Text(stringResource(R.string.ssm_number_hint), color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 colors = textFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
@@ -240,7 +238,7 @@ fun RegisterRestaurantScreen(
             Spacer(Modifier.height(16.dp))
 
             // Store Front Image Picker Button
-            FormLabel("Store Front / Banner Image")
+            FormLabel(stringResource(R.string.store_banner_label))
             Button(
                 onClick = { showImagePick = true },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
@@ -254,7 +252,7 @@ fun RegisterRestaurantScreen(
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = if (viewModel.storeImageUri != null) "Store Photo Attached ✓" else "Take or Upload Store Photo",
+                    text = if (viewModel.storeImageUri != null) stringResource(R.string.store_photo_attached) else stringResource(R.string.take_upload_store_photo),
                     color = MaterialTheme.colorScheme.primary
                 )
             }
@@ -262,7 +260,7 @@ fun RegisterRestaurantScreen(
             Spacer(Modifier.height(16.dp))
 
             // SSM Document Upload Button
-            FormLabel("SSM Certificate Document")
+            FormLabel(stringResource(R.string.ssm_doc_label))
             Button(
                 onClick = { ssmDocPickerLauncher.launch("*/*") },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
@@ -276,7 +274,7 @@ fun RegisterRestaurantScreen(
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = if (viewModel.ssmDocUri != null) "SSM Document Uploaded ✓" else "Upload SSM Document (PDF/Image)",
+                    text = if (viewModel.ssmDocUri != null) stringResource(R.string.ssm_doc_uploaded) else stringResource(R.string.upload_ssm_doc),
                     color = MaterialTheme.colorScheme.primary
                 )
             }
@@ -286,7 +284,7 @@ fun RegisterRestaurantScreen(
             // Operating Hours
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Column(modifier = Modifier.weight(1f)) {
-                    FormLabel("Opening Time")
+                    FormLabel(stringResource(R.string.opening_time_label))
                     OutlinedTextField(
                         value = viewModel.openingTime,
                         onValueChange = { viewModel.updateOpeningTime(it) },
@@ -297,7 +295,7 @@ fun RegisterRestaurantScreen(
                     )
                 }
                 Column(modifier = Modifier.weight(1f)) {
-                    FormLabel("Closing Time")
+                    FormLabel(stringResource(R.string.closing_time_label))
                     OutlinedTextField(
                         value = viewModel.closingTime,
                         onValueChange = { viewModel.updateClosingTime(it) },
@@ -312,11 +310,11 @@ fun RegisterRestaurantScreen(
             Spacer(Modifier.height(16.dp))
 
             // Cleanup End Time
-            FormLabel("Cleanup End Time")
+            FormLabel(stringResource(R.string.cleanup_end_time_label))
             OutlinedTextField(
                 value = viewModel.cleanupEndTime,
                 onValueChange = { viewModel.updateCleanupEndTime(it) },
-                placeholder = { Text("e.g. 22:30", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                placeholder = { Text(stringResource(R.string.cleanup_end_time_hint), color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 colors = textFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(50),
@@ -326,7 +324,7 @@ fun RegisterRestaurantScreen(
             Spacer(Modifier.height(20.dp))
 
             Text(
-                text = "Note: New registrations require review and verification (is_verified = false) before approval.",
+                text = stringResource(R.string.restaurant_verification_note),
                 fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 12.dp)
@@ -353,7 +351,7 @@ fun RegisterRestaurantScreen(
                 )
             ) {
                 Text(
-                    text = "Save & Continue",
+                    text = stringResource(R.string.save_and_continue),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimary
