@@ -2,12 +2,10 @@ package com.example.bitesavers.customer.store.logic
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.bitesavers.R
 import com.example.bitesavers.customer.store.data.StoreDetailUiModel
 import com.example.bitesavers.customer.store.data.StoreDetailUiState
 import com.example.bitesavers.customer.store.ui.StoreDetailUiEvent
-import com.example.bitesavers.data.model.DiscoveryCategory
-import com.example.bitesavers.data.model.OfferUiModel
+import com.example.bitesavers.data.mapper.toUiModel
 import com.example.bitesavers.data.repository.StoreRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,7 +13,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.Calendar
 import java.util.Locale
 
 // Manages state for the restaurant detail screen including store info and active offers
@@ -61,41 +58,9 @@ class StoreDetailViewModel : ViewModel() {
                     )
 
                     val offerDtos = repository.getOffersByStoreId(storeId)
+                    // Uses the standard mapper to keep model fields completely synchronized
                     val offerUiList = offerDtos.map { dto ->
-                        val discount = if (dto.originalPrice > 0) {
-                            (((dto.originalPrice - dto.discountedPrice) / dto.originalPrice) * 100).toInt()
-                        } else 0
-
-                        val pickupStart = formatTimeDisplay(dto.pickupStart) ?: "08:00 PM"
-                        val pickupEnd = formatTimeDisplay(dto.pickupEnd) ?: "10:00 PM"
-                        val remainingHours = calculateHoursToClose(dto.pickupEnd)
-
-                        val catEnum = runCatching {
-                            DiscoveryCategory.valueOf(dto.category.uppercase())
-                        }.getOrDefault(DiscoveryCategory.HOT_MEALS)
-
-                        OfferUiModel(
-                            id = dto.id,
-                            storeId = storeDto.id,
-                            title = dto.title,
-                            storeName = storeDto.name,
-                            storeRating = storeDto.rating,
-                            imageResId = R.drawable.ic_launcher_foreground,
-                            imageUrl = dto.imageUrl,
-                            discountPercent = discount,
-                            currentPrice = dto.discountedPrice,
-                            originalPrice = dto.originalPrice,
-                            distanceKm = 0.0,
-                            quantityLeft = dto.quantityAvailable,
-                            hoursToClose = remainingHours,
-                            pickupWindow = "Today, $pickupStart - $pickupEnd",
-                            category = catEnum,
-                            isEligibleForNgoFree = dto.isEligibleForNgoFree,
-                            storageType = "HOT",
-                            description = dto.description ?: "Fresh surplus food ready for rescue.",
-                            latitude = storeDto.latitude,
-                            longitude = storeDto.longitude
-                        )
+                        dto.toUiModel(storeDto)
                     }
 
                     _uiState.update {
@@ -142,30 +107,6 @@ class StoreDetailViewModel : ViewModel() {
             }
         }
         return timeStr
-    }
-
-    // Computes difference between current system time and pickup_end time window
-    private fun calculateHoursToClose(pickupEndStr: String?): Int {
-        if (pickupEndStr.isNullOrBlank()) return 2
-        return try {
-            val parser = SimpleDateFormat("HH:mm", Locale.getDefault())
-            val targetDate = parser.parse(pickupEndStr.trim().take(5)) ?: return 2
-
-            val now = Calendar.getInstance()
-            val endCalendar = Calendar.getInstance().apply {
-                time = targetDate
-                set(Calendar.YEAR, now.get(Calendar.YEAR))
-                set(Calendar.MONTH, now.get(Calendar.MONTH))
-                set(Calendar.DAY_OF_MONTH, now.get(Calendar.DAY_OF_MONTH))
-            }
-
-            val diffMillis = endCalendar.timeInMillis - now.timeInMillis
-            val diffMinutes = diffMillis / (1000 * 60)
-
-            if (diffMinutes <= 0) 0 else (diffMinutes / 60.0).toInt().coerceAtLeast(1)
-        } catch (_: Exception) {
-            2
-        }
     }
 
     private fun toggleBookmark(offerId: String) {

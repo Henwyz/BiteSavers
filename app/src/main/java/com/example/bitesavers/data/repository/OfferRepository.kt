@@ -26,7 +26,8 @@ class OfferRepository {
                 .decodeList<OfferDto>()
 
             // Fetch all stores referenced by their clean text IDs (e.g. store_01, store_02)
-            val storeIds = offers.map { it.storeId }.distinct()
+            // Uses mapNotNull to guarantee a non-null List<String> for the Supabase filter
+            val storeIds: List<String> = offers.mapNotNull { it.storeId }.distinct()
             val storesMap = if (storeIds.isNotEmpty()) {
                 client.from("stores")
                     .select {
@@ -41,7 +42,7 @@ class OfferRepository {
             }
 
             offers.map { offer ->
-                val store = storesMap[offer.storeId]
+                val store = offer.storeId?.let { storesMap[it] }
                 offer.toUiModel(store)
             }
         } catch (e: Exception) {
@@ -57,11 +58,16 @@ class OfferRepository {
                 .select { filter { eq("id", offerId) } }
                 .decodeSingle<OfferDto>()
 
-            val store = try {
-                client.from("stores")
-                    .select { filter { eq("id", offer.storeId) } }
-                    .decodeSingle<StoreDto>()
-            } catch (_: Exception) {
+            val targetStoreId = offer.storeId
+            val store = if (!targetStoreId.isNullOrBlank()) {
+                try {
+                    client.from("stores")
+                        .select { filter { eq("id", targetStoreId) } }
+                        .decodeSingle<StoreDto>()
+                } catch (_: Exception) {
+                    null
+                }
+            } else {
                 null
             }
 
@@ -85,7 +91,8 @@ class OfferRepository {
                 }
                 .decodeList<OfferDto>()
 
-            val storeIds = offers.map { it.storeId }.distinct()
+            // Uses mapNotNull to guarantee a non-null List<String> for the Supabase filter
+            val storeIds: List<String> = offers.mapNotNull { it.storeId }.distinct()
             val storesMap = if (storeIds.isNotEmpty()) {
                 client.from("stores")
                     .select {
@@ -100,7 +107,7 @@ class OfferRepository {
             }
 
             offers.map { offer ->
-                val store = storesMap[offer.storeId]
+                val store = offer.storeId?.let { storesMap[it] }
                 offer.toUiModel(store)
             }
         } catch (e: Exception) {
