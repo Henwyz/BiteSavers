@@ -51,6 +51,7 @@ import com.example.bitesavers.R
 import com.example.bitesavers.business.inventory.data.ListingItem
 import com.example.bitesavers.business.inventory.logic.InventoryViewModel
 import com.example.bitesavers.ui.theme.BiteSaversTheme
+import com.example.bitesavers.util.TimeUtils
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -133,7 +134,9 @@ fun MyListingScreen(
     }
 }
 
-// Checks if current system time has passed pickup end time, supporting both 12h and 24h formats
+
+// Checks if current system time has passed pickup end time, supporting multi-day and 12h/24h formats
+// Checks if current system time has passed pickup end time, supporting multi-day and 12h/24h formats
 fun isPickupEnd(pickupEndTimeStr: String?): Boolean {
     if (pickupEndTimeStr.isNullOrBlank()) return false
     return try {
@@ -147,14 +150,25 @@ fun isPickupEnd(pickupEndTimeStr: String?): Boolean {
 
         val parsedDate = parser.parse(trimmed.take(8)) ?: return false
 
+        val endCalendar = Calendar.getInstance().apply { time = parsedDate }
+        val endHour = endCalendar.get(Calendar.HOUR_OF_DAY)
+        val endMinute = endCalendar.get(Calendar.MINUTE)
+
         val currentCal = Calendar.getInstance()
-        val endCal = Calendar.getInstance().apply {
-            time = parsedDate
-            set(Calendar.YEAR, currentCal.get(Calendar.YEAR))
-            set(Calendar.MONTH, currentCal.get(Calendar.MONTH))
-            set(Calendar.DAY_OF_MONTH, currentCal.get(Calendar.DAY_OF_MONTH))
+        val currentHour = currentCal.get(Calendar.HOUR_OF_DAY)
+        val currentMinute = currentCal.get(Calendar.MINUTE)
+
+        // Convert both to total minutes from midnight for foolproof comparison
+        val currentTotalMinutes = currentHour * 60 + currentMinute
+        val endTotalMinutes = endHour * 60 + endMinute
+
+        // If it's early morning (e.g., 00:00 to 05:59) and the pickup window was in the evening (e.g., 19:00 onwards),
+        // the pickup window definitely happened yesterday and has ended.
+        if (currentHour < 6 && endHour >= 18) {
+            return true
         }
-        currentCal.after(endCal)
+
+        currentTotalMinutes > endTotalMinutes
     } catch (_: Exception) {
         false
     }
@@ -267,13 +281,15 @@ fun ListingCard(
                                     MaterialTheme.colorScheme.tertiaryContainer,
                                     RoundedCornerShape(4.dp)
                                 )
-                                .padding(horizontal = 4.dp, vertical = 2.dp)
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
                             Text(
                                 text = badgeText,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                maxLines = 1,
+                                softWrap = false
                             )
                         }
                     }
@@ -300,11 +316,21 @@ fun ListingCard(
                     )
                 }
 
-                // Compute badge display for merchant: ACTIVE vs NGO CLAIM vs PAUSED
+                // Determine active phase using pickup and store cleanup boundaries
+                val isPausedState = item.status.equals("PAUSED", ignoreCase = true)
+                val isAfterPickup = isPickupEnd(item.pickupEnd)
+                val isBeforeCleanup = TimeUtils.isCurrentTimeWithin(item.pickupEnd, item.cleanupEndTime) ||
+                        (TimeUtils.getCurrentMinutesOfDay() <= TimeUtils.timeStringToMinutes(item.pickupEnd))
+
+                // Compute badge display for merchant: ACTIVE, NGO RESCUE, or PAUSED
                 val effectiveStatus = when {
-                    isExpired -> "NGO RESCUE"
-                    item.status.equals("ACTIVE", ignoreCase = true) -> "ACTIVE"
-                    else -> item.status.uppercase()
+                    isPausedState -> "PAUSED"
+                    // Active during or before pickup window
+                    !isAfterPickup -> "ACTIVE"
+                    // NGO Rescue active between pickup end and cleanup end time
+                    isAfterPickup && TimeUtils.isCurrentTimeWithin(item.pickupEnd, item.cleanupEndTime) -> "NGO RESCUE"
+                    // Past cleanup/closing time (e.g., 2:30 AM), automatically pause/close the listing for the day
+                    else -> "PAUSED"
                 }
 
                 val (statusBg, statusText) = when (effectiveStatus) {

@@ -10,7 +10,7 @@ import java.util.Calendar
 import java.util.Locale
 
 // Set to true to bypass opening hours during development so all stores/offers appear open
-const val DEBUG_BYPASS_OPERATING_HOURS = true
+const val DEBUG_BYPASS_OPERATING_HOURS = false
 
 fun OfferDto.toUiModel(store: StoreDto?): OfferUiModel {
     val origPrice = originalPrice ?: 0.0

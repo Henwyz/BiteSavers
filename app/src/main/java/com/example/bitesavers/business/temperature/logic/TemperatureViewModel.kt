@@ -5,12 +5,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.bitesavers.R
 import com.example.bitesavers.data.dto.StorageBoxDto
 import com.example.bitesavers.data.remote.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.util.UUID
+import kotlinx.coroutines.withContext
 
 class TemperatureViewModel : ViewModel() {
 
@@ -37,44 +38,79 @@ class TemperatureViewModel : ViewModel() {
                     }
                     .decodeList<StorageBoxDto>()
 
-                units = response
-                if (selectedUnit == null && response.isNotEmpty()) {
-                    selectedUnit = response.first()
-                } else if (response.isEmpty()) {
-                    selectedUnit = null
+                withContext(Dispatchers.Main) {
+                    units = response
+                    if (selectedUnit == null && response.isNotEmpty()) {
+                        selectedUnit = response.first()
+                    } else if (response.isEmpty()) {
+                        selectedUnit = null
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
-                isLoading = false
+                withContext(Dispatchers.Main) {
+                    isLoading = false
+                }
             }
         }
     }
 
-    fun addNewBox(storeId: String, boxCode: String, storageType: String, onSuccess: () -> Unit) {
+    // Finds the pre-inserted box by its box code where store_id is null, and assigns the store_id to claim it
+    fun addNewBox(storeId: String, boxCode: String, selectedStorageType: String, onError: (Int) -> Unit, onSuccess: () -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                // Determine the appropriate default/target temperature based on storage type
-                val defaultTemp = if (storageType.equals("Refrigerator", ignoreCase = true)) 4.0 else 60.0
+                val existingBoxes = SupabaseClient.client.from("storage_boxes")
+                    .select {
+                        filter {
+                            eq("box_code", boxCode)
+                        }
+                    }
+                    .decodeList<StorageBoxDto>()
 
-                val newBox = StorageBoxDto(
-                    id = UUID.randomUUID().toString(),
-                    storeId = storeId,
-                    boxCode = boxCode,
-                    storageType = storageType,
-                    targetTemperature = defaultTemp,
-                    currentTemperature = defaultTemp,
-                    isLocked = true,
-                    lastSyncedAt = null
-                )
+                if (existingBoxes.isEmpty()) {
+                    withContext(Dispatchers.Main) {
+                        onError(R.string.error_box_not_found)
+                    }
+                    return@launch
+                }
 
-                SupabaseClient.client.from("storage_boxes").insert(newBox)
+                // 👇 Declared targetBox here so it can be referenced below
+                val targetBox = existingBoxes.first()
 
-                // Refresh the units list to display the newly added box instantly
+                if (!targetBox.storeId.isNullOrBlank() && targetBox.storeId != storeId) {
+                    withContext(Dispatchers.Main) {
+                        onError(R.string.error_box_claimed)
+                    }
+                    return@launch
+                }
+
+                if (!targetBox.storageType.equals(selectedStorageType, ignoreCase = true)) {
+                    withContext(Dispatchers.Main) {
+                        onError(R.string.error_box_mismatch)
+                    }
+                    return@launch
+                }
+
+                SupabaseClient.client.from("storage_boxes")
+                    .update({
+                        set("store_id", storeId)
+                    }) {
+                        filter {
+                            eq("box_code", boxCode)
+                        }
+                    }
+
                 fetchUnitsForStore(storeId)
-                onSuccess()
+
+                withContext(Dispatchers.Main) {
+                    onSuccess()
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    onError(R.string.error_general)
+                }
             }
         }
     }
@@ -86,19 +122,24 @@ class TemperatureViewModel : ViewModel() {
     fun deleteBox(boxId: String, storeId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                // Instead of deleting the row, unclaim it by setting store_id to null
                 SupabaseClient.client.from("storage_boxes")
-                    .delete {
+                    .update({
+                        set("store_id", null as String?)
+                    }) {
                         filter {
                             eq("id", boxId)
                         }
                     }
 
-                // Refresh the list after deletion
+                // Refresh the list after unclaiming
                 fetchUnitsForStore(storeId)
 
-                // Clear or switch selected unit if the deleted one was selected
-                if (selectedUnit?.id == boxId) {
-                    selectedUnit = units.firstOrNull()
+                withContext(Dispatchers.Main) {
+                    // Clear or switch selected unit if the unclaimed one was selected
+                    if (selectedUnit?.id == boxId) {
+                        selectedUnit = units.firstOrNull()
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()

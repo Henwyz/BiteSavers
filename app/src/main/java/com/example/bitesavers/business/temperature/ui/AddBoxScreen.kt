@@ -34,12 +34,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bitesavers.R
 
 @Composable
 fun AddBoxScreen(
+    errorMessage: String = "",
     onNavigateBack: () -> Unit,
     onUnitAdded: (boxCode: String, storageType: String) -> Unit
 ) {
@@ -118,6 +120,17 @@ fun AddBoxScreen(
                         singleLine = true
                     )
 
+                    // Show error message
+                    if (errorMessage.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = errorMessage,
+                            color = MaterialTheme.colorScheme.error,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(20.dp))
 
                     Text(
@@ -153,7 +166,6 @@ fun AddBoxScreen(
                     onClick = {
                         if (boxCode.isNotBlank()) {
                             onUnitAdded(boxCode.trim(), storageType)
-                            onNavigateBack()
                         }
                     },
                     modifier = Modifier
@@ -204,5 +216,16 @@ fun TypeSelectionCard(
                 fontSize = 14.sp
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun AddBoxScreenPreview() {
+    MaterialTheme {
+        AddBoxScreen(
+            onNavigateBack = {},
+            onUnitAdded = { _, _ -> }
+        )
     }
 }

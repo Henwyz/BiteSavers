@@ -9,6 +9,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -23,7 +26,6 @@ import com.example.bitesavers.business.analytics.ui.AnalyticsScreen
 import com.example.bitesavers.business.dashboard.logic.DashboardViewModel
 import com.example.bitesavers.business.dashboard.ui.BusinessCancelScreen
 import com.example.bitesavers.business.dashboard.ui.BusinessHomeScreen
-import com.example.bitesavers.business.dashboard.ui.BusinessNotificationScreen
 import com.example.bitesavers.business.dashboard.ui.BusinessOrdersScreen
 import com.example.bitesavers.business.dashboard.ui.BusinessVerificationScreen
 import com.example.bitesavers.business.inventory.logic.InventoryViewModel
@@ -218,19 +220,27 @@ fun BusinessNavHost(
                 )
             }
 
-            // 8. ADD BOX SCREEN
+            // 10. ADD BOX SCREEN
             composable(BusinessScreen.AddBox.route) {
+                var errorMessage by remember { mutableStateOf("") }
+                val context = androidx.compose.ui.platform.LocalContext.current
+
                 AddBoxScreen(
+                    errorMessage = errorMessage,
                     onNavigateBack = { navController.popBackStack() },
                     onUnitAdded = { unitName, unitType ->
                         val currentStoreId = dashboardViewModel.currentStoreId ?: ""
+                        errorMessage = "" // Clear previous error
 
                         temperatureViewModel.addNewBox(
                             storeId = currentStoreId,
                             boxCode = unitName,
-                            storageType = unitType,
+                            selectedStorageType = unitType,
+                            onError = { errorResId ->
+                                errorMessage = context.resources.getString(errorResId)
+                            },
                             onSuccess = {
-                                // Automatically saved, list updated
+                                navController.popBackStack()
                             }
                         )
                     }
@@ -262,7 +272,7 @@ fun BusinessNavHost(
                 )
             }
 
-            // 10. Business Verification Check
+            // 9. Business Verification Check
             composable(
                 route = BusinessScreen.Verification.route,
                 arguments = listOf(
@@ -289,7 +299,7 @@ fun BusinessNavHost(
                 )
             }
 
-            // 11. Business Cancel Order
+            // 10. Business Cancel Order
             composable(
                 route = BusinessScreen.CancelOrder.route,
                 arguments = listOf(navArgument("orderId") { type = NavType.StringType })
@@ -303,17 +313,6 @@ fun BusinessNavHost(
                         // Refresh orders and pop back to order lists
                         dashboardViewModel.fetchOrdersFromSupabase()
                         navController.popBackStack(BusinessScreen.BusinessOrders.route, inclusive = false)
-                    }
-                )
-            }
-
-            // 12. Business Notification Screen
-            composable(BusinessScreen.Notification.route) {
-                BusinessNotificationScreen(
-                    viewModel = dashboardViewModel,
-                    onNavigateBack = { navController.popBackStack() },
-                    onNavigateToOrderDetails = { orderId ->
-                        navController.navigate(BusinessScreen.Verification.createRoute(orderId))
                     }
                 )
             }
