@@ -1,5 +1,6 @@
 package com.example.bitesavers.customer.checkout.ui.components
 
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,12 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalanceWallet
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CreditCard
-import androidx.compose.material.icons.filled.Money
-import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -36,7 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -50,8 +45,11 @@ import com.example.bitesavers.ui.theme.BiteSaversTheme
 fun PaymentMethodSelectionSheet(
     selectedMethod: PaymentMethod,
     walletBalance: Double,
+    isTngLinked: Boolean = false,
+    tngPhone: String = "",
+    savedCardDigits: String? = null,
     onMethodSelect: (PaymentMethod) -> Unit,
-    onAddNewPaymentClick: () -> Unit, // 👈 Added parameter
+    onAddNewPaymentClick: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -69,8 +67,11 @@ fun PaymentMethodSelectionSheet(
         PaymentMethodSelectionContent(
             selectedMethod = selectedMethod,
             walletBalance = walletBalance,
+            isTngLinked = isTngLinked,
+            tngPhone = tngPhone,
+            savedCardDigits = savedCardDigits,
             onMethodSelect = onMethodSelect,
-            onAddNewPaymentClick = onAddNewPaymentClick // 👈 Passed down
+            onAddNewPaymentClick = onAddNewPaymentClick
         )
     }
 }
@@ -79,8 +80,11 @@ fun PaymentMethodSelectionSheet(
 fun PaymentMethodSelectionContent(
     selectedMethod: PaymentMethod,
     walletBalance: Double,
+    isTngLinked: Boolean = false,
+    tngPhone: String = "",
+    savedCardDigits: String? = null,
     onMethodSelect: (PaymentMethod) -> Unit,
-    onAddNewPaymentClick: () -> Unit, // 👈 Added parameter
+    onAddNewPaymentClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -112,11 +116,11 @@ fun PaymentMethodSelectionContent(
                 MaterialTheme.colorScheme.outlineVariant
             }
 
-            val icon: ImageVector = when (method) {
-                PaymentMethod.BITESAVER_PAY -> Icons.Default.AccountBalanceWallet
-                PaymentMethod.TNG_EWALLET -> Icons.Default.Payments
-                PaymentMethod.BANK_CARD -> Icons.Default.CreditCard
-                PaymentMethod.CASH_ON_PICKUP -> Icons.Default.Money
+            val iconResId = when (method) {
+                PaymentMethod.BITESAVER_PAY -> R.drawable.ic_payment
+                PaymentMethod.TNG_EWALLET -> R.drawable.ic_payment
+                PaymentMethod.BANK_CARD -> R.drawable.ic_payment
+                PaymentMethod.CASH_ON_PICKUP -> R.drawable.ic_payment
             }
 
             val titleText = when (method) {
@@ -126,10 +130,28 @@ fun PaymentMethodSelectionContent(
                 PaymentMethod.CASH_ON_PICKUP -> stringResource(R.string.payment_method_cash_on_pickup)
             }
 
-            val subtitleText = if (method == PaymentMethod.BITESAVER_PAY) {
-                stringResource(R.string.checkout_balance_format, walletBalance)
-            } else {
-                method.subtitle
+            // Subtitle dynamically displays linked wallet phone number, card digits, or unlinked prompt
+            val subtitleText = when (method) {
+                PaymentMethod.BITESAVER_PAY -> {
+                    stringResource(R.string.checkout_balance_format, walletBalance)
+                }
+                PaymentMethod.TNG_EWALLET -> {
+                    if (isTngLinked) {
+                        tngPhone.ifBlank { stringResource(R.string.payment_method_tng) }
+                    } else {
+                        stringResource(R.string.payment_not_linked)
+                    }
+                }
+                PaymentMethod.BANK_CARD -> {
+                    if (!savedCardDigits.isNullOrBlank()) {
+                        stringResource(R.string.payment_card_format, savedCardDigits)
+                    } else {
+                        stringResource(R.string.payment_no_cards)
+                    }
+                }
+                PaymentMethod.CASH_ON_PICKUP -> {
+                    stringResource(R.string.payment_method_cash_subtitle)
+                }
             }
 
             Row(
@@ -154,7 +176,7 @@ fun PaymentMethodSelectionContent(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = icon,
+                        painter = painterResource(id = iconResId),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(20.dp)
@@ -196,7 +218,7 @@ fun PaymentMethodSelectionContent(
             modifier = Modifier.fillMaxWidth()
         ) {
             Icon(
-                imageVector = Icons.Default.Add,
+                painter = painterResource(id = R.drawable.ic_add),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary
             )
@@ -210,7 +232,8 @@ fun PaymentMethodSelectionContent(
     }
 }
 
-@Preview(showBackground = true)
+@Preview(name = "Payment Sheet - Light", showBackground = true)
+@Preview(name = "Payment Sheet - Dark", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
 private fun PaymentMethodSelectionSheetPreview() {
     BiteSaversTheme {
@@ -218,6 +241,9 @@ private fun PaymentMethodSelectionSheetPreview() {
             PaymentMethodSelectionContent(
                 selectedMethod = PaymentMethod.BITESAVER_PAY,
                 walletBalance = 43.50,
+                isTngLinked = true,
+                tngPhone = "+60 12-*** 3456",
+                savedCardDigits = "4321",
                 onMethodSelect = {},
                 onAddNewPaymentClick = {}
             )

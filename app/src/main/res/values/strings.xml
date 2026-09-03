@@ -223,6 +223,8 @@
     <string name="action_change_payment">Change</string>
     <string name="checkout_payment_balance_format">Balance: RM %1$.2f</string>
     <string name="checkout_balance_format">Available: RM %1$.2f</string>
+    <string name="checkout_payment_method_label">Payment Method</string>
+    <string name="checkout_action_change">Change</string>
 
     <!-- Payment Methods Bottom Sheet -->
     <string name="payment_sheet_title">Select Payment Method</string>
@@ -235,6 +237,7 @@
     <string name="payment_method_cash">Cash on Pickup</string>
     <string name="payment_method_cash_on_pickup">Cash on Pickup</string>
     <string name="payment_method_cash_subtitle">Pay directly at store counter</string>
+    <string name="payment_card_format">Card ending in •••• %1$s</string>
     <string name="payment_not_linked">Not linked</string>
     <string name="payment_no_cards">No cards saved yet.</string>
     <string name="badge_default">Default</string>

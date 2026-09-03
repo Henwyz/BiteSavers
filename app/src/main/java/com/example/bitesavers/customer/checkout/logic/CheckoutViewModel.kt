@@ -37,6 +37,14 @@ class CheckoutViewModel(
             _uiState.update { it.copy(isLoading = true, errorResId = null) }
 
             val realBalance = paymentRepository.fetchWalletBalance()
+            val savedMethods = paymentRepository.fetchPaymentMethods()
+            val tngMethod = savedMethods.firstOrNull { it.type == "TNG_EWALLET" }
+            val defaultCard = savedMethods.firstOrNull { it.type == "BANK_CARD" && it.isDefault }
+                ?: savedMethods.firstOrNull { it.type == "BANK_CARD" }
+
+            val isTngLinked = tngMethod != null
+            val hasSavedCard = defaultCard != null
+
             val offer = offerRepository.fetchOfferById(offerId)
 
             if (offer != null) {
@@ -44,6 +52,10 @@ class CheckoutViewModel(
                     val totalPrice = offer.currentPrice * quantity
                     val defaultMethod = if (realBalance >= totalPrice) {
                         PaymentMethod.BITESAVER_PAY
+                    } else if (isTngLinked) {
+                        PaymentMethod.TNG_EWALLET
+                    } else if (hasSavedCard) {
+                        PaymentMethod.BANK_CARD
                     } else {
                         PaymentMethod.CASH_ON_PICKUP
                     }
@@ -56,6 +68,9 @@ class CheckoutViewModel(
                         unitPrice = offer.currentPrice,
                         quantity = quantity,
                         selectedPaymentMethod = defaultMethod,
+                        isTngLinked = isTngLinked,
+                        tngPhone = tngMethod?.linkedPhone.orEmpty(),
+                        savedCardDigits = defaultCard?.lastFourDigits,
                         errorResId = null
                     )
                 }
@@ -75,7 +90,24 @@ class CheckoutViewModel(
         when (event) {
             is CheckoutUiEvent.OnNavigateBack -> {}
             is CheckoutUiEvent.OnChangePaymentClicked -> {
-                _uiState.update { it.copy(isPaymentSheetVisible = true) }
+                // Refresh saved payment methods when opening the sheet to ensure up-to-date options
+                viewModelScope.launch {
+                    val savedMethods = paymentRepository.fetchPaymentMethods()
+                    val tngMethod = savedMethods.firstOrNull { it.type == "TNG_EWALLET" }
+                    val defaultCard = savedMethods.firstOrNull { it.type == "BANK_CARD" && it.isDefault }
+                        ?: savedMethods.firstOrNull { it.type == "BANK_CARD" }
+                    val realBalance = paymentRepository.fetchWalletBalance()
+
+                    _uiState.update {
+                        it.copy(
+                            walletBalance = realBalance,
+                            isTngLinked = tngMethod != null,
+                            tngPhone = tngMethod?.linkedPhone.orEmpty(),
+                            savedCardDigits = defaultCard?.lastFourDigits,
+                            isPaymentSheetVisible = true
+                        )
+                    }
+                }
             }
             is CheckoutUiEvent.OnDismissPaymentSheet -> {
                 _uiState.update { it.copy(isPaymentSheetVisible = false) }
@@ -106,12 +138,18 @@ class CheckoutViewModel(
                 }
             }
             PaymentMethod.TNG_EWALLET -> {
-                _uiState.update { it.copy(errorResId = R.string.error_tng_not_linked) }
-                return
+                // Verifies if Touch 'n Go is linked in user payment methods
+                if (!state.isTngLinked) {
+                    _uiState.update { it.copy(errorResId = R.string.error_tng_not_linked) }
+                    return
+                }
             }
             PaymentMethod.BANK_CARD -> {
-                _uiState.update { it.copy(errorResId = R.string.error_bank_card_not_registered) }
-                return
+                // Verifies if a valid bank card exists in user payment methods
+                if (state.savedCardDigits.isNullOrBlank()) {
+                    _uiState.update { it.copy(errorResId = R.string.error_bank_card_not_registered) }
+                    return
+                }
             }
             PaymentMethod.CASH_ON_PICKUP -> {
                 // Direct checkout allowed
