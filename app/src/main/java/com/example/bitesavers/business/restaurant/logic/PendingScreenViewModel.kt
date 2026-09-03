@@ -63,7 +63,7 @@ class PendingScreenViewModel : ViewModel() {
         }
     }
 
-    // 👇 Helper function to convert "18:00:00" to "06:00 PM"
+    //Helper function to convert "18:00:00" to "06:00 PM"
     private fun formatTo12Hour(timeStr: String): String {
         if (timeStr.isBlank()) return ""
         if (timeStr.contains("AM", true) || timeStr.contains("PM", true)) return timeStr
