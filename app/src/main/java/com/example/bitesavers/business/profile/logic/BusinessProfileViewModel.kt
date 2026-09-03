@@ -339,7 +339,8 @@ class BusinessProfileViewModel : ViewModel() {
                     operatingHours = draft.operatingHours,
                     cleanupHours = draft.cleanupHours,
                     latitude = currentLatitude,
-                    longitude = currentLongitude
+                    longitude = currentLongitude,
+                    reasonForChange = draft.reasonForChange // 👈 Passes the draft's reason for change
                 )
 
                 _hasPendingBusinessEdit.value = true

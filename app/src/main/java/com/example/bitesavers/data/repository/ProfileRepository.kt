@@ -72,7 +72,8 @@ class ProfileRepository {
         operatingHours: String,
         cleanupHours: String,
         latitude: Double = 3.1390,
-        longitude: Double = 101.6869
+        longitude: Double = 101.6869,
+        reasonForChange: String? = null // 👈 Accepts reasonForChange
     ) {
         val times = operatingHours.split("-").map { it.trim() }
         val openingTime = times.getOrNull(0) ?: "08:30"
@@ -90,7 +91,8 @@ class ProfileRepository {
             openingTime = openingTime,
             closingTime = closingTime,
             cleanupEndTime = cleanupHours,
-            status = "PENDING"
+            status = "PENDING",
+            reasonForChange = reasonForChange // 👈 Sends reason to Supabase
         )
 
         postgrest.from("stores").insert(insertDto)

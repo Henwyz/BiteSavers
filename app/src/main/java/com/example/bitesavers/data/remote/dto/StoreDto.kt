@@ -54,8 +54,7 @@ data class StoreDto(
     val ssmNumber: String? = null,
 
     @SerialName("ssm_document_url")
-    val ssmDocumentUrl: String? = null,
-
+    val ssmDocumentUrl: String? = null
 )
 
 @Serializable
@@ -71,5 +70,6 @@ data class StoreEditInsertDto(
     @SerialName("opening_time") val openingTime: String?,
     @SerialName("closing_time") val closingTime: String?,
     @SerialName("cleanup_end_time") val cleanupEndTime: String?,
-    @SerialName("status") val status: String
+    @SerialName("status") val status: String,
+    @SerialName("reason_for_change") val reasonForChange: String? = null // 👈 Added to insert payload
 )
