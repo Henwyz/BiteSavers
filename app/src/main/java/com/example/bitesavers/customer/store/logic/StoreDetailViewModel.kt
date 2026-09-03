@@ -46,12 +46,15 @@ class StoreDetailViewModel : ViewModel() {
                 if (storeDto != null) {
                     val openTime = storeDto.openingTime ?: "8:30 AM"
                     val closeTime = storeDto.closingTime ?: "9:00 PM"
+                    val storeIdNonNull = storeDto.id ?: storeId
+                    val storeNameNonNull = storeDto.name ?: "Store"
+                    val storeRatingNonNull = storeDto.rating ?: 4.8
 
                     val storeUi = StoreDetailUiModel(
-                        id = storeDto.id,
-                        name = storeDto.name,
+                        id = storeIdNonNull,
+                        name = storeNameNonNull,
                         address = storeDto.address ?: "Location not specified",
-                        rating = storeDto.rating,
+                        rating = storeRatingNonNull,
                         contactPhone = storeDto.contactPhone,
                         operatingHours = "Mon – Sun: $openTime - $closeTime",
                         imageUrl = storeDto.imageUrl
@@ -66,8 +69,8 @@ class StoreDetailViewModel : ViewModel() {
                         OfferUiModel(
                             id = dto.id,
                             title = dto.title,
-                            storeName = storeDto.name,
-                            storeRating = storeDto.rating,
+                            storeName = storeNameNonNull,
+                            storeRating = storeRatingNonNull,
                             imageResId = R.drawable.ic_launcher_foreground,
                             imageUrl = dto.imageUrl,
                             discountPercent = discount,
@@ -81,8 +84,8 @@ class StoreDetailViewModel : ViewModel() {
                             isEligibleForNgoFree = dto.isEligibleForNgoFree,
                             storageType = "HOT",
                             description = dto.description ?: "Fresh surplus food ready for rescue.",
-                            latitude = storeDto.latitude,
-                            longitude = storeDto.longitude
+                            latitude = storeDto.latitude ?: 0.0,
+                            longitude = storeDto.longitude ?: 0.0
                         )
                     }
 

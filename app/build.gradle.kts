@@ -70,8 +70,8 @@ dependencies {
     //import Icons
     implementation("androidx.compose.material:material-icons-extended:1.7.6")
 
-    // Supabase
-    implementation(platform("io.github.jan-tennert.supabase:bom:2.6.1")) // or your version
+// Supabase
+    implementation(platform("io.github.jan-tennert.supabase:bom:2.6.1"))
     implementation("io.github.jan-tennert.supabase:postgrest-kt")
     implementation("io.github.jan-tennert.supabase:gotrue-kt")
     implementation("io.github.jan-tennert.supabase:storage-kt")
@@ -80,7 +80,7 @@ dependencies {
     // Serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
-    //Location services
+    // Location services
     implementation("com.google.android.gms:play-services-location:21.3.0")
 
     // Coil for Jetpack Compose image loading

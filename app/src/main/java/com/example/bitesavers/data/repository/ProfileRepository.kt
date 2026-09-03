@@ -1,34 +1,105 @@
-package com.example.bitesavers.data.repository
+package com.example.bitesavers.data.remote.repository
 
+import android.util.Log
 import com.example.bitesavers.data.remote.SupabaseClient
-import com.example.bitesavers.data.remote.dto.NgoApplicationDto
-import com.example.bitesavers.data.remote.dto.NgoApplicationInsertDto
-import com.example.bitesavers.data.remote.dto.UserDto
-import com.example.bitesavers.data.remote.dto.UserNgoStatusUpdateDto
+import com.example.bitesavers.data.remote.dto.*
+import io.github.jan.supabase.gotrue.auth
+import io.github.jan.supabase.postgrest.Postgrest
+import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
 
-/**
- * NOTE: the exact Postgrest DSL syntax below (`.select { filter { ... } }`,
- * `.update(dto) { filter { ... } }`) matches commonly-documented supabase-kt
- * usage, but the DSL has shifted slightly across versions. If any of these
- * don't compile against your teammate's installed version, check
- * https://github.com/supabase-community/supabase-kt or find another spot
- * in the project that already calls Postgrest successfully and match its
- * exact syntax instead.
- */
 class ProfileRepository {
 
     private val postgrest = SupabaseClient.client.postgrest
+    private val auth = SupabaseClient.client.auth
 
+    // =================================================================
+    // 1. USER OPERATIONS
+    // =================================================================
     suspend fun getUser(userId: String): UserDto =
         postgrest.from("users")
-            .select {
-                filter { eq("id", userId) }
-            }
+            .select { filter { eq("id", userId) } }
             .decodeSingle<UserDto>()
 
-    /** All applications for this user, most recent first. */
+    suspend fun updateUserProfile(userId: String, name: String, email: String) {
+        postgrest.from("users")
+            .update(UserProfileUpdateDto(name = name, email = email)) {
+                filter { eq("id", userId) }
+            }
+    }
+
+    suspend fun updateUserPassword(newPassword: String) {
+        auth.updateUser {
+            password = newPassword
+        }
+    }
+
+    // =================================================================
+    // 2. STORE OPERATIONS (stores table)
+    // =================================================================
+    suspend fun getStoreRowsByOwnerId(ownerId: String): List<StoreDto> {
+        return try {
+            postgrest.from("stores")
+                .select {
+                    filter { eq("owner_id", ownerId) }
+                    order("created_at", Order.DESCENDING)
+                }
+                .decodeList<StoreDto>()
+        } catch (e: Exception) {
+            Log.e("ProfileRepository", "Error fetching stores for owner_id '$ownerId'", e)
+            emptyList()
+        }
+    }
+
+    suspend fun getFirstStoreFallback(): StoreDto? {
+        return try {
+            postgrest.from("stores")
+                .select { limit(1) }
+                .decodeList<StoreDto>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            Log.e("ProfileRepository", "Error fetching fallback store", e)
+            null
+        }
+    }
+
+    suspend fun insertStoreEditRequest(
+        ownerId: String,
+        name: String,
+        address: String,
+        phone: String,
+        operatingHours: String,
+        cleanupHours: String,
+        latitude: Double = 3.1390,
+        longitude: Double = 101.6869
+    ) {
+        val times = operatingHours.split("-").map { it.trim() }
+        val openingTime = times.getOrNull(0) ?: "08:30"
+        val closingTime = times.getOrNull(1) ?: "21:00"
+
+        val insertDto = StoreEditInsertDto(
+            id = java.util.UUID.randomUUID().toString(),
+            ownerId = ownerId,
+            name = name,
+            address = address,
+            latitude = latitude,
+            longitude = longitude,
+            rating = 4.8,
+            contactPhone = phone,
+            openingTime = openingTime,
+            closingTime = closingTime,
+            cleanupEndTime = cleanupHours,
+            status = "PENDING"
+        )
+
+        postgrest.from("stores").insert(insertDto)
+        Log.d("ProfileRepository", "✅ Successfully inserted new PENDING store row into 'stores'")
+    }
+
+    // =================================================================
+    // 3. NGO OPERATIONS
+    // =================================================================
     suspend fun getNgoApplications(userId: String): List<NgoApplicationDto> =
         postgrest.from("ngo_applications")
             .select {

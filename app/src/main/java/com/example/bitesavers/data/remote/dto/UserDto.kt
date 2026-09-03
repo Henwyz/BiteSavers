@@ -29,3 +29,9 @@ data class UserNgoStatusUpdateDto(
     @SerialName("ngo_status") val ngoStatus: String,
     @SerialName("ngo_org_name") val ngoOrgName: String? = null
 )
+
+@Serializable
+data class UserProfileUpdateDto(
+    val name: String,
+    val email: String
+)

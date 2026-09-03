@@ -146,7 +146,6 @@
     <string name="notifications_empty_state">No new notifications</string>
     <string name="notifications_button_content_desc">View notifications</string>
     <string name="notifications_close_button">Close</string>
-
     <string name="notifications_clear_all_button">Clear All</string>
 
     <!-- ================================================================= -->
@@ -157,6 +156,8 @@
     <string name="detail_about_title">About this surplus item</string>
     <string name="detail_category_format">Category: %1$s</string>
     <string name="detail_saved_amount">Saved RM%1$.2f</string>
+
+    <!-- Hero & Selector -->
     <string name="cd_food_item_image">Food Item Image</string>
     <string name="detail_select_quantity">Select Quantity</string>
 
@@ -204,44 +205,46 @@
     <string name="checkout_total_payment">Total Payment</string>
     <string name="action_confirm_payment">Confirm Payment</string>
 
-    <!-- Payment Selection inside Checkout -->
+    <!-- Card Component -->
     <string name="checkout_payment_title">Payment Method</string>
+    <string name="checkout_payment_method_title">Payment Method</string>
     <string name="checkout_change_action">Change</string>
+    <string name="action_change_payment">Change</string>
     <string name="checkout_payment_balance_format">Balance: RM %1$.2f</string>
     <string name="checkout_balance_format">Available: RM %1$.2f</string>
 
-    <!-- Payment Methods Bottom Sheet -->
+    <!-- Bottom Sheet Selector -->
     <string name="payment_sheet_title">Select Payment Method</string>
     <string name="payment_sheet_manage_action">Manage / Add Payment Methods</string>
+
+    <!-- Payment Names & Options -->
+    <string name="payment_bitesaver_pay">BiteSaver Pay</string>
     <string name="payment_method_bitesaver_pay">BiteSaver Pay</string>
+    <string name="payment_tng_title">Touch \'n Go eWallet</string>
     <string name="payment_method_tng">Touch \'n Go eWallet</string>
     <string name="payment_method_bank_card">Debit / Credit Card</string>
+    <string name="payment_method_cash">Cash on Pickup</string>
     <string name="payment_method_cash_on_pickup">Cash on Pickup</string>
     <string name="payment_method_cash_subtitle">Pay directly at store counter</string>
     <string name="payment_not_linked">Not linked</string>
     <string name="payment_no_cards">No cards saved yet.</string>
     <string name="badge_default">Default</string>
 
-    <!-- Payment Validations & Error Messages -->
+    <!-- Payment Error Messages -->
     <string name="error_insufficient_bitesaver_balance">Insufficient funds in BiteSaver Pay.</string>
     <string name="error_tng_not_linked">Please link your Touch \'n Go eWallet before paying.</string>
     <string name="error_bank_card_not_registered">Please add a valid Debit/Credit Card before paying.</string>
     <string name="error_order_failed_general">Payment failed. Please check your balance or try again.</string>
+
+    <!-- Card Form Validations -->
     <string name="error_invalid_card_number">Card number must be 16 digits</string>
     <string name="error_invalid_expiry">Enter a valid future MM/YY</string>
     <string name="error_invalid_cvv">CVV must be 3 digits</string>
     <string name="error_invalid_phone">Enter a valid 9–11 digit mobile number</string>
     <string name="error_invalid_otp">Enter a complete 6-digit verification code</string>
 
-    <!-- Checkout Payment Method Section Header -->
-    <string name="checkout_payment_method_title">Payment Method</string>
-
-    <!-- Payment Methods Screen Titles -->
-    <string name="payment_bitesaver_pay">BiteSaver Pay</string>
-    <string name="payment_tng_title">Touch \'n Go eWallet</string>
-
     <!-- ================================================================= -->
-    <!-- 7. PAYMENT METHODS MANAGEMENT & TOP UP                            -->
+    <!-- PAYMENT METHODS MANAGEMENT & TOP UP                               -->
     <!-- ================================================================= -->
     <string name="payment_methods_title">Payment Methods</string>
     <string name="payment_section_bitesaver_balance">BiteSaver Balance</string>
@@ -250,7 +253,7 @@
     <string name="payment_section_cards">Debit / Credit Cards</string>
     <string name="payment_security_notice">Your payment credentials are encrypted &amp; secure</string>
 
-    <!-- Top-Up Sheet (BiteSaver Pay) -->
+    <!-- Top-Up Sheet -->
     <string name="top_up_sheet_title">Top Up BiteSaver Pay</string>
     <string name="top_up_current_balance">Current Balance: RM %1$.2f</string>
     <string name="top_up_step_select_amount">1. Select Amount</string>
@@ -274,7 +277,7 @@
     <string name="action_get_otp">Get Verification Code</string>
     <string name="action_confirm_link_account">Confirm &amp; Link Account</string>
 
-    <!-- Add Card Form -->
+    <!-- Card Form -->
     <string name="payment_title_add_card">Add Debit / Credit Card</string>
     <string name="field_card_number">Card Number</string>
     <string name="hint_card_number">16 digits</string>
@@ -289,15 +292,13 @@
     <string name="cd_delete_card">Delete card</string>
 
     <!-- ================================================================= -->
-    <!-- 8. ORDER SUCCESS, PICKUP TICKET & REVIEW                          -->
+    <!-- ORDER SUCCESS & PICKUP TICKET                                     -->
     <!-- ================================================================= -->
-    <!-- Order Success Screen -->
     <string name="cd_success_icon">Order Successful</string>
     <string name="order_success_title">Order Placed Successfully!</string>
     <string name="order_success_subtitle">Your food rescue reservation is confirmed. Show your ticket at pickup.</string>
     <string name="btn_view_ticket">View Pickup Ticket</string>
 
-    <!-- Pickup Ticket Screen -->
     <string name="ticket_header_title">Pickup Ticket</string>
     <string name="ticket_header_subtitle">Show this to staff at pickup</string>
     <string name="ticket_status_confirmed">• RESERVATION CONFIRMED</string>
@@ -314,7 +315,7 @@
     <string name="ticket_label_pickup_window">PICKUP WINDOW</string>
     <string name="ticket_label_item">ITEM</string>
     <string name="cd_impact_icon">Impact</string>
-    <string name="ticket_impact_message">You saved RM %1$d and prevented %2$.1f kg of food waste. Thank you!</string>
+    <string name="ticket_impact_message">You saved RM %1$d and prevented -%2$.1f kg of food waste. Thank you!</string>
 
     <!-- Order Review Bottom Sheet -->
     <string name="review_order_completed_title">Order Completed!</string>
@@ -328,26 +329,27 @@
     <string name="review_celebration_icon_desc">Order completed celebration icon</string>
 
     <!-- ================================================================= -->
-    <!-- 9. ORDERS HISTORY TAB                                             -->
+    <!-- ORDERS TAB                                                        -->
     <!-- ================================================================= -->
+    <string name="orders_price_format">RM %1$.2f</string>
     <string name="orders_header_title">My Orders</string>
     <string name="orders_header_summary_format">%1$d completed • RM %2$.2f saved</string>
-    <string name="orders_price_format">RM %1$.2f</string>
+    <string name="orders_rate_order_button">Rate Order</string>
+    <string name="cd_orders_rate_star">Rate order star icon</string>
+    <string name="cd_orders_notification_icon">Notifications</string>
+    <string name="cd_orders_profile_avatar">User Avatar</string>
+
     <string name="orders_tab_active">Active</string>
     <string name="orders_tab_history">History</string>
     <string name="orders_status_completed">Completed</string>
     <string name="orders_status_cancelled">Cancelled</string>
     <string name="orders_status_ready">Ready for Pickup</string>
+    <string name="cd_orders_time_icon">Time icon</string>
     <string name="orders_empty_active">No active orders</string>
     <string name="orders_empty_history">No order history</string>
-    <string name="orders_rate_order_button">Rate Order</string>
-    <string name="cd_orders_rate_star">Rate order star icon</string>
-    <string name="cd_orders_notification_icon">Notifications</string>
-    <string name="cd_orders_profile_avatar">User Avatar</string>
-    <string name="cd_orders_time_icon">Time icon</string>
 
     <!-- ================================================================= -->
-    <!-- 10. CUSTOMER PROFILE & NGO MANAGEMENT                             -->
+    <!-- PROFILE PAGE                                                      -->
     <!-- ================================================================= -->
     <string name="profile_sign_out">Sign Out</string>
     <string name="profile_wallet_label">E-WALLET BALANCE</string>
@@ -372,24 +374,26 @@
     <string name="profile_edit_success">Profile updated successfully</string>
     <string name="profile_edit_name_empty">Name cannot be empty</string>
 
-    <!-- NGO Registration Form -->
+    <!-- ================================================================= -->
+    <!-- NGO REGISTRATION & MANAGEMENT                                     -->
+    <!-- ================================================================= -->
     <string name="ngo_registration_title">Register as NGO</string>
     <string name="ngo_registration_subtitle">Tell us about your organization so we can verify your NGO status and unlock free surplus food claims.</string>
     <string name="ngo_field_org_name">Organization Name</string>
-    <string name="ngo_field_registration_type">Registration Type</string>
     <string name="ngo_field_registration_number">Registration Number</string>
     <string name="ngo_field_contact_name">Contact Person Name</string>
     <string name="ngo_field_contact_email">Contact Email</string>
     <string name="ngo_field_contact_phone">Contact Phone Number</string>
     <string name="ngo_field_cause_category">Cause Category</string>
     <string name="ngo_field_address">Organization Address</string>
-    <string name="ngo_field_certificate">Certificate of Registration (PDF)</string>
-    <string name="ngo_certificate_placeholder">Tap to upload PDF</string>
-    <string name="ngo_select_category_placeholder">Select a Category</string>
     <string name="ngo_agree_terms">I confirm this information is accurate and agree to the Terms of Service.</string>
     <string name="ngo_submit_application">Submit Application</string>
 
-    <!-- NGO Form Placeholders -->
+    <string name="ngo_field_registration_type">Registration Type</string>
+    <string name="ngo_field_certificate">Certificate of Registration (PDF)</string>
+    <string name="ngo_certificate_placeholder">Tap to upload PDF</string>
+    <string name="ngo_select_category_placeholder">Select a Category</string>
+
     <string name="ngo_placeholder_org_name">e.g. Kechara Soup Kitchen</string>
     <string name="ngo_placeholder_registration_ssm">e.g. 202301012345 or 1234567-A</string>
     <string name="ngo_placeholder_registration_ros">e.g. PPM-002-10-04091985</string>
@@ -398,29 +402,33 @@
     <string name="ngo_placeholder_phone">e.g. 012-3456789</string>
     <string name="ngo_placeholder_address">e.g. No 12, Jalan Ampang, 50450 Kuala Lumpur</string>
 
-    <!-- NGO Terms & Dialogs -->
     <string name="ngo_tnc_dialog_title">Terms &amp; Conditions</string>
     <string name="ngo_tnc_dialog_confirm">Agree &amp; Submit</string>
     <string name="ngo_tnc_dialog_message_register">Please agree to the Terms of Service to submit your application.</string>
     <string name="ngo_tnc_dialog_message_edit">Please agree to the Terms of Service to change the NGO details.</string>
+
+    <string name="ngo_edit_title">Change NGO Details</string>
+    <string name="ngo_submit_edit">Change NGO Details</string>
     <string name="ngo_details_title">NGO Details</string>
     <string name="ngo_details_edit_button">Edit</string>
     <string name="ngo_details_empty">No NGO details found.</string>
-    <string name="ngo_details_pending_banner">This information may not be accurate. Your change request is still pending approval.</string>
-    <string name="ngo_details_certificate_verified">Certificate Verified</string>
-    <string name="ngo_details_certificate_label">Certificate of Registration</string>
-    <string name="ngo_edit_title">Change NGO Details</string>
-    <string name="ngo_submit_edit">Change NGO Details</string>
-    <string name="ngo_field_reason_for_change">Reason for Change</string>
-    <string name="ngo_placeholder_reason_for_change">e.g. Updated contact person after staff change</string>
+
     <string name="ngo_pending_title">Update Submitted</string>
     <string name="ngo_pending_message">Your NGO details will be updated once approved. In the meantime, your current NGO details remain active.</string>
     <string name="ngo_pending_understood">Understood</string>
+
+    <string name="ngo_field_reason_for_change">Reason for Change</string>
+    <string name="ngo_placeholder_reason_for_change">e.g. Updated contact person after staff change</string>
     <string name="ngo_no_changes_title">No Changes Made</string>
     <string name="ngo_no_changes_message">You haven\'t changed any details. Please update at least one field before submitting.</string>
     <string name="ngo_dialog_ok">OK</string>
+
     <string name="ngo_pending_edit_dialog_title">Change Request Pending</string>
     <string name="ngo_pending_edit_dialog_message">You already have a change request pending approval. Please wait for approval before submitting another change.</string>
+    <string name="ngo_details_pending_banner">This information may not be accurate. Your change request is still pending approval.</string>
+    <string name="ngo_details_certificate_verified">Certificate Verified</string>
+    <string name="ngo_details_certificate_label">Certificate of Registration</string>
+
     <string name="ngo_details_disable_button">Disable NGO Account</string>
     <string name="ngo_disable_title">Disable NGO Account</string>
     <string name="ngo_disable_confirm_title">Are you sure you want to disable your NGO account?</string>
@@ -431,7 +439,7 @@
     <string name="ngo_disabled_dialog_message">Your NGO account has been disabled.</string>
 
     <!-- ================================================================= -->
-    <!-- 11. BUSINESS DASHBOARD, INVENTORY & HARDWARE                      -->
+    <!-- DASHBOARD                                                         -->
     <!-- ================================================================= -->
     <string name="dashboard_sample_date">Friday, 28 Aug 2026</string>
     <string name="dashboard_store_name">Madam Lim Bakery</string>
@@ -451,38 +459,16 @@
     <string name="dashboard_waste_kg_format">%1$.1f kg</string>
     <string name="dashboard_currency_format">RM %.0f</string>
 
-    <!-- Business Orders & Verification Strings -->
-    <string name="title_all_orders">Customer Orders</string>
-    <string name="tab_all">All</string>
-    <string name="tab_pending">Pending</string>
-    <string name="tab_completed">Completed</string>
-    <string name="tab_cancelled">Cancelled</string>
-    <string name="empty_orders_msg">No orders found</string>
-
-    <!-- Order Item & Card Strings -->
-    <string name="order_id_prefix">Order #</string>
-    <string name="customer_prefix">Customer #</string>
-    <string name="status_ready_pickup">Ready for Pickup</string>
-    <string name="status_completed">Completed</string>
-    <string name="status_cancelled">Cancelled</string>
-    <string name="status_pending">Pending</string>
-    <string name="ngo_badge">NGO Claim</string>
-
-    <!-- Restaurant Onboarding -->
-    <string name="register_restaurant_title">Register Your Restaurant 🏪</string>
-    <string name="restaurant_name">Restaurant Name</string>
-    <string name="address">Address</string>
-    <string name="opening_time">Opening Time</string>
-    <string name="closing_time">Closing Time</string>
-    <string name="save_and_continue">Save &amp; Continue</string>
-
-    <!-- Listings & Surplus Food Form -->
+    <!-- ================================================================= -->
+    <!-- MERCHANT / INVENTORY & LISTINGS                                   -->
+    <!-- ================================================================= -->
     <string name="my_listings_title">My Listing</string>
     <string name="my_listings_subtitle">%1$d items · %2$d active</string>
     <string name="btn_add_food">Add Food</string>
     <string name="btn_edit">Edit</string>
     <string name="btn_delete">Delete</string>
     <string name="remaining_count">%1$d remaining</string>
+
     <string name="add_food_title">Add Surplus Food</string>
     <string name="upload_photo_title">Upload Food Photo</string>
     <string name="upload_photo_subtitle">Tap to take photo or pick from gallery</string>
@@ -503,8 +489,6 @@
     <string name="hint_pickup_end">07:00 PM</string>
     <string name="btn_update_listing">Update Listing</string>
     <string name="btn_publish_listing">Publish Listing</string>
-
-    <!-- Photo Selection -->
     <string name="title_choose_photo_source">Choose Photo Source</string>
     <string name="action_take_photo">Take Photo</string>
     <string name="action_choose_from_gallery">Choose from gallery</string>
@@ -513,6 +497,9 @@
     <string name="btn_retake_change">Retake / Change</string>
     <string name="btn_close">Close</string>
 
+    <!-- ================================================================= -->
+    <!-- BUSINESS ANALYTICS & PROFILE                                      -->
+    <!-- ================================================================= -->
     <!-- ESP32 Temperature Hardware -->
     <string name="temperature_monitor">Temperature Monitor</string>
     <string name="esp32_live_sensor">ESP32 Live Sensor</string>
@@ -530,7 +517,7 @@
     <string name="hot_box">Hot Box</string>
     <string name="save_and_connect_unit">Save &amp; Connect Unit</string>
 
-    <!-- Business Analytics & Profile -->
+
     <string name="analytics_title">Analytics</string>
     <string name="analytics_revenue_recovered">Revenue Recovered</string>
     <string name="analytics_meals_rescued">Meals Rescued</string>
@@ -543,16 +530,9 @@
     <string name="analytics_weekly_revenue_title">Weekly Revenue (RM)</string>
     <string name="analytics_this_week">This Week</string>
     <string name="analytics_meals_per_day_title">Meals Rescued per Day</string>
-    <string name="business_verified_merchant">Verified Merchant</string>
-    <string name="business_reviews_suffix">reviews</string>
-    <string name="business_info_title">Business Information</string>
-    <string name="business_address_label">Address</string>
-    <string name="business_phone_label">Phone</string>
-    <string name="business_category_label">Category</string>
-    <string name="business_operating_hours_title">Operating Hours</string>
 
     <!-- ================================================================= -->
-    <!-- 12. STATIC & INFORMATIONAL (PRIVACY, FAQ, ABOUT)                  -->
+    <!-- STATIC / INFORMATIONAL (PRIVACY, HELP, ABOUT)                    -->
     <!-- ================================================================= -->
     <string name="privacy_data_collected_title">Data We Collect</string>
     <string name="privacy_data_collected_body">We collect your name, email, phone number, and pickup location to coordinate food reservations. Order history is used to calculate your personal impact stats.</string>
@@ -584,6 +564,54 @@
     <string name="about_version_label">Version 1.0.0 (MVP)</string>
 
     <!-- ================================================================= -->
+    <!-- BUSINESS ORDERS & RESTAURANT REGISTRATION                         -->
+    <!-- ================================================================= -->
+    <string name="title_all_orders">Customer Orders</string>
+    <string name="tab_all">All</string>
+    <string name="tab_pending">Pending</string>
+    <string name="tab_completed">Completed</string>
+    <string name="tab_cancelled">Cancelled</string>
+    <string name="empty_orders_msg">No orders found</string>
+
+    <!-- Order Item & Card Strings -->
+    <string name="order_id_prefix">Order #</string>
+    <string name="customer_prefix">Customer #</string>
+    <string name="status_ready_pickup">Ready for Pickup</string>
+    <string name="status_completed">Completed</string>
+    <string name="status_cancelled">Cancelled</string>
+    <string name="status_pending">Pending</string>
+    <string name="ngo_badge">NGO Claim</string>
+
+    <!-- Register Restaurant Page Strings -->
+    <string name="register_restaurant_title">Register Your Restaurant 🏪</string>
+    <string name="restaurant_name">Restaurant Name</string>
+    <string name="address">Address</string>
+    <string name="opening_time">Opening Time</string>
+    <string name="closing_time">Closing Time</string>
+    <string name="save_and_continue">Save &amp; Continue</string>
+
+    <!-- ================================================================= -->
+    <!-- BUSINESS EDIT PROFILE                                             -->
+    <!-- ================================================================= -->
+    <string name="business_edit_account_subtitle">Update your login credentials and personal details.</string>
+    <string name="business_edit_name_label">Username</string>
+    <string name="business_edit_email_label">Email</string>
+    <string name="business_edit_store_subtitle">Submit changes for your store details. Changes will be reviewed before going live.</string>
+    <string name="business_name_label">Business Name</string>
+    <string name="business_edit_profile_title">Edit Profile</string>
+    <string name="business_edit_save">Save Changes</string>
+    <string name="business_edit_cancel">Cancel</string>
+    <string name="business_address_label">Address</string>
+    <string name="business_phone_label">Phone</string>
+    <string name="business_category_label">Category</string>
+    <string name="business_operating_hours_title">Operating Hours</string>
+    <string name="business_info_title">Business Info</string>
+    <string name="business_verified_merchant">Verified Merchant</string>
+    <string name="business_reviews_suffix">reviews</string>
+    <string name="business_edit_tnc_title">Terms and Conditions</string>
+    <string name="business_edit_tnc_message">By submitting these changes, you confirm all business details are accurate and comply with the platform\'s partner merchant policies.</string>
+
+    <!-- ================================================================= -->
     <!-- NOTIFICATIONS (SYSTEM & IN-APP)                                   -->
     <!-- ================================================================= -->
     <string name="notification_channel_orders_name">Order Status Updates</string>
@@ -597,4 +625,14 @@
     <string name="notifications_empty_subtitle">We will let you know when your orders are ready or completed.</string>
     <string name="notifications_action_mark_all_read">Mark all as read</string>
     <string name="notifications_action_clear_all">Clear all</string>
+
+    <!-- Business Update Pending & Review Strings -->
+    <string name="business_pending_title">Update Submitted</string>
+    <string name="business_pending_message">Your business details will be updated once approved. In the meantime, your current business details remain active.</string>
+    <string name="business_pending_understood">Understood</string>
+    <string name="business_details_pending_banner">Your change request is currently pending review. Current details will remain active until approved.</string>
+    <string name="business_pending_edit_dialog_title">Change Request Pending</string>
+    <string name="business_pending_edit_dialog_message">You already have a change request pending approval. Please wait for approval before submitting another change.</string>
+
+    <string name="business_edit_details_title">Edit Details</string>
 </resources>

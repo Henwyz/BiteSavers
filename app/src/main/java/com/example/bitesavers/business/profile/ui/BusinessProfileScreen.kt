@@ -7,16 +7,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BakeryDining
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Map
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Storefront
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,13 +23,22 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitesavers.R
 import com.example.bitesavers.business.profile.logic.BusinessProfileViewModel
+import com.example.bitesavers.data.remote.UserSession
 
 @Composable
 fun BusinessProfileScreen(
     onSignOutClick: () -> Unit,
+    onEditClick: () -> Unit,
     viewModel: BusinessProfileViewModel = viewModel()
 ) {
     val profile by viewModel.profile.collectAsStateWithLifecycle()
+    val ownerAccount by viewModel.ownerAccount.collectAsStateWithLifecycle()
+    val hasPendingBusinessEdit by viewModel.hasPendingBusinessEdit.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadAllData(UserSession.currentUserId.value)
+    }
 
     Column(
         modifier = Modifier
@@ -44,6 +46,10 @@ fun BusinessProfileScreen(
             .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
     ) {
+        if (isLoading) {
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+        }
+
         // ---------- Header ----------
         Column(
             modifier = Modifier
@@ -78,17 +84,36 @@ fun BusinessProfileScreen(
                     ),
                     border = null
                 )
-                IconButton(
-                    onClick = { /* TODO wire to notifications */ },
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary)
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        Icons.Filled.Notifications,
-                        contentDescription = stringResource(R.string.cd_notifications),
-                        tint = MaterialTheme.colorScheme.onPrimary
-                    )
+                    // Edit button is ALWAYS clickable so user can edit Account details
+                    IconButton(
+                        onClick = onEditClick,
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.secondaryContainer)
+                    ) {
+                        Icon(
+                            Icons.Filled.Edit,
+                            contentDescription = stringResource(R.string.business_edit_details_title),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    IconButton(
+                        onClick = { /* TODO notifications */ },
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary)
+                    ) {
+                        Icon(
+                            Icons.Filled.Notifications,
+                            contentDescription = stringResource(R.string.cd_notifications),
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
                 }
             }
 
@@ -119,6 +144,13 @@ fun BusinessProfileScreen(
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp
                 )
+                if (ownerAccount.name.isNotBlank()) {
+                    Text(
+                        "Managed by ${ownerAccount.name}",
+                        color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.85f),
+                        fontSize = 13.sp
+                    )
+                }
                 Spacer(Modifier.height(2.dp))
                 Text(
                     "${profile.verificationId} • ${
@@ -146,7 +178,36 @@ fun BusinessProfileScreen(
             }
         }
 
-        Column(modifier = Modifier.padding(20.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(20.dp)
+                .padding(bottom = 80.dp)
+        ) {
+            // Yellow Pending Banner
+            if (hasPendingBusinessEdit) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.tertiaryContainer, RoundedCornerShape(12.dp))
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Icon(
+                        Icons.Filled.WarningAmber,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        stringResource(R.string.business_details_pending_banner),
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        fontSize = 12.sp
+                    )
+                }
+                Spacer(Modifier.height(16.dp))
+            }
+
             // ---------- Business info card ----------
             Card(
                 shape = RoundedCornerShape(16.dp),
@@ -173,7 +234,12 @@ fun BusinessProfileScreen(
                     BusinessInfoRow(
                         icon = Icons.Filled.Storefront,
                         label = stringResource(R.string.business_category_label),
-                        value = profile.category,
+                        value = profile.category
+                    )
+                    BusinessInfoRow(
+                        icon = Icons.Filled.AccessTime,
+                        label = stringResource(R.string.business_operating_hours_title),
+                        value = profile.operatingHours,
                         showDivider = false
                     )
                 }
@@ -182,10 +248,6 @@ fun BusinessProfileScreen(
             Spacer(Modifier.height(16.dp))
 
             // ---------- Map placeholder ----------
-            // NOTE: not a real map — real Google Maps Compose integration
-            // needs an API key + Play Services dependency, out of scope for
-            // this MVP. Reuses the same placeholder pattern/string as the
-            // Discovery screen's map preview for consistency.
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -207,38 +269,6 @@ fun BusinessProfileScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 11.sp
                     )
-                }
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            // ---------- Operating hours card ----------
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        stringResource(R.string.business_operating_hours_title),
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    profile.operatingHours.forEachIndexed { index, row ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(row.dayRangeLabel, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text(row.hoursLabel, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
-                        }
-                        if (index != profile.operatingHours.lastIndex) {
-                            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
-                        }
-                    }
                 }
             }
         }

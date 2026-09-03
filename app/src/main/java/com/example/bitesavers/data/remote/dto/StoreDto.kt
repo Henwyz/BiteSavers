@@ -6,37 +6,22 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class StoreDto(
     @SerialName("id")
-    val id: String,
+    val id: String? = null,
 
     @SerialName("owner_id")
     val ownerId: String? = null,
 
     @SerialName("name")
-    val name: String,
+    val name: String? = null,
 
     @SerialName("address")
-    val address: String,
+    val address: String? = null,
 
     @SerialName("latitude")
-    val latitude: Double = 5.4674,
+    val latitude: Double? = null,
 
     @SerialName("longitude")
-    val longitude: Double = 100.2790,
-
-    @SerialName("opening_time")
-    val openingTime: String, // e.g. "08:00:00"
-
-    @SerialName("closing_time")
-    val closingTime: String, // e.g. "21:30:00"
-
-    @SerialName("cleanup_end_time")
-    val cleanupEndTime: String = "22:15:00", // e.g. "22:15:00"
-
-    @SerialName("image_url")
-    val imageUrl: String? = null,
-
-    @SerialName("created_at")
-    val createdAt: String? = null,
+    val longitude: Double? = null,
 
     @SerialName("rating")
     val rating: Double? = null,
@@ -44,8 +29,23 @@ data class StoreDto(
     @SerialName("contact_phone")
     val contactPhone: String? = null,
 
+    @SerialName("opening_time")
+    val openingTime: String? = null,
+
+    @SerialName("closing_time")
+    val closingTime: String? = null,
+
+    @SerialName("cleanup_end_time")
+    val cleanupEndTime: String? = null,
+
+    @SerialName("image_url")
+    val imageUrl: String? = null,
+
+    @SerialName("created_at")
+    val createdAt: String? = null,
+
     @SerialName("status")
-    val status: String? = "PENDING", // PENDING, APPROVED, REJECTED
+    val status: String? = null,
 
     @SerialName("reason_for_change")
     val reasonForChange: String? = null,
@@ -54,5 +54,22 @@ data class StoreDto(
     val ssmNumber: String? = null,
 
     @SerialName("ssm_document_url")
-    val ssmDocumentUrl: String? = null
+    val ssmDocumentUrl: String? = null,
+
+)
+
+@Serializable
+data class StoreEditInsertDto(
+    val id: String,
+    @SerialName("owner_id") val ownerId: String,
+    val name: String,
+    val address: String?,
+    val latitude: Double,
+    val longitude: Double,
+    val rating: Double,
+    @SerialName("contact_phone") val contactPhone: String?,
+    @SerialName("opening_time") val openingTime: String?,
+    @SerialName("closing_time") val closingTime: String?,
+    @SerialName("cleanup_end_time") val cleanupEndTime: String?,
+    @SerialName("status") val status: String
 )

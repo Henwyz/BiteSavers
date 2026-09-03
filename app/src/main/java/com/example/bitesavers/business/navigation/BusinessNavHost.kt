@@ -23,7 +23,10 @@ import com.example.bitesavers.business.dashboard.ui.BusinessOrdersScreen
 import com.example.bitesavers.business.inventory.logic.InventoryViewModel
 import com.example.bitesavers.business.inventory.ui.AddFoodScreen
 import com.example.bitesavers.business.inventory.ui.MyListingScreen
+import com.example.bitesavers.business.profile.logic.BusinessProfileViewModel
+import com.example.bitesavers.business.profile.ui.BusinessProfileEditScreen
 import com.example.bitesavers.business.profile.ui.BusinessProfileScreen
+import com.example.bitesavers.business.profile.ui.BusinessUpdatePendingScreen
 import com.example.bitesavers.business.restaurant.ui.RegisterRestaurantScreen
 import com.example.bitesavers.business.sharedUI.BusinessBottomNavigationBar
 import com.example.bitesavers.business.temperature.ui.AddBoxScreen
@@ -37,6 +40,7 @@ fun BusinessNavHost(
 ) {
     val inventoryViewModel: InventoryViewModel = viewModel()
     val dashboardViewModel: DashboardViewModel = viewModel()
+    val businessProfileViewModel: BusinessProfileViewModel = viewModel() // 👈 Shared ViewModel instance
 
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -115,11 +119,42 @@ fun BusinessNavHost(
             // 4. PROFILE TAB
             composable(BusinessScreen.Profile.route) {
                 BusinessProfileScreen(
-                    onSignOutClick = onLogout
+                    viewModel = businessProfileViewModel, // 👈 Uses shared instance
+                    onSignOutClick = onLogout,
+                    onEditClick = {
+                        businessProfileViewModel.initEditScreen()
+                        navController.navigate(BusinessScreen.EditProfile.route)
+                    }
                 )
             }
 
-            // 5. ADD FOOD SCREEN
+            // 5. EDIT PROFILE SCREEN
+            composable(BusinessScreen.EditProfile.route) {
+                BusinessProfileEditScreen(
+                    viewModel = businessProfileViewModel, // 👈 Uses shared instance with pre-filled data
+                    onBackClick = { navController.popBackStack() },
+                    onSubmitted = { isBusinessDetails ->
+                        if (isBusinessDetails) {
+                            navController.navigate(BusinessScreen.UpdatePending.route) {
+                                popUpTo(BusinessScreen.Profile.route)
+                            }
+                        } else {
+                            navController.popBackStack()
+                        }
+                    }
+                )
+            }
+
+            // 6. UPDATE PENDING SCREEN
+            composable(BusinessScreen.UpdatePending.route) {
+                BusinessUpdatePendingScreen(
+                    onUnderstoodClick = {
+                        navController.popBackStack(BusinessScreen.Profile.route, inclusive = false)
+                    }
+                )
+            }
+
+            // 7. ADD FOOD SCREEN
             composable(BusinessScreen.AddFood.route) {
                 AddFoodScreen(
                     viewModel = inventoryViewModel,
@@ -127,7 +162,7 @@ fun BusinessNavHost(
                 )
             }
 
-            // 6. REGISTER RESTAURANT SCREEN
+            // 8. REGISTER RESTAURANT SCREEN
             composable(BusinessScreen.RegisterRestaurant.route) {
                 RegisterRestaurantScreen(
                     onRestaurantRegistered = {
@@ -175,12 +210,5 @@ fun BusinessNavHost(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun BusinessPlaceholderScreen(title: String) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = title)
     }
 }
