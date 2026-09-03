@@ -35,7 +35,7 @@ class OrderRepository {
                     .select { filter { eq("id", uid) } }
                     .decodeSingle<UserDto>()
 
-                val currentBalance = user.walletBalance ?: 0.0
+                val currentBalance = user.walletBalance
                 if (currentBalance < totalPrice) {
                     Log.e("OrderRepository", "Insufficient balance: $currentBalance < $totalPrice")
                     return@withContext null
@@ -86,7 +86,7 @@ class OrderRepository {
                     .select { filter { eq("id", uid) } }
                     .decodeSingle<UserDto>()
 
-                val updatedBalance = (user.walletBalance ?: 0.0) - totalPrice
+                val updatedBalance = user.walletBalance - totalPrice
                 client.from("users")
                     .update({ set("wallet_balance", updatedBalance) }) {
                         filter { eq("id", uid) }

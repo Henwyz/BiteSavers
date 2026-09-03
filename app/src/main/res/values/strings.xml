@@ -33,6 +33,17 @@
     <string name="order_status_cancelled">Cancelled</string>
     <string name="order_status_failed">Order Failed</string>
 
+    <!-- Profile & Edit Profile Strings -->
+    <string name="profile_change_password">Change Password</string>
+    <string name="profile_new_password_label">New Password</string>
+    <string name="profile_new_password_hint">Enter at least 6 characters</string>
+    <string name="profile_confirm_password_label">Confirm Password</string>
+    <string name="profile_confirm_password_hint">Re-enter your password</string>
+    <string name="profile_password_length_error">Password must be at least 6 characters</string>
+    <string name="profile_password_mismatch_error">Passwords do not match</string>
+    <string name="profile_password_success">Password updated successfully</string>
+    <string name="profile_change_password_title">Change Password</string>
+
     <!-- ================================================================= -->
     <!-- 2. AUTHENTICATION (LOGIN & SIGN UP)                               -->
     <!-- ================================================================= -->

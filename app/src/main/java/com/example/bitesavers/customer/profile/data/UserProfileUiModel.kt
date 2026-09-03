@@ -3,7 +3,7 @@ package com.example.bitesavers.customer.profile.data
 /**
  * UI-facing model for the logged-in consumer's Profile screen.
  *
- * ⚠️ Check with the team before merging: this may overlap with whatever
+ * Check with the team before merging: this may overlap with whatever
  * user/profile model already exists near UserRole.kt. If one exists,
  * just add `ngoStatus`, `ngoOrgName`, and `mealsRescued` to it instead
  * of introducing a second model.
@@ -17,10 +17,9 @@ data class UserProfileUiModel(
     val walletBalance: Double,
     val ngoStatus: NgoStatus = NgoStatus.NONE,
     val ngoOrgName: String? = null,
-    // MVP-phase counter — increment this from checkout/ticket logic
-    // whenever an order is completed. Real order history can replace
-    // this later without changing the sustainability math below.
-    val mealsRescued: Int = 0
+    val mealsRescued: Int = 0,
+    val moneySaved: Double = 0.0,
+    val co2ReducedKg: Double = 0.0
 )
 
 enum class NgoStatus {

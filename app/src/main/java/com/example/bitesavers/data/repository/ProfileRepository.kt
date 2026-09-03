@@ -4,7 +4,6 @@ import android.util.Log
 import com.example.bitesavers.data.remote.SupabaseClient
 import com.example.bitesavers.data.remote.dto.*
 import io.github.jan.supabase.gotrue.auth
-import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
@@ -24,14 +23,24 @@ class ProfileRepository {
 
     suspend fun updateUserProfile(userId: String, name: String, email: String) {
         postgrest.from("users")
-            .update(UserProfileUpdateDto(name = name, email = email)) {
+            .update({
+                set("name", name)
+                set("email", email)
+            }) {
                 filter { eq("id", userId) }
             }
     }
 
-    suspend fun updateUserPassword(newPassword: String) {
-        auth.updateUser {
-            password = newPassword
+    // Updates active user password using Supabase Auth
+    suspend fun updateUserPassword(newPassword: String): Result<Unit> {
+        return try {
+            auth.updateUser {
+                password = newPassword
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("ProfileRepository", "updateUserPassword error: ${e.message}", e)
+            Result.failure(e)
         }
     }
 
@@ -73,7 +82,7 @@ class ProfileRepository {
         cleanupHours: String,
         latitude: Double = 3.1390,
         longitude: Double = 101.6869,
-        reasonForChange: String? = null // 👈 Accepts reasonForChange
+        reasonForChange: String? = null
     ) {
         val times = operatingHours.split("-").map { it.trim() }
         val openingTime = times.getOrNull(0) ?: "08:30"
@@ -92,11 +101,11 @@ class ProfileRepository {
             closingTime = closingTime,
             cleanupEndTime = cleanupHours,
             status = "PENDING",
-            reasonForChange = reasonForChange // 👈 Sends reason to Supabase
+            reasonForChange = reasonForChange
         )
 
         postgrest.from("stores").insert(insertDto)
-        Log.d("ProfileRepository", "✅ Successfully inserted new PENDING store row into 'stores'")
+        Log.d("ProfileRepository", "Successfully inserted new PENDING store row into 'stores'")
     }
 
     // =================================================================
@@ -116,7 +125,10 @@ class ProfileRepository {
 
     suspend fun updateUserNgoStatus(userId: String, status: String, orgName: String?) {
         postgrest.from("users")
-            .update(UserNgoStatusUpdateDto(ngoStatus = status, ngoOrgName = orgName)) {
+            .update({
+                set("ngo_status", status)
+                set("ngo_org_name", orgName)
+            }) {
                 filter { eq("id", userId) }
             }
     }

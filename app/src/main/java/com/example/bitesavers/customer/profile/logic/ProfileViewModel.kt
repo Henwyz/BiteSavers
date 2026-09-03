@@ -11,8 +11,11 @@ import com.example.bitesavers.data.mapper.toInsertDto
 import com.example.bitesavers.data.mapper.toUiModel
 import com.example.bitesavers.data.remote.UserSession
 import com.example.bitesavers.data.remote.repository.ProfileRepository
+import com.example.bitesavers.data.repository.OfferRepository
+import com.example.bitesavers.data.repository.OrderRepository
 import com.example.bitesavers.data.repository.UserRepository
-import io.github.jan.supabase.gotrue.auth
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,7 +37,9 @@ private val PLACEHOLDER_PROFILE = UserProfileUiModel(
     avatarInitials = "?",
     memberSinceLabel = "",
     walletBalance = 0.0,
-    mealsRescued = 0
+    mealsRescued = 0,
+    moneySaved = 0.0,
+    co2ReducedKg = 0.0
 )
 
 /**
@@ -47,6 +52,8 @@ class ProfileViewModel : ViewModel() {
 
     private val repository = ProfileRepository()
     private val userRepository = UserRepository()
+    private val orderRepository = OrderRepository()
+    private val offerRepository = OfferRepository()
 
     private val _profile = MutableStateFlow(PLACEHOLDER_PROFILE)
     val profile: StateFlow<UserProfileUiModel> = _profile.asStateFlow()
@@ -98,6 +105,22 @@ class ProfileViewModel : ViewModel() {
     private val _isUpdatingProfile = MutableStateFlow(false)
     val isUpdatingProfile: StateFlow<Boolean> = _isUpdatingProfile.asStateFlow()
 
+    // Manages visibility and state for Change Password dialog
+    private val _showChangePasswordDialog = MutableStateFlow(false)
+    val showChangePasswordDialog: StateFlow<Boolean> = _showChangePasswordDialog.asStateFlow()
+
+    private val _newPassword = MutableStateFlow("")
+    val newPassword: StateFlow<String> = _newPassword.asStateFlow()
+
+    private val _confirmPassword = MutableStateFlow("")
+    val confirmPassword: StateFlow<String> = _confirmPassword.asStateFlow()
+
+    private val _passwordError = MutableStateFlow<String?>(null)
+    val passwordError: StateFlow<String?> = _passwordError.asStateFlow()
+
+    private val _isChangingPassword = MutableStateFlow(false)
+    val isChangingPassword: StateFlow<Boolean> = _isChangingPassword.asStateFlow()
+
     private val touchedFields = mutableSetOf<String>()
     private var currentMode = NgoFormMode.REGISTER
     private var pendingSubmitMode = NgoFormMode.REGISTER
@@ -107,7 +130,9 @@ class ProfileViewModel : ViewModel() {
         // Customer/Business toggle flips and calls UserSession.setUserId).
         viewModelScope.launch {
             UserSession.currentUserId.collectLatest { userId ->
-                loadProfileData(userId)
+                if (userId.isNotBlank()) {
+                    loadProfileData(userId)
+                }
             }
         }
     }
@@ -117,7 +142,38 @@ class ProfileViewModel : ViewModel() {
         _loadError.value = null
         try {
             val userDto = repository.getUser(userId)
-            _profile.value = userDto.toUiModel()
+            val baseProfile = userDto.toUiModel()
+
+            // Aggregates real completed orders to calculate exact savings and impact
+            val rawOrders = orderRepository.fetchCustomerOrders()
+            val completedOrders = rawOrders.filter { it.status.equals("COMPLETED", ignoreCase = true) }
+
+            var computedMoneySaved = 0.0
+            var totalWeightKg = 0.0
+            var completedCount = 0
+
+            completedOrders.map { order ->
+                viewModelScope.async {
+                    val offer = offerRepository.fetchOfferById(order.offerId)
+                    val originalTotal = (offer?.originalPrice ?: 0.0) * order.quantity
+                    val saved = (originalTotal - order.totalPrice).coerceAtLeast(0.0)
+                    val weight = order.totalWeightKg ?: (0.3 * order.quantity)
+                    Triple(saved, weight, order.quantity)
+                }
+            }.awaitAll().forEach { (saved, weight, qty) ->
+                computedMoneySaved += saved
+                totalWeightKg += weight
+                completedCount += qty
+            }
+
+            // Calculates 2.5 kg CO2e reduced per 1.0 kg of rescued food
+            val computedCo2 = totalWeightKg * 2.5
+
+            _profile.value = baseProfile.copy(
+                mealsRescued = if (completedCount > 0) completedCount else baseProfile.mealsRescued,
+                moneySaved = computedMoneySaved,
+                co2ReducedKg = computedCo2
+            )
 
             val applications = repository.getNgoApplications(userId) // already newest-first
             _activeNgoDetails.value = applications.firstOrNull { it.status == "APPROVED" }?.toUiModel()
@@ -175,6 +231,65 @@ class ProfileViewModel : ViewModel() {
                 _editProfileError.value = "Failed to update profile. Please try again."
             }
             _isUpdatingProfile.value = false
+        }
+    }
+
+    // ---------- Change Password Handlers ----------
+
+    // Opens change password dialog and resets form fields
+    fun openChangePasswordDialog() {
+        _newPassword.value = ""
+        _confirmPassword.value = ""
+        _passwordError.value = null
+        _showChangePasswordDialog.value = true
+    }
+
+    // Closes change password dialog
+    fun dismissChangePasswordDialog() {
+        _showChangePasswordDialog.value = false
+        _passwordError.value = null
+    }
+
+    // Tracks input buffer for new password
+    fun onNewPasswordChange(input: String) {
+        _newPassword.value = input
+        if (_passwordError.value != null) _passwordError.value = null
+    }
+
+    // Tracks input buffer for password confirmation
+    fun onConfirmPasswordChange(input: String) {
+        _confirmPassword.value = input
+        if (_passwordError.value != null) _passwordError.value = null
+    }
+
+    // Validates password equality and minimum length before calling Supabase Auth
+    fun savePasswordChanges(
+        lengthErrorMessage: String,
+        mismatchErrorMessage: String,
+        onSuccess: () -> Unit
+    ) {
+        val pass = _newPassword.value
+        val confirm = _confirmPassword.value
+
+        if (pass.length < 6) {
+            _passwordError.value = lengthErrorMessage
+            return
+        }
+        if (pass != confirm) {
+            _passwordError.value = mismatchErrorMessage
+            return
+        }
+
+        viewModelScope.launch {
+            _isChangingPassword.value = true
+            val result = repository.updateUserPassword(pass)
+            if (result.isSuccess) {
+                _showChangePasswordDialog.value = false
+                onSuccess()
+            } else {
+                _passwordError.value = result.exceptionOrNull()?.message ?: "Failed to update password"
+            }
+            _isChangingPassword.value = false
         }
     }
 
@@ -372,8 +487,8 @@ class ProfileViewModel : ViewModel() {
     fun signOut(onSignedOut: () -> Unit) {
         viewModelScope.launch {
             try {
-                // Clear Supabase authentication session
-                com.example.bitesavers.data.remote.SupabaseClient.client.auth.signOut()
+                userRepository.signOut()
+                onSignedOut()
             } catch (e: Exception) {
                 android.util.Log.e("ProfileViewModel", "Supabase signOut error: ${e.message}")
             } finally {
