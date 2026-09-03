@@ -748,4 +748,24 @@
 
     <string name="action_back">Back</string>
     <string name="store_whatsapp_not_installed">WhatsApp is not installed on this device</string>
+
+    <!-- Dynamic Pricing Dialog & Labels -->
+    <string name="hint_original_price">10.00</string>
+    <string name="hint_discount_price">5.00</string>
+    <string name="label_est_weight">Est. Weight (kg)</string>
+    <string name="hint_est_weight">0.35</string>
+    <string name="hint_quantity">1</string>
+    <string name="label_discount_price_info_title">Dynamic Rescue Pricing</string>
+    <string name="label_discount_price_info_desc">Prices drop dynamically to ensure zero food waste:\n\n• Initial window: 35% – 50% OFF\n• Final 45 mins: 70% OFF clearance\n• Window Closed: 100% OFF (Available for free NGO food rescue claim)\n\nDiscounts are calculated automatically by BiteSaver based on the pickup window.</string>
+    <string name="hint_dynamic_pricing_sub">Price decays dynamically until NGO window</string>
+    <string name="action_got_it">Got it</string>
+    <string name="cd_pricing_info">Pricing Info</string>
+    <string name="title_choose_photo">Choose Photo Source</string>
+    <string name="action_choose_gallery">Choose from gallery</string>
+    <string name="action_retake_change">Retake / Change</string>
+    <string name="action_close">Close</string>
+    <string name="cd_full_image_preview">Full Image Preview</string>
+    <string name="cd_food_preview">Food Preview</string>
+
+    <string name="hint_auto_calculated_pricing">Auto-calculated by Bitesaver dynamic pricing</string>
 </resources>

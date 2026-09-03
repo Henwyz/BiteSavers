@@ -13,6 +13,7 @@ import com.example.bitesavers.data.remote.SupabaseClient
 import com.example.bitesavers.data.remote.UserSession
 import com.example.bitesavers.data.remote.dto.OfferDto
 import com.example.bitesavers.data.remote.dto.StoreDto
+import com.example.bitesavers.util.DynamicPricingEngine
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +27,6 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.UUID
 
-
 class InventoryViewModel : ViewModel() {
     private val _listings = MutableStateFlow<List<ListingItem>>(emptyList())
     val listings: StateFlow<List<ListingItem>> = _listings.asStateFlow()
@@ -36,9 +36,9 @@ class InventoryViewModel : ViewModel() {
     var currentStoreId: String = ""
         private set
 
-    var defaultPickupStart by mutableStateOf("")
+    var defaultPickupStart by mutableStateOf("05:00 PM")
         private set
-    var defaultPickupEnd by mutableStateOf("")
+    var defaultPickupEnd by mutableStateOf("07:00 PM")
         private set
 
     init {
@@ -48,44 +48,40 @@ class InventoryViewModel : ViewModel() {
     private fun initStoreAndFetchListings() {
         viewModelScope.launch(Dispatchers.IO) {
             val userId = UserSession.getUserId()
+            var matchedStore: StoreDto? = null
+
             if (userId.isNotBlank()) {
                 try {
                     val storeList = SupabaseClient.client.from("stores")
-                        .select {
-                            filter {
-                                eq("owner_id", userId)
-                            }
-                        }
+                        .select { filter { eq("owner_id", userId) } }
                         .decodeList<StoreDto>()
-
-                    val store = storeList.firstOrNull()
-                    if (store != null) {
-                        currentStoreId = store.id
-                        store.closingTime?.let { defaultPickupStart = formatTo12Hour(it) }
-                        store.cleanupEndTime?.let { defaultPickupEnd = formatTo12Hour(it) }
-                    }
+                    matchedStore = storeList.firstOrNull()
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
             }
 
-            // Fallback if no store is matched for this user ID
-            if (currentStoreId.isBlank()) {
+            // Fallback store if current owner store not found
+            if (matchedStore == null) {
                 try {
                     val storeList = SupabaseClient.client.from("stores")
-                        .select()
+                        .select { limit(1) }
                         .decodeList<StoreDto>()
-
-                    val defaultStore = storeList.firstOrNull()
-                    if (defaultStore != null) {
-                        currentStoreId = defaultStore.id
-                        defaultStore.closingTime?.let { defaultPickupStart = formatTo12Hour(it) }
-                        defaultStore.cleanupEndTime?.let { defaultPickupEnd = formatTo12Hour(it) }
-                    }
+                    matchedStore = storeList.firstOrNull()
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    currentStoreId = "11111111-1111-1111-1111-111111111111"
                 }
+            }
+
+            matchedStore?.let { store ->
+                currentStoreId = store.id
+                // Generates an automated consumer pickup window based on operating hours
+                val (suggestedStart, suggestedEnd) = DynamicPricingEngine.generateDefaultPickupWindow(
+                    openingTime24 = store.openingTime,
+                    closingTime24 = store.closingTime
+                )
+                defaultPickupStart = suggestedStart
+                defaultPickupEnd = suggestedEnd
             }
 
             fetchListings()
@@ -99,28 +95,22 @@ class InventoryViewModel : ViewModel() {
                     .from("offers")
                     .select {
                         if (currentStoreId.isNotBlank()) {
-                            filter {
-                                eq("store_id", currentStoreId)
-                            }
+                            filter { eq("store_id", currentStoreId) }
                         }
                     }
                     .decodeList<OfferDto>()
 
-                _listings.value = result.map { it.toListingItem(defaultPickupStart, defaultPickupEnd) }
+                // Maps items and formats any SQL 24-hour times into user-friendly 12-hour AM/PM
+                _listings.value = result.map { offer ->
+                    val item = offer.toListingItem(defaultPickupStart, defaultPickupEnd)
+                    item.copy(
+                        pickupStart = formatToAmPm(item.pickupStart),
+                        pickupEnd = formatToAmPm(item.pickupEnd)
+                    )
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        }
-    }
-
-    private fun formatTo12Hour(time24: String): String {
-        return try {
-            val parser = SimpleDateFormat("HH:mm:ss", Locale.US)
-            val formatter = SimpleDateFormat("hh:mm a", Locale.US)
-            val date = parser.parse(time24)
-            if (date != null) formatter.format(date) else time24
-        } catch (_: Exception) {
-            time24
         }
     }
 
@@ -150,7 +140,6 @@ class InventoryViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 var finalImageUrl = item.imageUrl
-
                 if (item.imageBitmap != null) {
                     val uploadedUrl = uploadFoodImage(item.imageBitmap)
                     if (uploadedUrl != null) {
@@ -158,7 +147,15 @@ class InventoryViewModel : ViewModel() {
                     }
                 }
 
-                val dtoToInsert = localItem.copy(imageUrl = finalImageUrl).toDto(currentStoreId)
+                // Convert 12-hour UI strings to 24-hour Postgres formats before saving
+                val formattedStart = DynamicPricingEngine.to24HourTime(localItem.pickupStart) ?: localItem.pickupStart
+                val formattedEnd = DynamicPricingEngine.to24HourTime(localItem.pickupEnd) ?: localItem.pickupEnd
+
+                val dtoToInsert = localItem.copy(
+                    imageUrl = finalImageUrl,
+                    pickupStart = formattedStart,
+                    pickupEnd = formattedEnd
+                ).toDto(currentStoreId)
 
                 SupabaseClient.client
                     .from("offers")
@@ -177,7 +174,6 @@ class InventoryViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 var finalImageUrl = item.imageUrl
-
                 if (item.imageBitmap != null) {
                     val uploadedUrl = uploadFoodImage(item.imageBitmap)
                     if (uploadedUrl != null) {
@@ -185,14 +181,19 @@ class InventoryViewModel : ViewModel() {
                     }
                 }
 
-                val dtoToUpdate = item.copy(imageUrl = finalImageUrl).toDto(currentStoreId)
+                val formattedStart = DynamicPricingEngine.to24HourTime(item.pickupStart) ?: item.pickupStart
+                val formattedEnd = DynamicPricingEngine.to24HourTime(item.pickupEnd) ?: item.pickupEnd
+
+                val dtoToUpdate = item.copy(
+                    imageUrl = finalImageUrl,
+                    pickupStart = formattedStart,
+                    pickupEnd = formattedEnd
+                ).toDto(currentStoreId)
 
                 SupabaseClient.client
                     .from("offers")
                     .update(dtoToUpdate) {
-                        filter {
-                            eq("id", item.id)
-                        }
+                        filter { eq("id", item.id) }
                     }
 
                 fetchListings()
@@ -209,15 +210,28 @@ class InventoryViewModel : ViewModel() {
             try {
                 SupabaseClient.client
                     .from("offers")
-                    .delete {
-                        filter {
-                            eq("id", itemId)
-                        }
-                    }
+                    .delete { filter { eq("id", itemId) } }
                 fetchListings()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
+        }
+    }
+
+    // Safely converts 24-hour SQL time strings to 12-hour AM/PM strings for display
+    private fun formatToAmPm(timeStr: String?): String {
+        if (timeStr.isNullOrBlank()) return ""
+        val trimmed = timeStr.trim()
+        if (trimmed.endsWith("AM", ignoreCase = true) || trimmed.endsWith("PM", ignoreCase = true)) {
+            return trimmed
+        }
+        return try {
+            val parser = SimpleDateFormat("HH:mm", Locale.US)
+            val formatter = SimpleDateFormat("hh:mm a", Locale.US)
+            val date = parser.parse(trimmed.take(5))
+            if (date != null) formatter.format(date) else trimmed
+        } catch (_: Exception) {
+            trimmed
         }
     }
 }
