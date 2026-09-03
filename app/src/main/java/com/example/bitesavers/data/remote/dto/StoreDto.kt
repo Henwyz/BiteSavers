@@ -54,7 +54,19 @@ data class StoreDto(
     val ssmNumber: String? = null,
 
     @SerialName("ssm_document_url")
-    val ssmDocumentUrl: String? = null
+    val ssmDocumentUrl: String? = null,
+
+    @SerialName("balance")
+    val balance: Double = 0.0,
+
+    @SerialName("payout_card_number")
+    val payoutCardNumber: String? = null,
+
+    @SerialName("payout_card_holder")
+    val payoutCardHolder: String? = null,
+
+    @SerialName("payout_card_bank")
+    val payoutCardBank: String? = null
 )
 
 @Serializable
@@ -71,5 +83,9 @@ data class StoreEditInsertDto(
     @SerialName("closing_time") val closingTime: String?,
     @SerialName("cleanup_end_time") val cleanupEndTime: String?,
     @SerialName("status") val status: String,
-    @SerialName("reason_for_change") val reasonForChange: String? = null // 👈 Added to insert payload
+    @SerialName("reason_for_change") val reasonForChange: String? = null,
+    @SerialName("balance") val balance: Double = 0.0,
+    @SerialName("payout_card_number") val payoutCardNumber: String? = null,
+    @SerialName("payout_card_holder") val payoutCardHolder: String? = null,
+    @SerialName("payout_card_bank") val payoutCardBank: String? = null
 )

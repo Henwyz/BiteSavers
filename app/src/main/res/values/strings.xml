@@ -757,6 +757,26 @@
     <string name="business_edit_tnc_title">Terms and Conditions</string>
     <string name="business_edit_tnc_message">By submitting these changes, you confirm all business details are accurate and comply with the platform\'s partner merchant policies.</string>
 
+
+    <!-- ================================================================= -->
+    <!-- MERCHANT PAYMENT METHOD                                           -->
+    <!-- ================================================================= -->
+    <string name="merchant_wallet_title">Store Balance</string>
+    <string name="merchant_available_balance">Available to Withdraw</string>
+    <string name="merchant_withdraw_button">Withdraw</string>
+    <string name="merchant_payout_history">Payout History</string>
+    <string name="dialog_withdraw_title">Request Payout</string>
+    <string name="dialog_card_number_hint">Debit / Credit Card Number</string>
+    <string name="dialog_amount_hint">Amount (RM)</string>
+    <string name="error_insufficient_funds">Withdrawal amount exceeds available balance.</string>
+    <string name="error_invalid_card">Please enter a valid card number.</string>
+    <string name="payout_status_pending">Pending</string>
+    <string name="payout_status_completed">Completed</string>
+    <string name="payout_status_rejected">Rejected</string>
+    <string name="payout_success_msg">Withdrawal request submitted successfully.</string>
+    <string name="profile_wallet_balance_label">Wallet Balance</string>
+    <string name="profile_view_wallet">View Wallet</string>
+
     <!-- ================================================================= -->
     <!-- NOTIFICATIONS (SYSTEM & IN-APP)                                   -->
     <!-- ================================================================= -->
