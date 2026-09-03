@@ -11,6 +11,9 @@ import com.example.bitesavers.data.dto.StorageBoxDto
 import com.example.bitesavers.data.remote.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -25,36 +28,110 @@ class TemperatureViewModel : ViewModel() {
     var isLoading by mutableStateOf(false)
         private set
 
-    fun fetchUnitsForStore(storeId: String) {
+    // Holds the polling coroutine reference
+    private var pollingJob: Job? = null
+
+    // Starts background polling loop every 5 seconds for live sensor updates
+    fun startPolling(storeId: String, intervalMillis: Long = 5000L) {
         if (storeId.isBlank()) return
 
-        viewModelScope.launch(Dispatchers.IO) {
-            isLoading = true
-            try {
-                val response = SupabaseClient.client.from("storage_boxes")
-                    .select {
-                        filter {
-                            eq("store_id", storeId)
-                        }
-                    }
-                    .decodeList<StorageBoxDto>()
+        // Prevent duplicate background loops
+        pollingJob?.cancel()
 
-                withContext(Dispatchers.Main) {
-                    units = response
-                    if (selectedUnit == null && response.isNotEmpty()) {
-                        selectedUnit = response.first()
-                    } else if (response.isEmpty()) {
-                        selectedUnit = null
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("TemperatureVM", "fetchUnitsForStore error: ${e.message}", e)
-            } finally {
-                withContext(Dispatchers.Main) {
-                    isLoading = false
-                }
+        pollingJob = viewModelScope.launch(Dispatchers.IO) {
+            // First run displays the initial loading indicator
+            fetchUnitsInternal(storeId, showLoading = true)
+
+            while (isActive) {
+                delay(intervalMillis)
+                // Subsequent ticks refresh data silently without full-screen loading spinner
+                fetchUnitsInternal(storeId, showLoading = false)
             }
         }
+    }
+
+    // Cancels polling when screen is paused or disposed
+    fun stopPolling() {
+        pollingJob?.cancel()
+        pollingJob = null
+    }
+
+    // Determines if a unit's live reading breaches safe holding parameters
+    private fun isTemperatureWarning(box: StorageBoxDto): Boolean {
+        val isHotBox = box.storageType.equals("Hot Box", ignoreCase = true)
+        return if (isHotBox) {
+            val minSafeHot = (box.targetTemperature ?: 60.0) - 5.0
+            box.currentTemperature < minSafeHot
+        } else {
+            val maxSafeCold = (box.targetTemperature ?: 4.0) + 4.0
+            box.currentTemperature > maxSafeCold
+        }
+    }
+
+    // Evaluates food safety condition and locks breached boxes in Supabase
+    private suspend fun enforceFoodSafetyLocks(fetchedUnits: List<StorageBoxDto>): List<StorageBoxDto> {
+        return fetchedUnits.map { box ->
+            val warning = isTemperatureWarning(box)
+            if (warning && !box.isLocked) {
+                try {
+                    SupabaseClient.client.from("storage_boxes")
+                        .update({
+                            set("is_locked", true)
+                        }) {
+                            filter {
+                                eq("id", box.id)
+                            }
+                        }
+                    box.copy(isLocked = true)
+                } catch (e: Exception) {
+                    Log.e("TemperatureVM", "Failed to auto-lock breached box ${box.id}: ${e.message}")
+                    box
+                }
+            } else {
+                box
+            }
+        }
+    }
+
+    // Internal fetch implementation with optional spinner toggle
+    private suspend fun fetchUnitsInternal(storeId: String, showLoading: Boolean) {
+        if (showLoading) {
+            withContext(Dispatchers.Main) { isLoading = true }
+        }
+
+        try {
+            val response = SupabaseClient.client.from("storage_boxes")
+                .select {
+                    filter {
+                        eq("store_id", storeId)
+                    }
+                }
+                .decodeList<StorageBoxDto>()
+
+            val evaluatedUnits = enforceFoodSafetyLocks(response)
+
+            withContext(Dispatchers.Main) {
+                units = evaluatedUnits
+                if (selectedUnit == null && evaluatedUnits.isNotEmpty()) {
+                    selectedUnit = evaluatedUnits.first()
+                } else if (evaluatedUnits.isNotEmpty()) {
+                    selectedUnit = evaluatedUnits.firstOrNull { it.id == selectedUnit?.id } ?: evaluatedUnits.first()
+                } else {
+                    selectedUnit = null
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("TemperatureVM", "fetchUnits error: ${e.message}", e)
+        } finally {
+            if (showLoading) {
+                withContext(Dispatchers.Main) { isLoading = false }
+            }
+        }
+    }
+
+    // Direct fetch wrapper
+    fun fetchUnitsForStore(storeId: String) {
+        startPolling(storeId)
     }
 
     // Assigns an unassigned physical IoT sensor to the store with the selected target mode and profile temperature
@@ -70,7 +147,6 @@ class TemperatureViewModel : ViewModel() {
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                // Fetch candidate matching by exact box_code or case-insensitive ilike
                 var candidates = SupabaseClient.client.from("storage_boxes")
                     .select {
                         filter {
@@ -79,7 +155,6 @@ class TemperatureViewModel : ViewModel() {
                     }
                     .decodeList<StorageBoxDto>()
 
-                // Fallback check if user entered internal ID directly
                 if (candidates.isEmpty()) {
                     candidates = SupabaseClient.client.from("storage_boxes")
                         .select {
@@ -99,7 +174,6 @@ class TemperatureViewModel : ViewModel() {
 
                 val targetBox = candidates.first()
 
-                // Check if already claimed by another store
                 if (!targetBox.storeId.isNullOrBlank() && targetBox.storeId != storeId) {
                     withContext(Dispatchers.Main) {
                         onError(R.string.error_box_claimed)
@@ -110,19 +184,19 @@ class TemperatureViewModel : ViewModel() {
                 val chosenType = if (isHotBox) "Hot Box" else "Refrigerator"
                 val targetTemp = if (isHotBox) 60.0 else 4.0
 
-                // Link to current store, set target operational temperature profile
                 SupabaseClient.client.from("storage_boxes")
                     .update({
                         set("store_id", storeId)
                         set("storage_type", chosenType)
                         set("target_temperature", targetTemp)
+                        set("is_locked", true)
                     }) {
                         filter {
                             eq("id", targetBox.id)
                         }
                     }
 
-                fetchUnitsForStore(storeId)
+                fetchUnitsInternal(storeId, showLoading = false)
 
                 withContext(Dispatchers.Main) {
                     onSuccess()
@@ -143,7 +217,6 @@ class TemperatureViewModel : ViewModel() {
     fun deleteBox(boxId: String, storeId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                // Unclaim sensor by resetting store_id to null
                 SupabaseClient.client.from("storage_boxes")
                     .update({
                         set("store_id", null as String?)
@@ -153,7 +226,7 @@ class TemperatureViewModel : ViewModel() {
                         }
                     }
 
-                fetchUnitsForStore(storeId)
+                fetchUnitsInternal(storeId, showLoading = false)
 
                 withContext(Dispatchers.Main) {
                     if (selectedUnit?.id == boxId) {
@@ -164,5 +237,10 @@ class TemperatureViewModel : ViewModel() {
                 Log.e("TemperatureVM", "deleteBox failed: ${e.message}", e)
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        stopPolling()
     }
 }

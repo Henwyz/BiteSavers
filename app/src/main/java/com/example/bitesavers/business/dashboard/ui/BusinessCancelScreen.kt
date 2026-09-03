@@ -1,5 +1,6 @@
 package com.example.bitesavers.business.dashboard.ui
 
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,9 +17,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -47,12 +45,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.bitesavers.R
 import com.example.bitesavers.business.dashboard.logic.CancelViewModel
+import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @Composable
 fun getPaymentDisplayName(raw: String): String {
@@ -206,7 +206,7 @@ fun BusinessCancelScreen(
                 }
             }
 
-            //Refund card auto linked to order payment method
+            // Refund card auto linked to order payment method
             Card(
                 shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -222,7 +222,7 @@ fun BusinessCancelScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    //Locked Radio showing the linked channel
+                    // Locked Radio showing the linked channel
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
@@ -277,8 +277,8 @@ fun BusinessCancelScreen(
                         verticalAlignment = Alignment.Top
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Warning, //mustbe change
-                            contentDescription = null,
+                            painter = painterResource(id = R.drawable.ic_warning),
+                            contentDescription = stringResource(id = R.string.cd_warning_icon),
                             tint = MaterialTheme.colorScheme.onTertiaryContainer,
                             modifier = Modifier.size(22.dp)
                         )
@@ -459,6 +459,18 @@ fun BusinessCancelScreen(
                     )
                 }
             }
+        )
+    }
+}
+
+// Renders BusinessCancelScreen in Android Studio Preview
+@Preview(name = "Business Cancel Screen - Light", showBackground = true)
+@Preview(name = "Business Cancel Screen - Dark", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Composable
+private fun BusinessCancelScreenPreview() {
+    BiteSaversTheme {
+        BusinessCancelScreen(
+            orderId = "preview_order_123"
         )
     }
 }

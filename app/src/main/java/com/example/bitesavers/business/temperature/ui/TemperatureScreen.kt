@@ -30,7 +30,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,9 +64,12 @@ fun TemperatureScreen(
     val warningText = stringResource(R.string.status_warning)
     val normalText = stringResource(R.string.status_normal)
 
-    // Automatically loads sensors associated with active store
-    LaunchedEffect(storeId) {
-        viewModel.fetchUnitsForStore(storeId)
+    // Starts live polling when screen is displayed, stops when navigating away
+    DisposableEffect(storeId) {
+        viewModel.startPolling(storeId)
+        onDispose {
+            viewModel.stopPolling()
+        }
     }
 
     Column(

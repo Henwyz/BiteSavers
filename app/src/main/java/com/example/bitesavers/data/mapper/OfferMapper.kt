@@ -1,6 +1,7 @@
 package com.example.bitesavers.data.mapper
 
 import com.example.bitesavers.R
+import com.example.bitesavers.data.dto.StorageBoxDto
 import com.example.bitesavers.data.model.DiscoveryCategory
 import com.example.bitesavers.data.model.OfferUiModel
 import com.example.bitesavers.data.remote.dto.OfferDto
@@ -10,9 +11,12 @@ import java.util.Calendar
 import java.util.Locale
 
 // Set to true to bypass opening hours during development so all stores/offers appear open
-const val DEBUG_BYPASS_OPERATING_HOURS = false
+const val DEBUG_BYPASS_OPERATING_HOURS = true
 
-fun OfferDto.toUiModel(store: StoreDto?): OfferUiModel {
+fun OfferDto.toUiModel(
+    store: StoreDto?,
+    storageBox: StorageBoxDto? = null
+): OfferUiModel {
     val origPrice = originalPrice ?: 0.0
     val discPrice = discountedPrice ?: 0.0
     val calculatedDiscount = if (origPrice > 0) {
@@ -57,6 +61,11 @@ fun OfferDto.toUiModel(store: StoreDto?): OfferUiModel {
         else -> R.drawable.ic_launcher_foreground
     }
 
+    // Resolves IoT storage classification and live temperature reading from connected storage box
+    val isHotHolding = storageBox?.storageType?.contains("Hot", ignoreCase = true) == true
+    val resolvedStorageType = if (isHotHolding) "HOT" else "COLD"
+    val resolvedTemperature = storageBox?.currentTemperature ?: if (isHotHolding) 60.0 else 4.0
+
     return OfferUiModel(
         id = this.id,
         storeId = this.storeId ?: store?.id ?: "store_01", // Maps foreign key store ID from Supabase
@@ -73,7 +82,8 @@ fun OfferDto.toUiModel(store: StoreDto?): OfferUiModel {
         pickupWindow = formattedPickupWindow,
         category = mappedCategory,
         isEligibleForNgoFree = this.isEligibleForNgoFree,
-        storageType = "HOT",
+        liveTemperature = resolvedTemperature,
+        storageType = resolvedStorageType,
         description = this.description ?: "Fresh surplus food ready for rescue.",
         latitude = store?.latitude,
         longitude = store?.longitude,

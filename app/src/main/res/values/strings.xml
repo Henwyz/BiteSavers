@@ -761,6 +761,34 @@
     <string name="business_edit_tnc_title">Terms and Conditions</string>
     <string name="business_edit_tnc_message">By submitting these changes, you confirm all business details are accurate and comply with the platform\'s partner merchant policies.</string>
 
+
+    <!-- ================================================================= -->
+    <!-- MERCHANT PAYMENT METHOD                                           -->
+    <!-- ================================================================= -->
+    <string name="merchant_wallet_title">Store Balance</string>
+    <string name="merchant_available_balance">Available to Withdraw</string>
+    <string name="merchant_withdraw_button">Withdraw</string>
+    <string name="merchant_payout_history">Payout History</string>
+    <string name="dialog_withdraw_title">Request Payout</string>
+    <string name="dialog_card_number_hint">Debit / Credit Card Number</string>
+    <string name="dialog_amount_hint">Amount (RM)</string>
+    <string name="error_insufficient_funds">Withdrawal amount exceeds available balance.</string>
+    <string name="error_invalid_card">Please enter a valid card number.</string>
+    <string name="payout_status_pending">Pending</string>
+    <string name="payout_status_completed">Completed</string>
+    <string name="payout_status_rejected">Rejected</string>
+    <string name="payout_success_msg">Withdrawal request submitted successfully.</string>
+    <string name="profile_wallet_balance_label">Wallet Balance</string>
+    <string name="profile_view_wallet">View Wallet</string>
+    <string name="dialog_exp_hint">Exp (MMYY)</string>
+    <string name="dialog_cvv_hint">CVV</string>
+    <string name="dialog_cancel">Cancel</string>
+    <string name="error_card_length">Card number must be exactly 16 digits.</string>
+    <string name="error_expiry_invalid">Please enter a valid expiry date (MMYY).</string>
+    <string name="error_month_range">Month must be between 01 and 12.</string>
+    <string name="error_year_range">Year must start from 27 or later.</string>
+    <string name="error_cvv_length">CVV must be exactly 3 digits.</string>
+
     <!-- ================================================================= -->
     <!-- NOTIFICATIONS (SYSTEM & IN-APP)                                   -->
     <!-- ================================================================= -->
@@ -845,4 +873,12 @@
     <string name="type_cold_temp_target">4.0°C</string>
     <string name="type_hot_storage">Hot Warmer Box</string>
     <string name="type_hot_temp_target">60.0°C</string>
+
+    <!-- Food Safety Banner & Details -->
+    <string name="detail_temp_safe_format">Live temp: %1$.1f°C - within safe %2$s zone</string>
+    <string name="detail_temp_breach_format">Live temp: %1$.1f°C - Alert: temperature breach!</string>
+    <string name="storage_zone_hot">hot holding (&gt;= 55°C)</string>
+    <string name="storage_zone_cold">cold storage (&lt;= 8°C)</string>
+    <string name="error_offer_not_found">Offer not found</string>
+    <string name="cd_warning_icon">Warning icon</string>
 </resources>

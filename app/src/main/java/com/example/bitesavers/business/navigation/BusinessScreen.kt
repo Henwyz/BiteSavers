@@ -12,7 +12,9 @@ sealed class BusinessScreen(val route: String) {
     object Temperature : BusinessScreen("temperature_screen")
     object AddBox : BusinessScreen("add_box_screen")
     object BusinessOrders : BusinessScreen("business_orders")
-
+    object Wallet : BusinessScreen("merchant_wallet_route/{storeId}") {
+        fun createRoute(storeId: String): String = "merchant_wallet_route/$storeId"
+    }
     object Verification : BusinessScreen("business_verification/{orderId}") {
         // Generates the destination route filled with the concrete order ID
         fun createRoute(orderId: String): String = "business_verification/$orderId"

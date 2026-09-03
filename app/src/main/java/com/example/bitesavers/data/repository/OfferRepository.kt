@@ -1,5 +1,6 @@
 package com.example.bitesavers.data.repository
 
+import com.example.bitesavers.data.dto.StorageBoxDto
 import com.example.bitesavers.data.mapper.toUiModel
 import com.example.bitesavers.data.model.OfferUiModel
 import com.example.bitesavers.data.remote.SupabaseClient
@@ -19,14 +20,11 @@ class OfferRepository {
                 .select {
                     filter {
                         gt("quantity_available", 0)
-                        // Matches the status in the seeded database records
                         isIn("status", listOf("AVAILABLE", "ACTIVE"))
                     }
                 }
                 .decodeList<OfferDto>()
 
-            // Fetch all stores referenced by their clean text IDs (e.g. store_01, store_02)
-            // Uses mapNotNull to guarantee a non-null List<String> for the Supabase filter
             val storeIds: List<String> = offers.mapNotNull { it.storeId }.distinct()
             val storesMap = if (storeIds.isNotEmpty()) {
                 client.from("stores")
@@ -41,9 +39,25 @@ class OfferRepository {
                 emptyMap()
             }
 
+            // Batch fetch storage boxes for live temperatures
+            val boxIds: List<String> = offers.mapNotNull { it.storageBoxId }.distinct()
+            val boxesMap = if (boxIds.isNotEmpty()) {
+                client.from("storage_boxes")
+                    .select {
+                        filter {
+                            isIn("id", boxIds)
+                        }
+                    }
+                    .decodeList<StorageBoxDto>()
+                    .associateBy { it.id }
+            } else {
+                emptyMap()
+            }
+
             offers.map { offer ->
                 val store = offer.storeId?.let { storesMap[it] }
-                offer.toUiModel(store)
+                val box = offer.storageBoxId?.let { boxesMap[it] }
+                offer.toUiModel(store = store, storageBox = box)
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -51,13 +65,14 @@ class OfferRepository {
         }
     }
 
-    // 2. Food Detail Screen: Fetch single item with store location data
+    // 2. Food Detail Screen: Fetch single item with real store & storage box telemetry
     suspend fun fetchOfferById(offerId: String): OfferUiModel? = withContext(Dispatchers.IO) {
         try {
             val offer = client.from("offers")
                 .select { filter { eq("id", offerId) } }
                 .decodeSingle<OfferDto>()
 
+            // Fetch Store for Location & Rating
             val targetStoreId = offer.storeId
             val store = if (!targetStoreId.isNullOrBlank()) {
                 try {
@@ -67,18 +82,27 @@ class OfferRepository {
                 } catch (_: Exception) {
                     null
                 }
-            } else {
-                null
-            }
+            } else null
 
-            offer.toUiModel(store)
+            // Fetch Connected IoT Storage Box for Live Temperature
+            val targetBoxId = offer.storageBoxId
+            val storageBox = if (!targetBoxId.isNullOrBlank()) {
+                try {
+                    client.from("storage_boxes")
+                        .select { filter { eq("id", targetBoxId) } }
+                        .decodeSingle<StorageBoxDto>()
+                } catch (_: Exception) {
+                    null
+                }
+            } else null
+
+            offer.toUiModel(store = store, storageBox = storageBox)
         } catch (e: Exception) {
             e.printStackTrace()
             null
         }
     }
 
-    // Fetches bookmarked items regardless of whether quantity is 0 (to display SOLD OUT state)
     suspend fun fetchSavedOffersByIds(offerIds: Set<String>): List<OfferUiModel> = withContext(Dispatchers.IO) {
         if (offerIds.isEmpty()) return@withContext emptyList()
 
@@ -91,7 +115,6 @@ class OfferRepository {
                 }
                 .decodeList<OfferDto>()
 
-            // Uses mapNotNull to guarantee a non-null List<String> for the Supabase filter
             val storeIds: List<String> = offers.mapNotNull { it.storeId }.distinct()
             val storesMap = if (storeIds.isNotEmpty()) {
                 client.from("stores")
@@ -106,9 +129,24 @@ class OfferRepository {
                 emptyMap()
             }
 
+            val boxIds: List<String> = offers.mapNotNull { it.storageBoxId }.distinct()
+            val boxesMap = if (boxIds.isNotEmpty()) {
+                client.from("storage_boxes")
+                    .select {
+                        filter {
+                            isIn("id", boxIds)
+                        }
+                    }
+                    .decodeList<StorageBoxDto>()
+                    .associateBy { it.id }
+            } else {
+                emptyMap()
+            }
+
             offers.map { offer ->
                 val store = offer.storeId?.let { storesMap[it] }
-                offer.toUiModel(store)
+                val box = offer.storageBoxId?.let { boxesMap[it] }
+                offer.toUiModel(store = store, storageBox = box)
             }
         } catch (e: Exception) {
             e.printStackTrace()
