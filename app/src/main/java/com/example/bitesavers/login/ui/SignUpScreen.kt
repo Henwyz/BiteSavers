@@ -139,15 +139,7 @@ fun SignUpScreen(
                     OutlinedTextField(
                         value = viewModel.fullName,
                         onValueChange = { viewModel.updateFullName(it) },
-                        placeholder = {
-                            Text(
-                                if (viewModel.isBusiness) {
-                                    stringResource(R.string.signup_placeholder_name_business)
-                                } else {
-                                    stringResource(R.string.signup_placeholder_name_consumer)
-                                }
-                            )
-                        },
+                        placeholder = { Text(stringResource(R.string.signup_placeholder_name_consumer)) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(50),
                         isError = viewModel.fullNameError != null,

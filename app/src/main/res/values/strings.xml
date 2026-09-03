@@ -557,7 +557,23 @@
     <string name="closing_time_label">Closing Time</string>
     <string name="cleanup_end_time_label">Cleanup End Time</string>
     <string name="cleanup_end_time_hint">e.g. 22:30</string>
-    <string name="restaurant_verification_note">Note: New registrations require review and verification (is_verified = false) before approval.</string>
+    <string name="restaurant_verification_note">Note: New registrations require review and verification before approval.</string>
+
+    <!-- Waiting approval for the restaurant registration -->
+    <string name="update_submitted_title">Update Submitted</string>
+    <string name="update_submitted_message">Your business details will be updated once approved.\nIn the meantime, your current business details remain active.</string>
+    <string name="understood_button">Understood</string>
+    <string name="restaurant_status_title">Restaurant Status</string>
+    <string name="pending_review_banner">Your change request is currently pending review. Current details will remain active until approved.</string>
+    <string name="certificate_verified">Certificate Verified</string>
+    <string name="pending_doc_verification">Pending Document Verification</string>
+    <string name="certificate_of_registration">Certificate of Registration</string>
+    <string name="label_restaurant_name">Restaurant Name</string>
+    <string name="label_ssm_number">Registration Number (SSM)</string>
+    <string name="label_contact_phone">Contact Phone</string>
+    <string name="label_address">Restaurant Address</string>
+    <string name="not_provided">Not provided</string>
+    <string name="edit_button_desc">Edit</string>
 
     <!-- Listings & Surplus Food Form -->
     <string name="my_listings_title">My Listing</string>

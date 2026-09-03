@@ -30,6 +30,7 @@ object UserSession {
     private val _notificationRefreshEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val notificationRefreshEvent: SharedFlow<Unit> = _notificationRefreshEvent.asSharedFlow()
 
+
     /**
      * Initializes disk storage access and restores any previously saved session.
      * Call this once when the application or MainActivity starts.
@@ -116,5 +117,15 @@ object UserSession {
         sharedPreferences?.edit()
             ?.clear()
             ?.commit()
+    }
+
+    private var storeStatus: String = "PENDING"
+
+    fun setStoreStatus(status: String) {
+        storeStatus = status
+    }
+
+    fun getStoreStatus(): String {
+        return storeStatus
     }
 }

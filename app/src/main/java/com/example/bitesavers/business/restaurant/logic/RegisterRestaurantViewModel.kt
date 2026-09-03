@@ -31,7 +31,23 @@ class RegisterRestaurantViewModel(application: Application) : AndroidViewModel(a
         private set
     var closingTime by mutableStateOf("10:00 PM")
         private set
-    var cleanupEndTime by mutableStateOf("22:30")
+    var cleanupEndTime by mutableStateOf("10:30 PM")
+        private set
+
+    // Validation error states
+    var cleanupTimeError by mutableStateOf<String?>(null)
+        private set
+    var ssmError by mutableStateOf<String?>(null)
+        private set
+    var restaurantNameError by mutableStateOf<String?>(null)
+        private set
+    var contactPhoneError by mutableStateOf<String?>(null)
+        private set
+    var addressError by mutableStateOf<String?>(null)
+        private set
+    var storeImageError by mutableStateOf<String?>(null)
+        private set
+    var ssmDocError by mutableStateOf<String?>(null)
         private set
 
     var storeImageUri by mutableStateOf<Uri?>(null)
@@ -39,40 +55,79 @@ class RegisterRestaurantViewModel(application: Application) : AndroidViewModel(a
     var ssmDocUri by mutableStateOf<Uri?>(null)
         private set
 
-    fun updateRestaurantName(value: String) { restaurantName = value }
-    fun updateAddress(value: String) { address = value }
-    fun updateContactPhone(value: String) { contactPhone = value }
-    fun updateSsmNumber(value: String) { ssmNumber = value }
+    fun updateRestaurantName(value: String) {
+        restaurantName = value
+        restaurantNameError = if (value.isBlank()) "Restaurant name is required" else null
+    }
+
+    fun updateAddress(value: String) {
+        address = value
+        addressError = if (value.isBlank()) "Address is required" else null
+    }
+
+    fun updateContactPhone(value: String) {
+        contactPhone = value
+        contactPhoneError = if (value.isBlank()) "Contact phone is required" else null
+    }
+
+    fun updateSsmNumber(value: String) {
+        if (value.all { it.isDigit() } && value.length <= 12) {
+            ssmNumber = value
+            ssmError = if (value.length != 12) {
+                "SSM number must be exactly 12 digits"
+            } else {
+                null
+            }
+        }
+    }
+
     fun updateOpeningTime(value: String) { openingTime = value }
-    fun updateClosingTime(value: String) { closingTime = value }
-    fun updateCleanupEndTime(value: String) { cleanupEndTime = value }
-    fun updateStoreImageUri(uri: Uri?) { storeImageUri = uri }
-    fun updateSsmDocUri(uri: Uri?) { ssmDocUri = uri }
+
+    fun updateClosingTime(value: String) {
+        closingTime = value
+        validateTimes()
+    }
+
+    fun updateCleanupEndTime(value: String) {
+        cleanupEndTime = value
+        validateTimes()
+    }
+
+    private fun validateTimes() {
+        if (!RegisterRestaurantValidation.isCleanupValid(closingTime, cleanupEndTime)) {
+            cleanupTimeError = "Cleanup time must be after closing time"
+        } else {
+            cleanupTimeError = null
+        }
+    }
+
+    fun updateStoreImageUri(uri: Uri?) {
+        storeImageUri = uri
+        storeImageError = if (uri == null) "Store photo is required" else null
+    }
+
+    fun updateSsmDocUri(uri: Uri?) {
+        ssmDocUri = uri
+        ssmDocError = if (uri == null) "SSM document is required" else null
+    }
 
     fun useDefaultPenangLocation() {
         address = "Penang, Malaysia"
+        addressError = null
     }
 
     private suspend fun uploadFileToStorage(uri: Uri, bucketName: String, prefix: String): String? = withContext(Dispatchers.IO) {
         try {
-            // Get application the context to access the device's content resolver
             val context = getApplication<Application>().applicationContext
-
-            // Open an input stream from the given file URI (gallery photo or SSM document)
             val inputStream = context.contentResolver.openInputStream(uri) ?: return@withContext null
             val bytes = inputStream.readBytes()
             inputStream.close()
 
-            // Generate a unique file name using a prefix (e.g., store_ or ssm_), current time, and a random hash
             val fileName = "${prefix}_${System.currentTimeMillis()}_${UUID.randomUUID().toString().take(6)}"
-
-            // Connect to the designated Supabase storage bucket
             val bucket = SupabaseClient.client.storage.from(bucketName)
 
-            // 7. Upload the raw byte array into the Supabase bucket and return its public URL
             bucket.upload(fileName, bytes)
             bucket.publicUrl(fileName)
-
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -80,24 +135,28 @@ class RegisterRestaurantViewModel(application: Application) : AndroidViewModel(a
     }
 
     fun registerRestaurant(onSuccess: () -> Unit) {
+        // Final sanity check validation on submission trigger
+        restaurantNameError = if (restaurantName.isBlank()) "Restaurant name is required" else null
+        addressError = if (address.isBlank()) "Address is required" else null
+        contactPhoneError = if (contactPhone.isBlank()) "Contact phone is required" else null
+        ssmError = if (!RegisterRestaurantValidation.isSsmValid(ssmNumber)) "SSM number must be exactly 12 digits" else null
+        storeImageError = if (storeImageUri == null) "Store photo is required" else null
+        ssmDocError = if (ssmDocUri == null) "SSM document is required" else null
+
+        if (restaurantNameError != null || addressError != null || contactPhoneError != null ||
+            ssmError != null || storeImageError != null || ssmDocError != null || cleanupTimeError != null) {
+            return
+        }
+
         viewModelScope.launch {
             try {
-                // 1. Resolve coordinates using LocationUtils with Penang fallback[cite: 2]
                 val (resolvedLat, resolvedLng) = LocationUtils.getCoordinatesFromAddress(
                     context = getApplication(),
                     address = address
                 )
 
-                // 2. Upload store image & SSM document files to Supabase buckets
-                var imageUrlStr: String? = null
-                if (storeImageUri != null) {
-                    imageUrlStr = uploadFileToStorage(storeImageUri!!, "store-images", "store")
-                }
-
-                var ssmDocUrlStr: String? = null
-                if (ssmDocUri != null) {
-                    ssmDocUrlStr = uploadFileToStorage(ssmDocUri!!, "ssm_documents", "ssm")
-                }
+                val imageUrlStr = uploadFileToStorage(storeImageUri!!, "store-images", "store")
+                val ssmDocUrlStr = uploadFileToStorage(ssmDocUri!!, "ssm_documents", "ssm")
 
                 val existingStores = SupabaseClient.client
                     .from("stores")
@@ -108,7 +167,6 @@ class RegisterRestaurantViewModel(application: Application) : AndroidViewModel(a
                 val storeId = String.format("STORE%03d", nextNumber)
                 val currentUserId = UserSession.getUserId()
 
-                // 3. Map into the shared StoreDto structure
                 val newStore = StoreDto(
                     id = storeId,
                     name = restaurantName.trim(),
@@ -124,13 +182,14 @@ class RegisterRestaurantViewModel(application: Application) : AndroidViewModel(a
                     ownerId = currentUserId,
                     ssmNumber = ssmNumber.trim(),
                     ssmDocumentUrl = ssmDocUrlStr,
-                    status = "PENDING" // Default status for new registrations
+                    status = "PENDING"
                 )
 
-                // 4. Save to Supabase 'stores' table
                 SupabaseClient.client
                     .from("stores")
                     .insert(newStore)
+
+                UserSession.setStoreStatus("PENDING")
 
                 onSuccess()
             } catch (e: Exception) {
