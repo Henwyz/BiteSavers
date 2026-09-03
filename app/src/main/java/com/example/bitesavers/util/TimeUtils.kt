@@ -47,4 +47,28 @@ object TimeUtils {
             now >= startMinutes || now <= endMinutes
         }
     }
+
+    /**
+     * Formats an ISO-8601 or standard SQL timestamp into readable format (e.g., "04 Sep, 04:15 AM").
+     * Falls back to raw string or current formatted time if parsing fails.
+     */
+    fun formatNotificationTimestamp(rawTimestamp: String?): String {
+        if (rawTimestamp.isNullOrBlank()) return ""
+        return try {
+            // Clean up standard Supabase ISO format (e.g. 2026-09-04T04:15:30.123+00:00)
+            val clean = rawTimestamp.replace("T", " ").substringBefore(".")
+            val inputFormat = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).apply {
+                timeZone = java.util.TimeZone.getTimeZone("UTC")
+            }
+            val date = inputFormat.parse(clean) ?: return rawTimestamp
+
+            // Converts to local device time zone for display
+            val outputFormat = java.text.SimpleDateFormat("dd MMM, hh:mm a", java.util.Locale.getDefault()).apply {
+                timeZone = java.util.TimeZone.getDefault()
+            }
+            outputFormat.format(date)
+        } catch (e: Exception) {
+            rawTimestamp
+        }
+    }
 }

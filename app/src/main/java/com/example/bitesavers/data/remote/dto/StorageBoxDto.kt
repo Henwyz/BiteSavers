@@ -8,9 +8,8 @@ data class StorageBoxDto(
     @SerialName("id") val id: String,
     @SerialName("store_id") val storeId: String? = null,
     @SerialName("box_code") val boxCode: String,
-    @SerialName("storage_type") val storageType: String,
-    @SerialName("target_temperature") val targetTemperature: Double,
-    @SerialName("current_temperature") val currentTemperature: Double,
-    @SerialName("is_locked") val isLocked: Boolean = true,
+    @SerialName("storage_type") val storageType: String? = null,
+    @SerialName("target_temperature") val targetTemperature: Double? = null,
+    @SerialName("current_temperature") val currentTemperature: Double = 0.0,
     @SerialName("last_synced_at") val lastSyncedAt: String? = null
 )

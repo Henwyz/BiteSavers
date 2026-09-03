@@ -1,6 +1,8 @@
 package com.example.bitesavers.business.temperature.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,8 +13,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -22,7 +27,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -38,15 +43,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bitesavers.R
+import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @Composable
 fun AddBoxScreen(
     errorMessage: String = "",
     onNavigateBack: () -> Unit,
-    onUnitAdded: (boxCode: String, storageType: String) -> Unit
+    onUnitAdded: (sensorId: String, isHotBox: Boolean) -> Unit
 ) {
-    var boxCode by remember { mutableStateOf("") }
-    var storageType by remember { mutableStateOf("Refrigerator") } // Default type
+    var sensorIdInput by remember { mutableStateOf("") }
+    var isHotBoxSelected by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -84,130 +90,190 @@ fun AddBoxScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Scaffold(
-            containerColor = MaterialTheme.colorScheme.background
-        ) { innerPadding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .verticalScroll(rememberScrollState())
+                .padding(20.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                // Sensor Pairing Instructions Card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                 ) {
-                    Text(
-                        text = stringResource(R.string.configure_esp32_sensor),
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Box Code / Name Field
-                    OutlinedTextField(
-                        value = boxCode,
-                        onValueChange = { boxCode = it },
-                        label = { Text(stringResource(R.string.box_code_hint)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                            focusedLabelColor = MaterialTheme.colorScheme.primary
-                        ),
-                        singleLine = true
-                    )
-
-                    // Show error message
-                    if (errorMessage.isNotBlank()) {
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = errorMessage,
-                            color = MaterialTheme.colorScheme.error,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    Text(
-                        text = stringResource(R.string.storage_type_label),
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Selection buttons for Storage Type
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        TypeSelectionCard(
-                            title = stringResource(R.string.type_refrigerator),
-                            isSelected = storageType.equals("Refrigerator", ignoreCase = true),
-                            onClick = { storageType = "Refrigerator" },
-                            modifier = Modifier.weight(1f)
-                        )
-                        TypeSelectionCard(
-                            title = stringResource(R.string.type_hot_box),
-                            isSelected = storageType.equals("Hot Box", ignoreCase = true),
-                            onClick = { storageType = "Hot Box" },
-                            modifier = Modifier.weight(1f)
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .background(MaterialTheme.colorScheme.primaryContainer, shape = RoundedCornerShape(12.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_verified),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = stringResource(R.string.configure_esp32_sensor),
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = stringResource(R.string.configure_sensor_desc),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 12.sp,
+                                lineHeight = 16.sp
+                            )
+                        }
                     }
                 }
 
-                // Save Button
-                Button(
-                    onClick = {
-                        if (boxCode.isNotBlank()) {
-                            onUnitAdded(boxCode.trim(), storageType)
-                        }
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Sensor ID Input Field
+                Text(
+                    text = stringResource(R.string.sensor_id_label),
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
+                )
+                OutlinedTextField(
+                    value = sensorIdInput,
+                    onValueChange = { sensorIdInput = it },
+                    placeholder = {
+                        Text(
+                            text = stringResource(R.string.sensor_id_hint),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(50),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
                     ),
-                    enabled = boxCode.isNotBlank()
-                ) {
+                    singleLine = true
+                )
+
+                if (errorMessage.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = stringResource(R.string.save_and_connect_unit),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
+                        text = errorMessage,
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(start = 12.dp)
                     )
                 }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Storage Mode Selection
+                Text(
+                    text = stringResource(R.string.storage_mode_title),
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(start = 4.dp)
+                )
+                Text(
+                    text = stringResource(R.string.storage_mode_desc),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(start = 4.dp, bottom = 12.dp)
+                )
+
+                // Storage Mode Choice Cards
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    StorageModeOptionCard(
+                        title = stringResource(R.string.type_cold_storage),
+                        targetTemp = stringResource(R.string.type_cold_temp_target),
+                        isSelected = !isHotBoxSelected,
+                        onClick = { isHotBoxSelected = false },
+                        modifier = Modifier.weight(1f)
+                    )
+                    StorageModeOptionCard(
+                        title = stringResource(R.string.type_hot_storage),
+                        targetTemp = stringResource(R.string.type_hot_temp_target),
+                        isSelected = isHotBoxSelected,
+                        onClick = { isHotBoxSelected = true },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Save & Pair Action Button
+            Button(
+                onClick = {
+                    if (sensorIdInput.isNotBlank()) {
+                        onUnitAdded(sensorIdInput.trim(), isHotBoxSelected)
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(50),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                ),
+                enabled = sensorIdInput.isNotBlank()
+            ) {
+                Text(
+                    text = stringResource(R.string.save_and_connect_unit),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
             }
         }
     }
 }
 
 @Composable
-fun TypeSelectionCard(
+private fun StorageModeOptionCard(
     title: String,
+    targetTemp: String,
     isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
-        onClick = onClick,
-        modifier = modifier.height(60.dp),
-        shape = RoundedCornerShape(12.dp),
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
         ),
-        border = if (isSelected) androidx.compose.foundation.BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else null
+        border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
     ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center
         ) {
             Text(
                 text = title,
@@ -215,15 +281,23 @@ fun TypeSelectionCard(
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp
             )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.target_temp_label, targetTemp),
+                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Medium,
+                fontSize = 12.sp
+            )
         }
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun AddBoxScreenPreview() {
-    MaterialTheme {
+private fun AddBoxScreenPreview() {
+    BiteSaversTheme {
         AddBoxScreen(
+            errorMessage = "",
             onNavigateBack = {},
             onUnitAdded = { _, _ -> }
         )

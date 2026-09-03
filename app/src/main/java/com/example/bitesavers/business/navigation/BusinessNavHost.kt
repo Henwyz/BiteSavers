@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -98,20 +99,22 @@ fun BusinessNavHost(
                 BusinessHomeScreen(
                     metrics = dynamicMetrics,
                     viewModel = dashboardViewModel,
-                    onNavigateToNotifications = { navController.navigate(BusinessScreen.Notification.route)},
+                    onNavigateToNotifications = { navController.navigate(BusinessScreen.Notification.route) },
                     onNavigateToAddFood = { navController.navigate(BusinessScreen.AddFood.route) },
                     onNavigateToListings = {
                         navController.navigate(BusinessScreen.Listings.route) {
                             popUpTo(navController.graph.startDestinationId) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
-                        } },
+                        }
+                    },
                     onNavigateToAnalytics = {
                         navController.navigate(BusinessScreen.Analytics.route) {
-                            popUpTo(navController.graph.startDestinationId) {saveState = true}
+                            popUpTo(navController.graph.startDestinationId) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
-                        }},
+                        }
+                    },
                     onNavigateToTemperature = {
                         navController.navigate(BusinessScreen.Temperature.route)
                     },
@@ -221,22 +224,22 @@ fun BusinessNavHost(
                 )
             }
 
-            // 10. ADD BOX SCREEN
+            // 10. ADD BOX SCREEN (Single, clean route handling (sensorId, isHotBox))
             composable(BusinessScreen.AddBox.route) {
                 var errorMessage by remember { mutableStateOf("") }
-                val context = androidx.compose.ui.platform.LocalContext.current
+                val context = LocalContext.current
 
                 AddBoxScreen(
                     errorMessage = errorMessage,
                     onNavigateBack = { navController.popBackStack() },
-                    onUnitAdded = { unitName, unitType ->
+                    onUnitAdded = { sensorId, isHotBox ->
                         val currentStoreId = dashboardViewModel.currentStoreId ?: ""
                         errorMessage = "" // Clear previous error
 
                         temperatureViewModel.addNewBox(
                             storeId = currentStoreId,
-                            boxCode = unitName,
-                            selectedStorageType = unitType,
+                            sensorCodeInput = sensorId,
+                            isHotBox = isHotBox,
                             onError = { errorResId ->
                                 errorMessage = context.resources.getString(errorResId)
                             },
@@ -264,7 +267,7 @@ fun BusinessNavHost(
                 )
             }
 
-            // 12. BUSINESS VERIFICATION CHECK
+            // 12. Business Verification Check
             composable(
                 route = BusinessScreen.Verification.route,
                 arguments = listOf(
@@ -291,7 +294,7 @@ fun BusinessNavHost(
                 )
             }
 
-            // 13. BUSINESS CANCEL ORDER
+            // 13. Business Cancel Order
             composable(
                 route = BusinessScreen.CancelOrder.route,
                 arguments = listOf(navArgument("orderId") { type = NavType.StringType })

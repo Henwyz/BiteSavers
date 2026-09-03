@@ -1,5 +1,6 @@
 package com.example.bitesavers.business.temperature.logic
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -47,7 +48,7 @@ class TemperatureViewModel : ViewModel() {
                     }
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e("TemperatureVM", "fetchUnitsForStore error: ${e.message}", e)
             } finally {
                 withContext(Dispatchers.Main) {
                     isLoading = false
@@ -56,28 +57,49 @@ class TemperatureViewModel : ViewModel() {
         }
     }
 
-    // Finds the pre-inserted box by its box code where store_id is null, and assigns the store_id to claim it
-    fun addNewBox(storeId: String, boxCode: String, selectedStorageType: String, onError: (Int) -> Unit, onSuccess: () -> Unit) {
+    // Assigns an unassigned physical IoT sensor to the store with the selected target mode and profile temperature
+    fun addNewBox(
+        storeId: String,
+        sensorCodeInput: String,
+        isHotBox: Boolean,
+        onError: (Int) -> Unit,
+        onSuccess: () -> Unit
+    ) {
+        val cleanCode = sensorCodeInput.trim()
+        if (cleanCode.isBlank()) return
+
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val existingBoxes = SupabaseClient.client.from("storage_boxes")
+                // Fetch candidate matching by exact box_code or case-insensitive ilike
+                var candidates = SupabaseClient.client.from("storage_boxes")
                     .select {
                         filter {
-                            eq("box_code", boxCode)
+                            ilike("box_code", cleanCode)
                         }
                     }
                     .decodeList<StorageBoxDto>()
 
-                if (existingBoxes.isEmpty()) {
+                // Fallback check if user entered internal ID directly
+                if (candidates.isEmpty()) {
+                    candidates = SupabaseClient.client.from("storage_boxes")
+                        .select {
+                            filter {
+                                eq("id", cleanCode)
+                            }
+                        }
+                        .decodeList<StorageBoxDto>()
+                }
+
+                if (candidates.isEmpty()) {
                     withContext(Dispatchers.Main) {
                         onError(R.string.error_box_not_found)
                     }
                     return@launch
                 }
 
-                // 👇 Declared targetBox here so it can be referenced below
-                val targetBox = existingBoxes.first()
+                val targetBox = candidates.first()
 
+                // Check if already claimed by another store
                 if (!targetBox.storeId.isNullOrBlank() && targetBox.storeId != storeId) {
                     withContext(Dispatchers.Main) {
                         onError(R.string.error_box_claimed)
@@ -85,19 +107,18 @@ class TemperatureViewModel : ViewModel() {
                     return@launch
                 }
 
-                if (!targetBox.storageType.equals(selectedStorageType, ignoreCase = true)) {
-                    withContext(Dispatchers.Main) {
-                        onError(R.string.error_box_mismatch)
-                    }
-                    return@launch
-                }
+                val chosenType = if (isHotBox) "Hot Box" else "Refrigerator"
+                val targetTemp = if (isHotBox) 60.0 else 4.0
 
+                // Link to current store, set target operational temperature profile
                 SupabaseClient.client.from("storage_boxes")
                     .update({
                         set("store_id", storeId)
+                        set("storage_type", chosenType)
+                        set("target_temperature", targetTemp)
                     }) {
                         filter {
-                            eq("box_code", boxCode)
+                            eq("id", targetBox.id)
                         }
                     }
 
@@ -107,7 +128,7 @@ class TemperatureViewModel : ViewModel() {
                     onSuccess()
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e("TemperatureVM", "addNewBox failed: ${e.message}", e)
                 withContext(Dispatchers.Main) {
                     onError(R.string.error_general)
                 }
@@ -122,7 +143,7 @@ class TemperatureViewModel : ViewModel() {
     fun deleteBox(boxId: String, storeId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                // Instead of deleting the row, unclaim it by setting store_id to null
+                // Unclaim sensor by resetting store_id to null
                 SupabaseClient.client.from("storage_boxes")
                     .update({
                         set("store_id", null as String?)
@@ -132,17 +153,15 @@ class TemperatureViewModel : ViewModel() {
                         }
                     }
 
-                // Refresh the list after unclaiming
                 fetchUnitsForStore(storeId)
 
                 withContext(Dispatchers.Main) {
-                    // Clear or switch selected unit if the unclaimed one was selected
                     if (selectedUnit?.id == boxId) {
                         selectedUnit = units.firstOrNull()
                     }
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e("TemperatureVM", "deleteBox failed: ${e.message}", e)
             }
         }
     }
