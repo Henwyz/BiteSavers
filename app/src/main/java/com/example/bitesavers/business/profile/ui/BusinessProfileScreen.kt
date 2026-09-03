@@ -31,6 +31,7 @@ import com.example.bitesavers.data.remote.UserSession
 fun BusinessProfileScreen(
     onSignOutClick: () -> Unit,
     onEditClick: () -> Unit,
+    onViewWalletClick: (String) -> Unit,
     viewModel: BusinessProfileViewModel = viewModel()
 ) {
     val profile by viewModel.profile.collectAsStateWithLifecycle()
@@ -38,8 +39,9 @@ fun BusinessProfileScreen(
     val hasPendingBusinessEdit by viewModel.hasPendingBusinessEdit.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
 
+
     LaunchedEffect(Unit) {
-        viewModel.loadAllData(UserSession.currentUserId.value)
+        viewModel.refresh()
     }
 
     Column(
@@ -244,6 +246,17 @@ fun BusinessProfileScreen(
 
             Spacer(Modifier.height(16.dp))
 
+            // ---------- Wallet Summary Card  ----------
+            WalletSummaryCard(
+                balance = profile.balance,
+                onViewWalletClick = {
+                    onViewWalletClick(profile.id)
+                }
+            )
+
+
+            Spacer(Modifier.height(16.dp))
+
             // ---------- Map placeholder ----------
             Box(
                 modifier = Modifier
@@ -302,5 +315,55 @@ private fun BusinessInfoRow(
     }
     if (showDivider) {
         HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+    }
+}
+
+// ---------- Wallet Summary Card Composable Component ----------
+@Composable
+fun WalletSummaryCard(
+    balance: Double,
+    onViewWalletClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Label & Amount Stacked
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = "Available to Withdraw",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "RM %.2f".format(balance),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            // Integrated Full-Width Withdraw Button
+            Button(
+                onClick = onViewWalletClick,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(50.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            ) {
+                Text(
+                    text = "Withdraw",
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
     }
 }

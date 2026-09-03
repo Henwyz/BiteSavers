@@ -15,11 +15,13 @@ class MerchantWalletRepository {
     suspend fun fetchStoreWallet(storeId: String): StoreDto? = withContext(Dispatchers.IO) {
         try {
             if (storeId.isBlank()) return@withContext null
-            SupabaseClient.client.from("stores")
+            val response = SupabaseClient.client.from("stores")
                 .select {
                     filter { eq("id", storeId) }
                 }
-                .decodeSingleOrNull<StoreDto>()
+                .decodeList<StoreDto>()
+
+            response.firstOrNull()
         } catch (e: Exception) {
             e.printStackTrace()
             null

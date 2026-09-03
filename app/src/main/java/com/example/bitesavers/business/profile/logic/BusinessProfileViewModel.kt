@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bitesavers.business.profile.data.*
+import com.example.bitesavers.business.payment.data.MerchantWalletData
 import com.example.bitesavers.customer.profile.logic.SubmissionState
 import com.example.bitesavers.data.mapper.toUiModel
 import com.example.bitesavers.data.remote.UserSession
@@ -98,6 +99,7 @@ class BusinessProfileViewModel : ViewModel() {
                 val storeRows: List<StoreDto> = if (userId.isNotBlank()) repository.getStoreRowsByOwnerId(userId) else emptyList()
 
                 // Display APPROVED row
+                // Display APPROVED row
                 val activeApprovedStore: StoreDto? = storeRows.firstOrNull { it.status?.equals("APPROVED", ignoreCase = true) == true }
                     ?: storeRows.lastOrNull { it.status?.equals("PENDING", ignoreCase = true) != true }
                     ?: storeRows.lastOrNull()
@@ -112,6 +114,9 @@ class BusinessProfileViewModel : ViewModel() {
                     currentLongitude = activeApprovedStore.longitude ?: 101.6869
 
                     val storeUi = activeApprovedStore.toUiModel()
+
+
+                    // Bind your live wallet balance here so Photo 1 and Photo 2 sync up:
                     _profile.value = storeUi
 
                     _businessDraft.update {
@@ -323,6 +328,13 @@ class BusinessProfileViewModel : ViewModel() {
         proceedWithBusinessSubmission()
     }
 
+    fun refresh() {
+        val userId = UserSession.currentUserId.value
+        if (userId.isNotBlank()) {
+            loadAllData(userId)
+        }
+    }
+
     private fun proceedWithBusinessSubmission() {
         val draft = _businessDraft.value.trimmed()
         val userId = UserSession.currentUserId.value
@@ -340,7 +352,7 @@ class BusinessProfileViewModel : ViewModel() {
                     cleanupHours = draft.cleanupHours,
                     latitude = currentLatitude,
                     longitude = currentLongitude,
-                    reasonForChange = draft.reasonForChange // 👈 Passes the draft's reason for change
+                    reasonForChange = draft.reasonForChange
                 )
 
                 _hasPendingBusinessEdit.value = true

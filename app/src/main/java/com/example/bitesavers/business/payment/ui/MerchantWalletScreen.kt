@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -12,10 +13,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.bitesavers.R
-import com.example.bitesavers.business.wallet.logic.MerchantWalletViewModel
+import com.example.bitesavers.business.payment.logic.MerchantWalletViewModel
 import com.example.bitesavers.data.remote.dto.MerchantPayoutDto
 
 // Screen for displaying store balance, requesting withdrawals, and viewing payout history
@@ -30,6 +31,10 @@ fun MerchantWalletScreen(
     var showWithdrawDialog by remember { mutableStateOf(false) }
     var amountInput by remember { mutableStateOf("") }
     var cardInput by remember { mutableStateOf("") }
+
+    // Additional state fields for expiry and CVV validation
+    var expiryInput by remember { mutableStateOf("") }
+    var cvvInput by remember { mutableStateOf("") }
 
     // Loads live store wallet data and history when screen opens
     LaunchedEffect(storeId) {
@@ -96,14 +101,7 @@ fun MerchantWalletScreen(
                 }
             }
 
-            // Displays error or success feedback messages
-            viewModel.errorMessage?.let { error ->
-                Text(
-                    text = error,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
+            // Displays success feedback message on the main screen if needed
             viewModel.successMessage?.let { success ->
                 Text(
                     text = success,
@@ -132,35 +130,135 @@ fun MerchantWalletScreen(
         }
     }
 
-    // Payout input dialog for amount and card number with input validation
+    // Payout input dialog with strict validation for amount, 16-digit card, MM/YY expiry, and 3-digit CVV
     if (showWithdrawDialog) {
+        // Capture string resources inside the Composable scope for localization safety
+        val errCardLength = stringResource(R.string.error_card_length)
+        val errExpiryInvalid = stringResource(R.string.error_expiry_invalid)
+        val errMonthRange = stringResource(R.string.error_month_range)
+        val errYearRange = stringResource(R.string.error_year_range)
+        val errCvvLength = stringResource(R.string.error_cvv_length)
+
         AlertDialog(
-            onDismissRequest = { showWithdrawDialog = false },
+            onDismissRequest = {
+                showWithdrawDialog = false
+                viewModel.clearMessages()
+            },
             title = { Text(stringResource(R.string.dialog_withdraw_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // Error message displayed directly inside the dialog above inputs
+                    viewModel.errorMessage?.let { error ->
+                        Text(
+                            text = error,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+
+                    // 1. Amount Field (Digits & decimals only)
                     OutlinedTextField(
                         value = amountInput,
-                        onValueChange = { amountInput = it },
+                        onValueChange = { input ->
+                            if (input.all { it.isDigit() || it == '.' }) {
+                                amountInput = input
+                            }
+                        },
                         label = { Text(stringResource(R.string.dialog_amount_hint)) },
-                        singleLine = true
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
+
+                    // 2. Card Number Field (Strictly numbers only, max 16 digits)
                     OutlinedTextField(
                         value = cardInput,
-                        onValueChange = { cardInput = it },
+                        onValueChange = { input ->
+                            if (input.all { it.isDigit() } && input.length <= 16) {
+                                cardInput = input
+                            }
+                        },
                         label = { Text(stringResource(R.string.dialog_card_number_hint)) },
-                        singleLine = true
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
+
+                    // Row for Expiry Date and CVV inputs
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // 3. Expiry Date Field (MMYY format, digits only, max 4 characters)
+                        OutlinedTextField(
+                            value = expiryInput,
+                            onValueChange = { input ->
+                                val digitsOnly = input.filter { it.isDigit() }.take(4)
+                                if (digitsOnly.length <= 4) {
+                                    expiryInput = digitsOnly
+                                }
+                            },
+                            label = { Text(stringResource(R.string.dialog_exp_hint)) },
+                            placeholder = { Text("MMYY") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+
+                        // 4. CVV Field (Strictly numbers only, max 3 digits)
+                        OutlinedTextField(
+                            value = cvvInput,
+                            onValueChange = { input ->
+                                if (input.all { it.isDigit() } && input.length <= 3) {
+                                    cvvInput = input
+                                }
+                            },
+                            label = { Text(stringResource(R.string.dialog_cvv_hint)) },
+                            placeholder = { Text("123") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+                    }
                 }
             },
             confirmButton = {
                 TextButton(
                     onClick = {
                         val amount = amountInput.toDoubleOrNull() ?: 0.0
-                        viewModel.requestWithdrawal(storeId, amount, cardInput) {
-                            showWithdrawDialog = false
-                            amountInput = ""
-                            cardInput = ""
+
+                        // Validations for Card, Expiry, and CVV constraints using localized strings
+                        when {
+                            cardInput.length != 16 -> {
+                                viewModel.errorMessage = errCardLength
+                            }
+                            expiryInput.length < 4 -> {
+                                viewModel.errorMessage = errExpiryInvalid
+                            }
+                            else -> {
+                                val month = expiryInput.take(2).toIntOrNull() ?: 0
+                                val year = expiryInput.takeLast(2).toIntOrNull() ?: 0
+
+                                when {
+                                    month !in 1..12 -> {
+                                        viewModel.errorMessage = errMonthRange
+                                    }
+                                    year < 27 -> {
+                                        viewModel.errorMessage = errYearRange
+                                    }
+                                    cvvInput.length != 3 -> {
+                                        viewModel.errorMessage = errCvvLength
+                                    }
+                                    else -> {
+                                        // Clear errors and run request withdrawal
+                                        viewModel.requestWithdrawal(storeId, amount, cardInput, expiryInput, cvvInput) {
+                                            showWithdrawDialog = false
+                                            amountInput = ""
+                                            cardInput = ""
+                                            expiryInput = ""
+                                            cvvInput = ""
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 ) {
@@ -168,8 +266,15 @@ fun MerchantWalletScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showWithdrawDialog = false }) {
-                    Text("Cancel")
+                TextButton(
+                    onClick = {
+                        showWithdrawDialog = false
+                        expiryInput = ""
+                        cvvInput = ""
+                        viewModel.clearMessages()
+                    }
+                ) {
+                    Text(stringResource(R.string.dialog_cancel))
                 }
             }
         )
@@ -231,4 +336,3 @@ fun PayoutHistoryItem(payout: MerchantPayoutDto) {
         }
     }
 }
-

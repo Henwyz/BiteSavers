@@ -42,6 +42,8 @@ import com.example.bitesavers.business.temperature.logic.TemperatureViewModel
 import com.example.bitesavers.business.temperature.ui.AddBoxScreen
 import com.example.bitesavers.business.temperature.ui.TemperatureScreen
 import com.example.bitesavers.business.dashboard.ui.BusinessNotificationScreen
+import com.example.bitesavers.business.payment.logic.MerchantWalletViewModel
+import com.example.bitesavers.business.wallet.ui.MerchantWalletScreen
 
 @Composable
 fun BusinessNavHost(
@@ -150,11 +152,15 @@ fun BusinessNavHost(
             // 4. PROFILE TAB
             composable(BusinessScreen.Profile.route) {
                 BusinessProfileScreen(
-                    viewModel = businessProfileViewModel, // 👈 Uses shared instance
+                    viewModel = businessProfileViewModel,
                     onSignOutClick = onLogout,
                     onEditClick = {
                         businessProfileViewModel.initEditScreen()
                         navController.navigate(BusinessScreen.EditProfile.route)
+                    },
+                    onViewWalletClick = { storeId ->
+                        val targetId = if (storeId.isNotBlank()) storeId else (dashboardViewModel.currentStoreId ?: "")
+                        navController.navigate(BusinessScreen.Wallet.createRoute(targetId))
                     }
                 )
             }
@@ -173,6 +179,20 @@ fun BusinessNavHost(
                             navController.popBackStack()
                         }
                     }
+                )
+            }
+
+            composable(
+                route = BusinessScreen.Wallet.route,
+                arguments = listOf(navArgument("storeId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val storeId = backStackEntry.arguments?.getString("storeId").orEmpty()
+                val walletViewModel: MerchantWalletViewModel = viewModel()
+
+                MerchantWalletScreen(
+                    viewModel = walletViewModel,
+                    storeId = storeId,
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
 

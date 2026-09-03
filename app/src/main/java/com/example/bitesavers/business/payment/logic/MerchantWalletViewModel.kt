@@ -1,4 +1,4 @@
-package com.example.bitesavers.business.wallet.logic
+package com.example.bitesavers.business.payment.logic
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -10,6 +10,7 @@ import com.example.bitesavers.data.repository.MerchantWalletRepository
 import kotlinx.coroutines.launch
 
 class MerchantWalletViewModel : ViewModel() {
+
     private val repository = MerchantWalletRepository()
 
     var balance by mutableStateOf(0.0)
@@ -22,27 +23,41 @@ class MerchantWalletViewModel : ViewModel() {
         private set
 
     var errorMessage by mutableStateOf<String?>(null)
-        private set
 
     var successMessage by mutableStateOf<String?>(null)
         private set
 
-    // Loads live store balance and payout history
     fun loadWalletData(storeId: String) {
-        if (storeId.isBlank()) return
+        if (storeId.isBlank()) return // Prevent querying with empty ID on initial composition
+
         viewModelScope.launch {
             isLoading = true
-            val store = repository.fetchStoreWallet(storeId)
-            if (store != null) {
-                balance = store.balance
+            errorMessage = null
+            try {
+                // Fetch store balance directly from Supabase
+                val store = repository.fetchStoreWallet(storeId)
+
+                // Explicitly assign balance (even if 0.0) so it doesn't hold stale state
+                balance = store?.balance ?: 0.0
+
+                // Fetch saved payout history from Supabase
+                payoutHistory = repository.fetchPayoutHistory(storeId)
+            } catch (e: Exception) {
+                errorMessage = "Failed to load wallet data: ${e.message}"
+            } finally {
+                isLoading = false
             }
-            payoutHistory = repository.fetchPayoutHistory(storeId)
-            isLoading = false
         }
     }
 
-    // Requests a withdrawal and updates local states
-    fun requestWithdrawal(storeId: String, amount: Double, cardNumber: String, onSuccess: () -> Unit) {
+    fun requestWithdrawal(
+        storeId: String,
+        amount: Double,
+        cardNumber: String,
+        expiryInput: String,
+        cvvInput: String,
+        onSuccess: () -> Unit
+    ) {
         if (amount <= 0.0) {
             errorMessage = "Please enter a valid amount."
             return
@@ -57,17 +72,20 @@ class MerchantWalletViewModel : ViewModel() {
             errorMessage = null
             successMessage = null
 
+            // Execute withdrawal and save transaction/balance update to Supabase via repository
             val result = repository.requestWithdrawal(storeId, amount, cardNumber)
-            result.fold(
-                onSuccess = {
-                    successMessage = "Withdrawal request submitted successfully."
-                    loadWalletData(storeId)
-                    onSuccess()
-                },
-                onFailure = { error ->
-                    errorMessage = error.localizedMessage ?: "Withdrawal failed."
-                }
-            )
+
+            if (result.isSuccess) {
+                // Refresh balance and payout list directly from Supabase
+                val store = repository.fetchStoreWallet(storeId)
+                balance = store?.balance ?: 0.0
+                payoutHistory = repository.fetchPayoutHistory(storeId)
+
+                successMessage = "Withdrawal request submitted successfully."
+                onSuccess()
+            } else {
+                errorMessage = result.exceptionOrNull()?.message ?: "Insufficient balance for withdrawal."
+            }
             isLoading = false
         }
     }

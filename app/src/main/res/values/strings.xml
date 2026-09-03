@@ -776,6 +776,14 @@
     <string name="payout_success_msg">Withdrawal request submitted successfully.</string>
     <string name="profile_wallet_balance_label">Wallet Balance</string>
     <string name="profile_view_wallet">View Wallet</string>
+    <string name="dialog_exp_hint">Exp (MMYY)</string>
+    <string name="dialog_cvv_hint">CVV</string>
+    <string name="dialog_cancel">Cancel</string>
+    <string name="error_card_length">Card number must be exactly 16 digits.</string>
+    <string name="error_expiry_invalid">Please enter a valid expiry date (MMYY).</string>
+    <string name="error_month_range">Month must be between 01 and 12.</string>
+    <string name="error_year_range">Year must start from 27 or later.</string>
+    <string name="error_cvv_length">CVV must be exactly 3 digits.</string>
 
     <!-- ================================================================= -->
     <!-- NOTIFICATIONS (SYSTEM & IN-APP)                                   -->

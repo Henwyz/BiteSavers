@@ -6,6 +6,7 @@ enum class BusinessEditTab(val displayLabel: String) {
 }
 
 data class BusinessProfileUiModel(
+    val id: String = "",
     val businessName: String = "Loading...",
     val verificationId: String = "",
     val isVerified: Boolean = false,
@@ -15,7 +16,8 @@ data class BusinessProfileUiModel(
     val phone: String = "",
     val category: String = "",
     val operatingHours: String = "",
-    val cleanupHours: String = ""
+    val cleanupHours: String = "",
+    val balance: Double = 0.0
 )
 
 data class BusinessAccountEditUiModel(
