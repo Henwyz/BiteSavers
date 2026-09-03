@@ -114,7 +114,7 @@ class DiscoveryViewModel : ViewModel() {
                         orderId = dto.orderId.orEmpty(),
                         title = dto.title,
                         message = dto.message,
-                        timestamp = "Recent",
+                        timestamp = com.example.bitesavers.util.TimeUtils.formatNotificationTimestamp(dto.createdAt),
                         isRead = dto.isRead
                     )
                 }

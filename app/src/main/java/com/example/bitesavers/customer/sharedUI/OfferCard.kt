@@ -17,8 +17,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -187,7 +185,7 @@ fun OfferCard(
                     horizontalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Star,
+                        painter = painterResource(id = R.drawable.ic_star_filled),
                         contentDescription = stringResource(R.string.cd_store_rating),
                         tint = Color(0xFFFFB800),
                         modifier = Modifier.size(14.dp)
@@ -203,52 +201,83 @@ fun OfferCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Price Row
+            // Price Row: Prevents wrapping 'RM' across lines and dynamically manages width
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Bottom
             ) {
                 if (isNgoFree) {
                     Text(
                         text = stringResource(id = R.string.price_free),
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
                     )
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = stringResource(id = R.string.currency_rm, offer.currentPrice),
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textDecoration = TextDecoration.LineThrough
+                        textDecoration = TextDecoration.LineThrough,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Ellipsis
                     )
                 } else {
                     Text(
                         text = stringResource(id = R.string.currency_rm, offer.currentPrice),
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
                     )
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = stringResource(id = R.string.original_price, offer.originalPrice),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textDecoration = TextDecoration.LineThrough,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Location, Quantity and Closing details
-            Text(
-                text = "• %.1f km  • %d left  • %s".format(
-                    offer.distanceKm,
-                    offer.quantityLeft,
-                    offer.timeStatusText.ifBlank { "Closes in ${offer.hoursToClose}h" }
-                ),
-                style = MaterialTheme.typography.bodySmall,
-                color = if (!offer.isCurrentlyOpen) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            // Location, Quantity and Closing details: Formatted cleanly to avoid visual clutter
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "• %.1f km  • %d left".format(offer.distanceKm, offer.quantityLeft),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    softWrap = false
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "• %s".format(offer.timeStatusText.ifBlank { "Closes in ${offer.hoursToClose}h" }),
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = if (!offer.isCurrentlyOpen) FontWeight.Medium else FontWeight.Normal,
+                    color = if (!offer.isCurrentlyOpen) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false)
+                )
+            }
         }
     }
 }

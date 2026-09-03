@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -35,9 +36,9 @@ class DashboardViewModel : ViewModel() {
     private val _notifications = MutableStateFlow<List<NotificationDto>>(emptyList())
     val notifications: StateFlow<List<NotificationDto>> = _notifications.asStateFlow()
 
-    // Count unread notifications to display on the bell badge
-    val unreadCount = combine(_notifications) { notifs ->
-        notifs.first().count { !it.isRead }
+    // Count unread notifications to display on the bell badge safely
+    val unreadCount = _notifications.map { list ->
+        list.count { !it.isRead }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),

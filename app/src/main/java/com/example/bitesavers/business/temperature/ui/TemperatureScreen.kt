@@ -18,10 +18,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -44,11 +40,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitesavers.R
 import com.example.bitesavers.business.temperature.logic.TemperatureViewModel
+import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @Composable
 fun TemperatureScreen(
@@ -66,8 +64,7 @@ fun TemperatureScreen(
     val warningText = stringResource(R.string.status_warning)
     val normalText = stringResource(R.string.status_normal)
 
-
-    // Inside your TemperatureScreen:
+    // Automatically loads sensors associated with active store
     LaunchedEffect(storeId) {
         viewModel.fetchUnitsForStore(storeId)
     }
@@ -119,9 +116,9 @@ fun TemperatureScreen(
                     modifier = Modifier.padding(bottom = 8.dp, end = 8.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Add,
+                        painter = painterResource(id = R.drawable.ic_add),
                         contentDescription = stringResource(R.string.add_storage_unit_cd),
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
@@ -170,7 +167,7 @@ fun TemperatureScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = if (currentSelected != null) "${currentSelected.currentTemperature}° C" else "--° C",
+                            text = if (currentSelected != null) "%.1f° C".format(currentSelected.currentTemperature) else "--° C",
                             color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 48.sp,
                             fontWeight = FontWeight.Bold
@@ -204,11 +201,23 @@ fun TemperatureScreen(
                     )
                 } else {
                     viewModel.units.forEach { box ->
-                        val isWarning = box.currentTemperature > (box.targetTemperature + 5.0)
+                        val isHotBox = box.storageType.equals("Hot Box", ignoreCase = true)
+
+                        // Directional warning threshold:
+                        // Hot Box: warning if temperature drops below safe holding limit (< 55°C)
+                        // Refrigerator: warning if temperature rises above safe cold limit (> 8°C)
+                        val isWarning = if (isHotBox) {
+                            val minSafeHot = (box.targetTemperature ?: 60.0) - 5.0
+                            box.currentTemperature < minSafeHot
+                        } else {
+                            val maxSafeCold = (box.targetTemperature ?: 4.0) + 4.0
+                            box.currentTemperature > maxSafeCold
+                        }
+
                         DetailedUnitCard(
                             name = box.boxCode,
-                            type = box.storageType,
-                            temp = "${box.currentTemperature}° C",
+                            type = box.storageType ?: stringResource(R.string.type_refrigerator),
+                            temp = "%.1f° C".format(box.currentTemperature),
                             status = if (isWarning) warningText else normalText,
                             isWarning = isWarning,
                             isSelected = box.id == currentSelected?.id,
@@ -298,9 +307,10 @@ fun DetailedUnitCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Thermostat,
+                        painter = painterResource(id = R.drawable.ic_thermostat),
                         contentDescription = null,
-                        tint = if (isWarning) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                        tint = if (isWarning) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(22.dp)
                     )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
@@ -357,7 +367,7 @@ fun DetailedUnitCard(
                         )
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Delete,
+                        painter = painterResource(id = R.drawable.ic_delete),
                         contentDescription = stringResource(R.string.delete_box_cd),
                         tint = MaterialTheme.colorScheme.error,
                         modifier = Modifier.size(20.dp)
@@ -365,5 +375,22 @@ fun DetailedUnitCard(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DetailedUnitCardPreview() {
+    BiteSaversTheme {
+        DetailedUnitCard(
+            name = "SENSOR-001",
+            type = "Refrigerator",
+            temp = "4.2° C",
+            status = "Normal",
+            isWarning = false,
+            isSelected = true,
+            onClick = {},
+            onDeleteClick = {}
+        )
     }
 }

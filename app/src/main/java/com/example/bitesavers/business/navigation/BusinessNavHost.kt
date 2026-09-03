@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -40,6 +41,7 @@ import com.example.bitesavers.business.sharedUI.BusinessBottomNavigationBar
 import com.example.bitesavers.business.temperature.logic.TemperatureViewModel
 import com.example.bitesavers.business.temperature.ui.AddBoxScreen
 import com.example.bitesavers.business.temperature.ui.TemperatureScreen
+import com.example.bitesavers.business.dashboard.ui.BusinessNotificationScreen
 
 @Composable
 fun BusinessNavHost(
@@ -97,20 +99,22 @@ fun BusinessNavHost(
                 BusinessHomeScreen(
                     metrics = dynamicMetrics,
                     viewModel = dashboardViewModel,
-                    onNavigateToNotifications = { navController.navigate(BusinessScreen.Notification.route)},
+                    onNavigateToNotifications = { navController.navigate(BusinessScreen.Notification.route) },
                     onNavigateToAddFood = { navController.navigate(BusinessScreen.AddFood.route) },
                     onNavigateToListings = {
                         navController.navigate(BusinessScreen.Listings.route) {
                             popUpTo(navController.graph.startDestinationId) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
-                        } },
+                        }
+                    },
                     onNavigateToAnalytics = {
                         navController.navigate(BusinessScreen.Analytics.route) {
-                            popUpTo(navController.graph.startDestinationId) {saveState = true}
+                            popUpTo(navController.graph.startDestinationId) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
-                        }},
+                        }
+                    },
                     onNavigateToTemperature = {
                         navController.navigate(BusinessScreen.Temperature.route)
                     },
@@ -200,7 +204,7 @@ fun BusinessNavHost(
                 )
             }
 
-            // 7. TEMPERATURE MONITOR SCREEN
+            // 9. TEMPERATURE MONITOR SCREEN
             composable(BusinessScreen.Temperature.route) {
                 val currentStoreId = dashboardViewModel.currentStoreId ?: ""
 
@@ -220,22 +224,22 @@ fun BusinessNavHost(
                 )
             }
 
-            // 10. ADD BOX SCREEN
+            // 10. ADD BOX SCREEN (Single, clean route handling (sensorId, isHotBox))
             composable(BusinessScreen.AddBox.route) {
                 var errorMessage by remember { mutableStateOf("") }
-                val context = androidx.compose.ui.platform.LocalContext.current
+                val context = LocalContext.current
 
                 AddBoxScreen(
                     errorMessage = errorMessage,
                     onNavigateBack = { navController.popBackStack() },
-                    onUnitAdded = { unitName, unitType ->
+                    onUnitAdded = { sensorId, isHotBox ->
                         val currentStoreId = dashboardViewModel.currentStoreId ?: ""
                         errorMessage = "" // Clear previous error
 
                         temperatureViewModel.addNewBox(
                             storeId = currentStoreId,
-                            boxCode = unitName,
-                            selectedStorageType = unitType,
+                            sensorCodeInput = sensorId,
+                            isHotBox = isHotBox,
                             onError = { errorResId ->
                                 errorMessage = context.resources.getString(errorResId)
                             },
@@ -247,7 +251,7 @@ fun BusinessNavHost(
                 )
             }
 
-            // 9. CHECK CUSTOMER ORDER SCREEN
+            // 11. CHECK CUSTOMER ORDER SCREEN
             composable(BusinessScreen.BusinessOrders.route) {
                 // Collect the existing recentOrders flow from your DashboardViewModel
                 val orders by dashboardViewModel.recentOrders.collectAsState()
@@ -263,16 +267,7 @@ fun BusinessNavHost(
                 )
             }
 
-            composable(BusinessScreen.AddBox.route) {
-                AddBoxScreen(
-                    onNavigateBack = { navController.popBackStack() },
-                    onUnitAdded = { unitName, unitType ->
-                        navController.popBackStack()
-                    }
-                )
-            }
-
-            // 9. Business Verification Check
+            // 12. Business Verification Check
             composable(
                 route = BusinessScreen.Verification.route,
                 arguments = listOf(
@@ -299,7 +294,7 @@ fun BusinessNavHost(
                 )
             }
 
-            // 10. Business Cancel Order
+            // 13. Business Cancel Order
             composable(
                 route = BusinessScreen.CancelOrder.route,
                 arguments = listOf(navArgument("orderId") { type = NavType.StringType })
@@ -313,6 +308,17 @@ fun BusinessNavHost(
                         // Refresh orders and pop back to order lists
                         dashboardViewModel.fetchOrdersFromSupabase()
                         navController.popBackStack(BusinessScreen.BusinessOrders.route, inclusive = false)
+                    }
+                )
+            }
+
+            // 14. BUSINESS NOTIFICATION SCREEN
+            composable(BusinessScreen.Notification.route) {
+                BusinessNotificationScreen(
+                    viewModel = dashboardViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToOrderDetails = { orderId ->
+                        navController.navigate(BusinessScreen.Verification.createRoute(orderId))
                     }
                 )
             }

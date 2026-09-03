@@ -11,7 +11,6 @@ data class StorageBox(
     val storeId: String?,
     val boxCode: String,
     val storageType: StorageType,
-    val targetTemperature: Double,
-    val currentTemperature: Double,
-    val isLocked: Boolean
+    val targetTemperature: Double?,
+    val currentTemperature: Double
 )

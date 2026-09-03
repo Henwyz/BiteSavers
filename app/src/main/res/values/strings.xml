@@ -849,4 +849,16 @@
     <string name="error_invalid_address">Could not find this address. Please enter a valid street name and city.</string>
 
     <string name="pending_sensor_deployment_msg">Your credentials have been verified successfully! Once approved, you will receive 2 IoT sensors delivered to your store address. You can request more sensors later from the add box page.</string>
+
+    <!-- Storage Box Configuration -->
+    <string name="configure_sensor_desc">Pair an unassigned IoT sensor by typing its sensor ID printed on the physical device.</string>
+    <string name="sensor_id_label">Sensor ID</string>
+    <string name="sensor_id_hint">e.g. SB-HOT-001 or SENSOR-01</string>
+    <string name="storage_mode_title">Target Storage Mode</string>
+    <string name="storage_mode_desc">Select temperature target profile for this unit</string>
+    <string name="target_temp_label">Target: %s</string>
+    <string name="type_cold_storage">Cold Refrigerator</string>
+    <string name="type_cold_temp_target">4.0°C</string>
+    <string name="type_hot_storage">Hot Warmer Box</string>
+    <string name="type_hot_temp_target">60.0°C</string>
 </resources>

@@ -145,6 +145,7 @@ class CancelViewModel : ViewModel() {
                     }) {
                         filter { eq("id", merchant.id) }
                     }
+
                     // Fetch and update customer wallet balance
                     val customerList = SupabaseClient.client.from("users").select {
                         filter { eq("id", currentOrder.userId) }

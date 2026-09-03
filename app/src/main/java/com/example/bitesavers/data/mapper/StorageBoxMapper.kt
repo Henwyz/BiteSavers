@@ -6,7 +6,7 @@ import com.example.bitesavers.data.model.StorageType
 
 fun StorageBoxDto.toDomain(): StorageBox {
     val type = try {
-        StorageType.valueOf(storageType.uppercase())
+        storageType?.let { StorageType.valueOf(it.uppercase().replace(" ", "_")) } ?: StorageType.ROOM_TEMP
     } catch (e: Exception) {
         StorageType.ROOM_TEMP
     }
@@ -17,7 +17,6 @@ fun StorageBoxDto.toDomain(): StorageBox {
         boxCode = boxCode,
         storageType = type,
         targetTemperature = targetTemperature,
-        currentTemperature = currentTemperature,
-        isLocked = isLocked
+        currentTemperature = currentTemperature
     )
 }

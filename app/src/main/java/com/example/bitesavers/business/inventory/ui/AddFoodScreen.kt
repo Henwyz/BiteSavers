@@ -76,6 +76,7 @@ import com.example.bitesavers.ui.theme.BiteSaversTheme
 import com.example.bitesavers.util.DynamicPricingEngine
 import java.io.File
 import java.util.Locale
+import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,6 +104,7 @@ fun AddFoodScreen(
 
     // selects photo and takes photo
     var myFoodImage by remember { mutableStateOf<Bitmap?>(null) }
+    var existingImageUrl by remember { mutableStateOf<String?>(null) }
     var showImagePick by remember { mutableStateOf(false) }
     var showFullImagePreview by remember { mutableStateOf(false) }
 
@@ -120,6 +122,7 @@ fun AddFoodScreen(
         pickupEndTime = editingItem?.pickupEnd ?: viewModel.defaultPickupEnd
 
         myFoodImage = editingItem?.imageBitmap
+        existingImageUrl = editingItem?.imageUrl
 
         val orig = originalPrice.toDoubleOrNull() ?: 0.0
         val disc = discountPrice.toDoubleOrNull() ?: 0.0
@@ -280,7 +283,7 @@ fun AddFoodScreen(
     }
 
     // click the picture then zoom it
-    if (showFullImagePreview && myFoodImage != null) {
+    if (showFullImagePreview && (myFoodImage != null || !existingImageUrl.isNullOrBlank())) {
         Dialog(onDismissRequest = { showFullImagePreview = false }) {
             Box(
                 modifier = Modifier
@@ -293,14 +296,25 @@ fun AddFoodScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Image(
-                        bitmap = myFoodImage!!.asImageBitmap(),
-                        contentDescription = stringResource(R.string.cd_full_image_preview),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(350.dp),
-                        contentScale = ContentScale.Fit
-                    )
+                    if (myFoodImage != null) {
+                        Image(
+                            bitmap = myFoodImage!!.asImageBitmap(),
+                            contentDescription = stringResource(R.string.content_desc_full_image_preview),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(350.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    } else if (!existingImageUrl.isNullOrBlank()) {
+                        AsyncImage(
+                            model = existingImageUrl,
+                            contentDescription = stringResource(R.string.content_desc_full_image_preview),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(350.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
                     Spacer(modifier = Modifier.height(16.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -382,6 +396,7 @@ fun AddFoodScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             // place of upload picture or preview
+            val hasPhoto = myFoodImage != null || !existingImageUrl.isNullOrBlank()
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -394,7 +409,7 @@ fun AddFoodScreen(
                         shape = RoundedCornerShape(12.dp)
                     )
                     .clickable {
-                        if (myFoodImage == null) {
+                        if (!hasPhoto) {
                             showImagePick = true
                         } else {
                             showFullImagePreview = true
@@ -409,8 +424,20 @@ fun AddFoodScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
+                } else if (!existingImageUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = existingImageUrl,
+                        contentDescription = stringResource(R.string.content_desc_food_preview),
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+                if (hasPhoto) {
                     IconButton(
-                        onClick = { myFoodImage = null },
+                        onClick = {
+                            myFoodImage = null
+                            existingImageUrl = null
+                        },
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .padding(8.dp)
@@ -779,6 +806,7 @@ fun AddFoodScreen(
                             weightKg = weightKg.toDoubleOrNull() ?: editingItem.weightKg,
                             pickupStart = pickupStartTime.trim(),
                             pickupEnd = pickupEndTime.trim(),
+                            imageUrl = if (myFoodImage != null) null else existingImageUrl,
                             imageBitmap = myFoodImage
                         )
                         viewModel.updateListing(updated)
