@@ -10,7 +10,9 @@ import com.example.bitesavers.business.dashboard.data.DashboardMetrics
 import com.example.bitesavers.business.inventory.data.ListingItem
 import com.example.bitesavers.data.remote.SupabaseClient
 import com.example.bitesavers.data.remote.UserSession
+import com.example.bitesavers.data.remote.dto.NotificationDto
 import com.example.bitesavers.data.remote.dto.StoreDto
+import com.example.bitesavers.data.repository.NotificationRepository
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,6 +29,20 @@ import java.util.Locale
 class DashboardViewModel : ViewModel() {
     private val _recentOrders = MutableStateFlow<List<CheckOrderData>>(emptyList())
     val recentOrders: StateFlow<List<CheckOrderData>> = _recentOrders.asStateFlow()
+
+    private val notificationRepository = NotificationRepository()
+
+    private val _notifications = MutableStateFlow<List<NotificationDto>>(emptyList())
+    val notifications: StateFlow<List<NotificationDto>> = _notifications.asStateFlow()
+
+    // Count unread notifications to display on the bell badge
+    val unreadCount = combine(_notifications) { notifs ->
+        notifs.first().count { !it.isRead }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = 0
+    )
 
     // Observable UI state for store details and current date
     var currentStoreId by mutableStateOf("")
@@ -66,17 +82,35 @@ class DashboardViewModel : ViewModel() {
                         .decodeList<StoreDto>()
 
                     val myStore = stores.firstOrNull()
-                    if (myStore != null) {
+                    if (myStore != null && myStore.name.isNotBlank()) {
                         currentStoreId = myStore.id
-                        storeName = myStore.name.ifBlank { "My Store" }
+                        storeName = myStore.name
                         storeInitials = computeInitials(storeName)
                         requiresRegistration = false
                     } else {
-                        // Fallback state for newly registered accounts without a store profile
-                        currentStoreId = ""
-                        storeName = "New Store"
-                        storeInitials = "NS"
-                        requiresRegistration = true // Triggers automatic jump to registration screen
+                        try {
+                            val userRecords = SupabaseClient.client.from("users")
+                                .select {
+                                    filter { eq("id", userId) }
+                                }
+                                .decodeList<Map<String, kotlinx.serialization.json.JsonElement>>()
+
+                            val userName = userRecords.firstOrNull()?.get("name")
+                                ?.toString()?.trim('"')
+
+                            if (!userName.isNullOrBlank()) {
+                                storeName = userName
+                                storeInitials = computeInitials(userName)
+                            } else {
+                                storeName = "My Store"
+                                storeInitials = "MS"
+                            }
+                        } catch (e: Exception) {
+                            storeName = "My Store"
+                            storeInitials = "MS"
+                        }
+                        currentStoreId = myStore?.id ?: ""
+                        requiresRegistration = (myStore == null)
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -93,6 +127,7 @@ class DashboardViewModel : ViewModel() {
             hasCheckedStore = true
             // Fetch live orders filtered strictly by the resolved store ID
             fetchOrdersFromSupabase()
+            fetchMerchantNotifications()
         }
     }
 
@@ -122,7 +157,7 @@ class DashboardViewModel : ViewModel() {
         }
     }
 
-    // Helper to generate dynamic 2-letter store initials
+    // to generate dynamic 2-letter store initials
     private fun computeInitials(name: String): String {
         val words = name.trim().split("\\s+".toRegex())
         return when {
@@ -157,4 +192,56 @@ class DashboardViewModel : ViewModel() {
             initialValue = DashboardMetrics()
         )
     }
+
+    fun deleteOrder(orderId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                SupabaseClient.client.from("orders").delete {
+                    filter { eq("id", orderId) }
+                }
+                // refresh list again
+                fetchOrdersFromSupabase()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    // Fetch notifications for the current authenticated merchant
+    fun fetchMerchantNotifications() {
+        val userId = com.example.bitesavers.data.remote.UserSession.getUserId()
+        if (userId.isBlank()) return
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val list = notificationRepository.fetchUserNotifications(userId)
+            _notifications.value = list
+        }
+    }
+
+    // Mark notifications as read
+    fun markNotificationsAsRead() {
+        val unreadIds = _notifications.value.filter { !it.isRead }.map { it.id }
+        if (unreadIds.isEmpty()) return
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val success = notificationRepository.markAsRead(unreadIds)
+            if (success) {
+                fetchMerchantNotifications()
+            }
+        }
+    }
+
+    // Clear all notifications for the merchant
+    fun clearAllNotifications() {
+        val userId = com.example.bitesavers.data.remote.UserSession.getUserId()
+        if (userId.isBlank()) return
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val success = notificationRepository.clearAllNotifications(userId)
+            if (success) {
+                _notifications.value = emptyList()
+            }
+        }
+    }
 }
+

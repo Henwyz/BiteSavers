@@ -112,6 +112,8 @@ fun BusinessVerificationScreen(
         }
 
         val isAlreadyCompleted = order.status.equals("COMPLETED", ignoreCase = true)
+        val isCancelled = order.status.equals("CANCELLED", ignoreCase = true)
+        val isFinalized = isAlreadyCompleted || isCancelled
 
         Column (
             modifier = Modifier
@@ -142,7 +144,7 @@ fun BusinessVerificationScreen(
                     )
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    if (isAlreadyCompleted) {
+                    if (isFinalized) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center
@@ -150,13 +152,13 @@ fun BusinessVerificationScreen(
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
+                                tint = if (isCancelled) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(24.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = stringResource(R.string.pin_verified),
-                                color = MaterialTheme.colorScheme.primary,
+                                text = if (isCancelled) stringResource(R.string.status_cancelled) else stringResource(R.string.pin_verified),
+                                color = if (isCancelled) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp
                             )
@@ -265,7 +267,7 @@ fun BusinessVerificationScreen(
 
             Spacer(modifier = Modifier.weight(1f))
             // Bottom Actions (Dynamically switched based on order status)
-            if (isAlreadyCompleted) {
+            if (isFinalized) {
                 Button(
                     onClick = { showDeleteConfirmDialog = true },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
@@ -366,12 +368,15 @@ fun BusinessVerificationScreen(
                 TextButton(
                     onClick = {
                         showDeleteConfirmDialog = false
-                        viewModel.deleteOrderRecord(onDeleted = onNavigateBack)
+                        viewModel.deleteOrder(orderId) {
+                            onVerificationCompleted()
+                        }
                     }
                 ) {
                     Text(
                         text = stringResource(R.string.delete_action2),
-                        color = MaterialTheme.colorScheme.error
+                        color = MaterialTheme.colorScheme.error,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             },

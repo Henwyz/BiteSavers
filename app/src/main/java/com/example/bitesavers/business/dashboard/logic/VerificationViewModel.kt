@@ -11,6 +11,7 @@ import com.example.bitesavers.data.remote.dto.NotificationDto
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.UUID
 
 class VerificationViewModel : ViewModel() {
@@ -95,17 +96,15 @@ class VerificationViewModel : ViewModel() {
     }
 
     // Permanently remove completed order from supabase
-    fun deleteOrderRecord(onDeleted: () -> Unit) {
-        val currentOrder = orderData ?: return
+    fun deleteOrder(orderId: String, onDeleted: () -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 SupabaseClient.client.from("orders").delete {
-                    filter {
-                        eq("id", currentOrder.id)
-                    }
+                    filter { eq("id", orderId) }
                 }
-                isDeleted = true
-                onDeleted()
+                withContext(Dispatchers.Main) {
+                    onDeleted()
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
             }

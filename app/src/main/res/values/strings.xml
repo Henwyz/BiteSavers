@@ -466,6 +466,14 @@
     <string name="dashboard_waste_kg_format">%1$.1f kg</string>
     <string name="dashboard_currency_format">RM %.0f</string>
 
+    <!-- Business Notification Strings -->
+    <string name="notification_icon_desc">Notifications</string>
+    <string name="title_business_notifications">Notifications</string>
+    <string name="empty_business_notifications">No notifications yet.</string>
+    <string name="btn_mark_all_read">Mark all as read</string>
+    <string name="btn_clear_all">Clear All</string>
+    <string name="notification_time_just_now">Just now</string>
+
     <!-- Business Verification Strings -->
     <string name="verification_title">Order Verification</string>
     <string name="pickup_pin_label">Pickup PIN</string>
@@ -504,15 +512,21 @@
     <string name="cancel_dialog_desc">Order has been cancelled, refunded, and the customer has been notified.</string>
     <string name="select_reason_error">Please select a cancellation reason.</string>
     <string name="other_reason_empty_error">Please provide a reason in the text box.</string>
+    <string name="order_cancelled_badge">Cancelled</string>
+    <string name="order_completed_badge">Completed</string>
+    <string name="order_already_finalized_msg">This order has already been %1$s. No further action can be performed.</string>
 
     <!-- Refund Method Formats & Labels -->
     <string name="refund_method_label">Refund Channel</string>
     <string name="refund_method_bitesaver">BiteSavers Pay (Wallet Balance)</string>
-    <string name="refund_method_credit_card">Credit Card (Automated Gateway)</string>
-    <string name="refund_method_cash">Cash on Pickup (Manual In-Person)</string>
+    <string name="refund_method_credit_card">Debit / Credit Cards</string>
+    <string name="refund_method_tng">Touch \'n Go eWallet</string>
+    <string name="refund_method_cash">Cash on Pickup</string>
     <string name="bitesaver_refund_flow_desc">Merchant wallet will be deducted RM %.2f, and customer wallet will be credited RM %.2f.</string>
     <string name="general_refund_mock_desc">Transaction marked as Refunded via %1$s. No direct wallet deduction required.</string>
 
+    <!-- Refund Error Strings -->
+    <string name="error_merchant_insufficient_balance">Refund failed: Insufficient merchant wallet balance.</string>
     <!-- General & Back -->
     <string name="temperature_monitor">Temperature Monitor</string>
     <string name="esp32_live_sensor">ESP32 Live Sensor</string>

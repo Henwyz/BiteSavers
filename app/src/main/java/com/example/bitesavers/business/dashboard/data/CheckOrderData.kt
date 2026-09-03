@@ -73,9 +73,18 @@ data class CheckOrderData(
     val formattedCustomerName: String
         get() = if (userId.length >= 4) userId.takeLast(4).uppercase() else "A291"
 
-    //Truncates order UUID to standard short ticket format (e.g. "BS-3F8A3").
+    // Formats order id with fixed 6 digits like 'ord_1001' -> '#BS-ORD_001001', 'ord_032090' -> '#BS-ORD_032090')
     val shortOrderId: String
-        get() = if (id.length >= 5) "BS-${id.take(5).uppercase()}" else "BS-$id"
+        get() {
+            val rawSuffix = when {
+                id.startsWith("ord_", ignoreCase = true) -> id.substringAfter("ord_")
+                id.contains("-") -> id.substringAfterLast("-")
+                else -> id
+            }
+            // Extract numeric or trailing characters and pad start with '0' to ensure strictly 6 digits
+            val paddedSuffix = rawSuffix.takeLast(6).padStart(6, '0')
+            return "#BS-ORD_$paddedSuffix"
+        }
 
     val displayItemName: String
         get() = offerDetails?.name ?: ""
