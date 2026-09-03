@@ -31,11 +31,28 @@ import com.example.bitesavers.login.ui.TermsScreen
 @Composable
 fun AppNavHost(
     modifier: Modifier = Modifier,
-    navController: NavHostController = rememberNavController(),
-    // Determine initial destination dynamically from saved disk session
-    startDestination: String = RootRoute.Login.route
+    navController: NavHostController = rememberNavController()
 ) {
     val context = LocalContext.current
+
+    // Determine initial destination dynamically from restored disk session
+    val resolvedStartDestination = remember {
+        if (UserSession.isLoggedIn()) {
+            val userRole = UserSession.getUserRole()
+            if (userRole.equals("business", ignoreCase = true)) {
+                when (UserSession.getStoreStatus()) {
+                    "APPROVED" -> RootRoute.BusinessGraph.route
+                    "REJECTED" -> RootRoute.RejectedApproval.route
+                    "UNREGISTERED" -> RootRoute.RegisterRestaurant.route
+                    else -> RootRoute.PendingApproval.route
+                }
+            } else {
+                RootRoute.CustomerGraph.route
+            }
+        } else {
+            RootRoute.Login.route
+        }
+    }
 
     // Handles result from the Android 13+ runtime permission prompt
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
@@ -59,7 +76,7 @@ fun AppNavHost(
 
     NavHost(
         navController = navController,
-        startDestination = startDestination,
+        startDestination = resolvedStartDestination,
         modifier = modifier
     ) {
         // 1. Login Screen
@@ -117,12 +134,12 @@ fun AppNavHost(
 
         // 4. Restaurant Registration Screen
         composable(RootRoute.RegisterRestaurant.route) {
-            // 👇 ADD THIS: Scope the ViewModel to the NavBackStackEntry so it survives recompositions
+            // Scope the ViewModel to the NavBackStackEntry so it survives recompositions
             val parentEntry = remember(it) { navController.getBackStackEntry(RootRoute.RegisterRestaurant.route) }
             val viewModel: RegisterRestaurantViewModel = viewModel(parentEntry)
 
             RegisterRestaurantScreen(
-                viewModel = viewModel, // 👈 PASS IT EXPLICITLY HERE
+                viewModel = viewModel,
                 onNavigateBack = {
                     navController.navigate(RootRoute.Login.route) {
                         popUpTo(RootRoute.RegisterRestaurant.route) { inclusive = true }
@@ -191,4 +208,3 @@ fun AppNavHost(
         }
     }
 }
-

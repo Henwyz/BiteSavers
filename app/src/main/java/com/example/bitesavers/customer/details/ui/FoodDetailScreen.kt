@@ -15,9 +15,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -49,6 +51,17 @@ fun FoodDetailRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    // Manages background telemetry polling tied strictly to screen lifecycle
+    val currentOfferId = uiState.offer?.id
+    DisposableEffect(currentOfferId) {
+        if (!currentOfferId.isNullOrBlank()) {
+            viewModel.startPolling(currentOfferId)
+        }
+        onDispose {
+            viewModel.stopPolling()
+        }
+    }
+
     FoodDetailScreen(
         state = uiState,
         onEvent = { event ->
@@ -59,9 +72,9 @@ fun FoodDetailRoute(
             when (event) {
                 is FoodDetailUiEvent.OnNavigateBack -> onBackClick()
                 is FoodDetailUiEvent.OnReserveClicked -> {
-                    val currentOfferId = uiState.offer?.id
-                    if (currentOfferId != null) {
-                        onReserveSuccess(currentOfferId, uiState.quantity)
+                    val offerId = uiState.offer?.id
+                    if (offerId != null) {
+                        onReserveSuccess(offerId, uiState.quantity)
                     }
                 }
                 is FoodDetailUiEvent.OnStoreClicked -> {
@@ -135,6 +148,20 @@ fun FoodDetailScreen(
                     val offer = state.offer
                     val scrollState = rememberScrollState()
 
+                    // Localizes safe holding zone descriptor and temperature banner text
+                    val isHot = offer.storageType.contains("Hot", ignoreCase = true)
+                    val zoneDescriptor = if (isHot) {
+                        stringResource(id = R.string.storage_zone_hot)
+                    } else {
+                        stringResource(id = R.string.storage_zone_cold)
+                    }
+
+                    val dynamicTempText = if (state.isTemperatureSafe) {
+                        stringResource(id = R.string.detail_temp_safe_format, offer.liveTemperature, zoneDescriptor)
+                    } else {
+                        stringResource(id = R.string.detail_temp_breach_format, offer.liveTemperature)
+                    }
+
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -167,7 +194,7 @@ fun FoodDetailScreen(
                             )
 
                             FoodDetailSafetyBanner(
-                                temperatureText = state.temperatureText,
+                                temperatureText = dynamicTempText,
                                 isSafe = state.isTemperatureSafe
                             )
 
@@ -211,7 +238,6 @@ private fun FoodDetailScreenPreview() {
                 isSaved = false,
                 quantity = 1,
                 totalPrice = 9.90,
-                temperatureText = "25.0°C – within safe room_temp storage zone",
                 isTemperatureSafe = true,
                 offer = OfferUiModel(
                     id = "e3333333-3333-3333-3333-333333333333",
@@ -228,8 +254,8 @@ private fun FoodDetailScreenPreview() {
                     hoursToClose = 2,
                     category = DiscoveryCategory.HOT_MEALS,
                     isEligibleForNgoFree = true,
-                    liveTemperature = 25.0,
-                    storageType = "ROOM_TEMP",
+                    liveTemperature = 62.0,
+                    storageType = "HOT",
                     description = "Hearty minced chicken pasta in slow-simmered tomato sauce.",
                     timeStatusText = "Closes in 2h",
                     isCurrentlyOpen = true
@@ -251,7 +277,6 @@ private fun FoodDetailScreenClosedPreview() {
                 isSaved = false,
                 quantity = 1,
                 totalPrice = 9.90,
-                temperatureText = "25.0°C – within safe room_temp storage zone",
                 isTemperatureSafe = true,
                 offer = OfferUiModel(
                     id = "e3333333-3333-3333-3333-333333333333",
@@ -268,8 +293,8 @@ private fun FoodDetailScreenClosedPreview() {
                     hoursToClose = 0,
                     category = DiscoveryCategory.HOT_MEALS,
                     isEligibleForNgoFree = true,
-                    liveTemperature = 25.0,
-                    storageType = "ROOM_TEMP",
+                    liveTemperature = 60.0,
+                    storageType = "HOT",
                     description = "Hearty minced chicken pasta in slow-simmered tomato sauce.",
                     timeStatusText = "Opens in 5h",
                     isCurrentlyOpen = false
@@ -291,7 +316,6 @@ private fun FoodDetailScreenSoldOutPreview() {
                 isSaved = true,
                 quantity = 0,
                 totalPrice = 8.00,
-                temperatureText = "4.0°C – within safe cold storage zone",
                 isTemperatureSafe = true,
                 offer = OfferUiModel(
                     id = "e2222222-2222-2222-2222-222222222222",

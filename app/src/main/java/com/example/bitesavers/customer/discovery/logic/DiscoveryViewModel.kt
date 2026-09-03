@@ -335,7 +335,6 @@ class DiscoveryViewModel : ViewModel() {
     }
 
     // Applies search queries, role-based visibility, and rescue claim window criteria
-    // Applies search queries, role-based visibility, and rescue claim window criteria
     private fun applyFilters(state: DiscoveryUiState, sourceList: List<OfferUiModel>): List<OfferUiModel> {
         val query = state.searchQuery.trim().lowercase()
         val currentLat = userLatitude
@@ -343,9 +342,9 @@ class DiscoveryViewModel : ViewModel() {
 
         val filteredSequence = sourceList.asSequence()
             .filter { offer ->
-                // Ensures active quantity remains, while allowing ongoing deals or NGO claims
-                offer.quantityLeft > 0 && (offer.hoursToClose >= 0 || state.isNgoApproved)
+                offer.hoursToClose >= 0 || state.isNgoApproved
             }
+            // 2. Category Tab Filter:
             .filter { offer ->
                 when (state.selectedCategory) {
                     DiscoveryCategory.ALL -> true
@@ -359,6 +358,7 @@ class DiscoveryViewModel : ViewModel() {
                     }
                 }
             }
+            // 3. Search Query Filter:
             .filter { offer ->
                 query.isBlank() ||
                         offer.title.lowercase().contains(query) ||

@@ -8,11 +8,14 @@ import com.example.bitesavers.customer.details.ui.FoodDetailUiEvent
 import com.example.bitesavers.data.remote.UserSession
 import com.example.bitesavers.data.repository.OfferRepository
 import com.example.bitesavers.data.repository.SavedRepository
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class FoodDetailViewModel(
@@ -25,14 +28,37 @@ class FoodDetailViewModel(
     private val _uiState = MutableStateFlow(FoodDetailUiState())
     val uiState: StateFlow<FoodDetailUiState> = _uiState.asStateFlow()
 
+    // Holds background polling coroutine job
+    private var pollingJob: Job? = null
+
     init {
         val offerId: String? = savedStateHandle.get<String>("offerId")
         if (offerId != null) {
-            fetchOfferDetails(offerId)
+            startPolling(offerId)
             observeBookmarkStatus(offerId)
         } else {
             _uiState.update { it.copy(isLoading = false, errorMessage = "Offer not found") }
         }
+    }
+
+    // Periodically polls Supabase so customer UI reflects live IoT temperature updates
+    fun startPolling(offerId: String, intervalMillis: Long = 2000L) {
+        pollingJob?.cancel()
+        pollingJob = viewModelScope.launch {
+            // First load displays loading progress
+            fetchOfferDetails(offerId, isInitialLoad = true)
+
+            while (isActive) {
+                delay(intervalMillis)
+                // Subsequent polls update live telemetry quietly without re-triggering full page loader
+                fetchOfferDetails(offerId, isInitialLoad = false)
+            }
+        }
+    }
+
+    fun stopPolling() {
+        pollingJob?.cancel()
+        pollingJob = null
     }
 
     private fun observeBookmarkStatus(offerId: String) {
@@ -50,7 +76,7 @@ class FoodDetailViewModel(
             is FoodDetailUiEvent.OnDecreaseQuantity -> decreaseQuantity()
             is FoodDetailUiEvent.OnToggleBookmark -> toggleBookmark()
             is FoodDetailUiEvent.OnNavigateBack -> {
-                // Any ViewModel cleanup before leaving
+                stopPolling()
             }
             is FoodDetailUiEvent.OnReserveClicked -> {
                 // send the card data to the database
@@ -74,37 +100,41 @@ class FoodDetailViewModel(
         }
     }
 
-    private fun fetchOfferDetails(offerId: String) {
-        // Run database fetch on a background coroutine thread
+    private fun fetchOfferDetails(offerId: String, isInitialLoad: Boolean = false) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            if (isInitialLoad) {
+                _uiState.update { it.copy(isLoading = true) }
+            }
 
             // Fetch the real item from Supabase
             val offer = repository.fetchOfferById(offerId)
 
             if (offer != null) {
-                // Preserved your custom temperature and safety logic
                 val temp = offer.liveTemperature
-                val isSafe = when (offer.storageType.uppercase()) {
-                    "HOT" -> temp >= 60.0
-                    "COLD" -> temp in 2.0..8.0
-                    else -> true
+                val isHot = offer.storageType.equals("HOT", ignoreCase = true) ||
+                        offer.storageType.contains("Hot", ignoreCase = true)
+
+                // Evaluates directional safe thresholds: Hot Box >= 55°C, Cold Chiller <= 8°C
+                val isSafe = if (isHot) {
+                    temp >= 55.0
+                } else {
+                    temp <= 8.0
                 }
-                val tempString = "Live temp: ${temp}°C - within safe ${offer.storageType.lowercase()} storage zone"
 
                 _uiState.update { current ->
                     current.copy(
                         isLoading = false,
                         offer = offer,
-                        quantity = 1,
-                        totalPrice = offer.currentPrice,
-                        temperatureText = tempString,
+                        quantity = if (isInitialLoad) 1 else current.quantity,
+                        totalPrice = if (isInitialLoad) offer.currentPrice else (offer.currentPrice * current.quantity),
                         isTemperatureSafe = isSafe
                     )
                 }
             } else {
-                _uiState.update { current ->
-                    current.copy(isLoading = false, errorMessage = "Offer not found")
+                if (isInitialLoad) {
+                    _uiState.update { current ->
+                        current.copy(isLoading = false, errorMessage = "Offer not found")
+                    }
                 }
             }
         }
@@ -134,5 +164,10 @@ class FoodDetailViewModel(
                 current
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        stopPolling()
     }
 }
