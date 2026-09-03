@@ -1,20 +1,26 @@
 package com.example.bitesavers.customer.details.ui.components
 
-import androidx.compose.foundation.background
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -26,26 +32,29 @@ import com.example.bitesavers.ui.theme.BiteSaversTheme
 fun FoodDetailStatusRow(
     hoursToClose: Int,
     stockLeft: Int,
+    isOpen: Boolean = true,
+    timeStatusText: String = "",
     modifier: Modifier = Modifier
 ) {
     val isSoldOut = stockLeft <= 0
-    val isExpired = hoursToClose <= 0
+    // Item is only truly expired if the store was open and current time passed the window
+    val isExpired = isOpen && hoursToClose <= 0
 
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // 1. EXPIRES IN CARD (Yellow tint / Error tint if expired)
+        // 1. TIME STATUS CARD (Opens In / Closes In / Expired)
         Card(
             modifier = Modifier
                 .weight(1f)
-                .alpha(if (isSoldOut && !isExpired) 0.6f else 1f),
+                .alpha(if (isSoldOut && !isExpired && isOpen) 0.6f else 1f),
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(
-                containerColor = if (isExpired) {
-                    MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f)
-                } else {
-                    MaterialTheme.colorScheme.tertiaryContainer // Soft yellow/orange background
+                containerColor = when {
+                    isExpired -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f)
+                    !isOpen -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+                    else -> MaterialTheme.colorScheme.tertiaryContainer
                 }
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -54,20 +63,48 @@ fun FoodDetailStatusRow(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_notification),
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp),
+                        tint = when {
+                            isExpired -> MaterialTheme.colorScheme.error
+                            !isOpen -> MaterialTheme.colorScheme.onSurfaceVariant
+                            else -> MaterialTheme.colorScheme.onTertiaryContainer
+                        }
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = when {
+                            !isOpen -> stringResource(id = R.string.badge_store_closed)
+                            isExpired -> stringResource(id = R.string.badge_expired)
+                            else -> stringResource(id = R.string.detail_expires_in_label)
+                        },
+                        style = MaterialTheme.typography.labelMedium,
+                        color = when {
+                            isExpired -> MaterialTheme.colorScheme.error
+                            !isOpen -> MaterialTheme.colorScheme.onSurfaceVariant
+                            else -> MaterialTheme.colorScheme.onTertiaryContainer
+                        },
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
                 Text(
-                    text = stringResource(id = R.string.detail_expires_in_label),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = if (isExpired) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onTertiaryContainer,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = if (isExpired) {
-                        stringResource(id = R.string.detail_status_expired)
-                    } else {
-                        stringResource(id = R.string.detail_expires_in_time, hoursToClose)
+                    text = when {
+                        !isOpen && timeStatusText.isNotBlank() -> timeStatusText
+                        isExpired -> stringResource(id = R.string.detail_status_expired)
+                        hoursToClose > 0 -> stringResource(id = R.string.detail_expires_in_time, hoursToClose)
+                        timeStatusText.isNotBlank() -> timeStatusText
+                        else -> stringResource(id = R.string.detail_status_expired)
                     },
                     style = MaterialTheme.typography.titleLarge,
-                    color = if (isExpired) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onTertiaryContainer,
+                    color = when {
+                        isExpired -> MaterialTheme.colorScheme.error
+                        !isOpen -> MaterialTheme.colorScheme.onSurfaceVariant
+                        else -> MaterialTheme.colorScheme.onTertiaryContainer
+                    },
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -81,7 +118,7 @@ fun FoodDetailStatusRow(
                 containerColor = if (isSoldOut) {
                     MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f)
                 } else {
-                    MaterialTheme.colorScheme.secondaryContainer // Soft green background
+                    MaterialTheme.colorScheme.secondaryContainer
                 }
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -111,27 +148,61 @@ fun FoodDetailStatusRow(
     }
 }
 
-@Preview(showBackground = true, name = "Food Detail Status Row - Available")
+@Preview(name = "Status Row - Available", showBackground = true)
 @Composable
-private fun FoodDetailStatusRowPreview() {
+private fun FoodDetailStatusRowAvailablePreview() {
     BiteSaversTheme {
         Box(modifier = Modifier.padding(16.dp)) {
             FoodDetailStatusRow(
-                hoursToClose = 1,
-                stockLeft = 6
+                hoursToClose = 2,
+                stockLeft = 6,
+                isOpen = true,
+                timeStatusText = "Closes in 2h"
             )
         }
     }
 }
 
-@Preview(showBackground = true, name = "Food Detail Status Row - Sold Out")
+@Preview(name = "Status Row - Opening Soon", showBackground = true)
+@Composable
+private fun FoodDetailStatusRowOpeningSoonPreview() {
+    BiteSaversTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            FoodDetailStatusRow(
+                hoursToClose = 0,
+                stockLeft = 6,
+                isOpen = false,
+                timeStatusText = "Opens in 6h"
+            )
+        }
+    }
+}
+
+@Preview(name = "Status Row - Expired", showBackground = true)
+@Composable
+private fun FoodDetailStatusRowExpiredPreview() {
+    BiteSaversTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            FoodDetailStatusRow(
+                hoursToClose = 0,
+                stockLeft = 6,
+                isOpen = true,
+                timeStatusText = "Closed"
+            )
+        }
+    }
+}
+
+@Preview(name = "Status Row - Sold Out", showBackground = true)
 @Composable
 private fun FoodDetailStatusRowSoldOutPreview() {
     BiteSaversTheme {
         Box(modifier = Modifier.padding(16.dp)) {
             FoodDetailStatusRow(
-                hoursToClose = 3,
-                stockLeft = 0
+                hoursToClose = 2,
+                stockLeft = 0,
+                isOpen = true,
+                timeStatusText = "Closes in 2h"
             )
         }
     }

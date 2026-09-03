@@ -24,5 +24,7 @@ data class OfferUiModel(
     val storageType: String = "HOT",
     val description: String = "Fresh surplus food ready for rescue.",
     val latitude: Double? = null,
-    val longitude: Double? = null
+    val longitude: Double? = null,
+    val timeStatusText: String = "",
+    val isCurrentlyOpen: Boolean = true
 )

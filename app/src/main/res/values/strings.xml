@@ -768,4 +768,14 @@
     <string name="cd_food_preview">Food Preview</string>
 
     <string name="hint_auto_calculated_pricing">Auto-calculated by Bitesaver dynamic pricing</string>
+
+    <string name="time_status_opens_in">Opens in %dh</string>
+    <string name="time_status_closes_in">Closes in %dh</string>
+    <string name="time_status_closed">Closed</string>
+
+    <string name="btn_store_closed">Store Closed</string>
+    <string name="btn_store_opens_in">Ordering Opens in %dh</string>
+
+    <string name="badge_store_closed">Store Closed</string>
+    <string name="badge_expired">Expired</string>
 </resources>

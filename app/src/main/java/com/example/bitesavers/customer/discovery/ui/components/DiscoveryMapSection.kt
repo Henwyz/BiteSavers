@@ -51,7 +51,6 @@ import com.example.bitesavers.customer.discovery.data.NearbyDealMarkerUiModel
 import com.example.bitesavers.customer.sharedUI.CompactDiscoveryOfferCard
 import com.example.bitesavers.data.model.DiscoveryCategory
 import com.example.bitesavers.data.model.OfferUiModel
-import com.example.bitesavers.data.model.UserRole
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 // MapLibre Imports
@@ -73,7 +72,7 @@ import org.maplibre.android.location.modes.RenderMode
 fun DiscoveryMapSection(
     markers: List<NearbyDealMarkerUiModel>,
     offers: List<OfferUiModel> = emptyList(),
-    userRole: UserRole = UserRole.CONSUMER,
+    isNgoApproved: Boolean = false,
     userLatitude: Double? = null,
     userLongitude: Double? = null,
     selectedOfferId: String?,
@@ -110,7 +109,7 @@ fun DiscoveryMapSection(
             )
         }
 
-        // --- THE POPUP OVERLAY CARD / MULTI-ITEM CAROUSEL ---
+        // The popup overlay card or multi-item carousel
         if (selectedOfferId != null) {
             val selectedMarker = markers.find { it.storeId == selectedOfferId }
             val storeOffers = selectedMarker?.offers ?: offers.filter { it.id == selectedOfferId }
@@ -131,7 +130,7 @@ fun DiscoveryMapSection(
                         ) {
                             CompactDiscoveryOfferCard(
                                 offer = storeOffers.first(),
-                                userRole = userRole,
+                                isNgoApproved = isNgoApproved,
                                 onClick = { onOfferNavigate(it.id) }
                             )
                         }
@@ -143,7 +142,7 @@ fun DiscoveryMapSection(
                             items(storeOffers, key = { it.id }) { offer ->
                                 CompactDiscoveryOfferCard(
                                     offer = offer,
-                                    userRole = userRole,
+                                    isNgoApproved = isNgoApproved,
                                     modifier = Modifier.width(240.dp),
                                     onClick = { onOfferNavigate(offer.id) }
                                 )
@@ -359,7 +358,6 @@ private fun DiscoveryMapMapLibre(
                     val map = mapInstance
                     if (map != null) {
                         try {
-                            // 1. Try MapLibre LocationComponent
                             val locComponent = map.locationComponent
                             if (locComponent.isLocationComponentActivated) {
                                 locComponent.cameraMode = CameraMode.TRACKING
@@ -377,7 +375,6 @@ private fun DiscoveryMapMapLibre(
                                 }
                             }
 
-                            // 2. Direct Android LocationManager fallback
                             val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
                             val gpsLocation: Location? = locationManager?.getLastKnownLocation(LocationManager.GPS_PROVIDER)
                                 ?: locationManager?.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
@@ -394,7 +391,6 @@ private fun DiscoveryMapMapLibre(
                                 return@IconButton
                             }
 
-                            // 3. ViewModel Coordinates fallback
                             if (userLatitude != null && userLongitude != null) {
                                 map.animateCamera(
                                     CameraUpdateFactory.newLatLngZoom(

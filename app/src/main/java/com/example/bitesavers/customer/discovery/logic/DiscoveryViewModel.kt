@@ -11,14 +11,11 @@ import com.example.bitesavers.customer.discovery.ui.DiscoveryUiEvent
 import com.example.bitesavers.data.model.DiscoveryCategory
 import com.example.bitesavers.data.model.OfferUiModel
 import com.example.bitesavers.data.model.UserRole
-import com.example.bitesavers.data.remote.SupabaseClient
 import com.example.bitesavers.data.remote.UserSession
-import com.example.bitesavers.data.remote.dto.UserDto
 import com.example.bitesavers.data.repository.NotificationRepository
 import com.example.bitesavers.data.repository.OfferRepository
 import com.example.bitesavers.data.repository.SavedRepository
 import com.example.bitesavers.data.repository.UserRepository
-import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -55,24 +52,18 @@ class DiscoveryViewModel : ViewModel() {
         observeRealtimeNotificationEvents()
     }
 
-    // Listens to UserSession changes dynamically
-    // Listens to UserSession changes dynamically
-    // Listens to UserSession changes dynamically
-    // Listens to UserSession changes dynamically
+    // Listens to UserSession changes dynamically and validates approved NGO status directly against Supabase
     private fun observeUserSessionChanges() {
         viewModelScope.launch {
             UserSession.currentUserId.collectLatest { userId ->
                 if (userId.isNotBlank()) {
                     val profile = userRepository.fetchUserProfile(userId)
 
-                    // Safely parses the saved session role into the UserRole enum
-                    val parsedRole = try {
-                        UserRole.valueOf(UserSession.getUserRole().uppercase())
-                    } catch (e: Exception) {
-                        UserRole.CONSUMER
-                    }
+                    // Verifies ngo_status directly from the users table in Supabase
+                    val ngoStatus = userRepository.fetchUserNgoStatus(userId)
+                    val isApprovedNgo = ngoStatus.equals("APPROVED", ignoreCase = true)
 
-                    val updatedCategories = if (parsedRole == UserRole.NGO) {
+                    val updatedCategories = if (isApprovedNgo) {
                         (_uiState.value.availableCategories + DiscoveryCategory.FREE).distinct()
                     } else {
                         _uiState.value.availableCategories.filterNot { it == DiscoveryCategory.FREE }
@@ -81,8 +72,12 @@ class DiscoveryViewModel : ViewModel() {
                     _uiState.update { current ->
                         current.copy(
                             user = profile ?: current.user,
-                            userRole = parsedRole,
-                            availableCategories = updatedCategories
+                            userRole = UserRole.CONSUMER, // Kept as CONSUMER
+                            isNgoApproved = isApprovedNgo,
+                            availableCategories = updatedCategories,
+                            selectedCategory = if (!isApprovedNgo && current.selectedCategory == DiscoveryCategory.FREE) {
+                                DiscoveryCategory.ALL
+                            } else current.selectedCategory
                         )
                     }
 
@@ -306,21 +301,11 @@ class DiscoveryViewModel : ViewModel() {
             var isApprovedNgo = false
 
             if (userId.isNotBlank()) {
-                try {
-                    val user = SupabaseClient.client.from("users")
-                        .select { filter { eq("id", userId) } }
-                        .decodeSingleOrNull<UserDto>()
-
-                    isApprovedNgo = user?.ngoStatus?.equals("APPROVED", ignoreCase = true) == true
-                } catch (e: Exception) {
-                    isApprovedNgo = false
-                }
+                val ngoStatus = userRepository.fetchUserNgoStatus(userId)
+                isApprovedNgo = ngoStatus.equals("APPROVED", ignoreCase = true)
             }
 
-            val effectiveRole = if (isApprovedNgo) UserRole.NGO else UserRole.CONSUMER
-
             _uiState.update { current ->
-                // Unlocks the 'Claim for Free' category only if status is APPROVED in Supabase
                 val updatedCategories = if (isApprovedNgo) {
                     (current.availableCategories + DiscoveryCategory.FREE).distinct()
                 } else {
@@ -328,7 +313,8 @@ class DiscoveryViewModel : ViewModel() {
                 }
 
                 val updated = current.copy(
-                    userRole = effectiveRole,
+                    userRole = UserRole.CONSUMER,
+                    isNgoApproved = isApprovedNgo,
                     availableCategories = updatedCategories,
                     selectedCategory = if (
                         !isApprovedNgo && current.selectedCategory == DiscoveryCategory.FREE
@@ -356,11 +342,8 @@ class DiscoveryViewModel : ViewModel() {
 
         val filteredSequence = sourceList.asSequence()
             .filter { offer ->
-                if (state.userRole == UserRole.CONSUMER) {
-                    offer.hoursToClose > 0
-                } else {
-                    true
-                }
+                // Offers must be unexpired or valid for viewing
+                offer.hoursToClose > 0 || state.isNgoApproved
             }
             .filter { offer ->
                 when (state.selectedCategory) {
@@ -370,10 +353,8 @@ class DiscoveryViewModel : ViewModel() {
                     DiscoveryCategory.DESSERTS -> offer.category == DiscoveryCategory.DESSERTS
                     DiscoveryCategory.BEVERAGES -> offer.category == DiscoveryCategory.BEVERAGES
                     DiscoveryCategory.FREE -> {
-                        // Unpurchased rescue items become free to NGOs during final hour before pickup ends
-                        state.userRole == UserRole.NGO &&
-                                offer.hoursToClose <= 1 &&
-                                offer.isEligibleForNgoFree
+                        // Unpurchased rescue items become free exclusively to approved NGOs
+                        state.isNgoApproved && offer.isEligibleForNgoFree
                     }
                 }
             }

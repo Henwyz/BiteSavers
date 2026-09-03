@@ -26,6 +26,19 @@ class UserRepository {
         }
     }
 
+    // Evaluates whether the user's NGO status is explicitly APPROVED in Supabase
+    suspend fun fetchUserNgoStatus(userId: String): String = withContext(Dispatchers.IO) {
+        try {
+            val user = client.from("users")
+                .select { filter { eq("id", userId) } }
+                .decodeSingle<UserDto>()
+            user.ngoStatus
+        } catch (e: Exception) {
+            Log.e("UserRepository", "fetchUserNgoStatus error: ${e.message}", e)
+            "NONE"
+        }
+    }
+
     // Fetch user record and convert to UserUiModel with generated initials
     suspend fun fetchUserProfile(userId: String): UserUiModel? = withContext(Dispatchers.IO) {
         try {

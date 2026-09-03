@@ -9,6 +9,9 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
+// Set to true to bypass opening hours during development so all stores/offers appear open
+const val DEBUG_BYPASS_OPERATING_HOURS = true
+
 fun OfferDto.toUiModel(store: StoreDto?): OfferUiModel {
     val origPrice = originalPrice ?: 0.0
     val discPrice = discountedPrice ?: 0.0
@@ -33,7 +36,12 @@ fun OfferDto.toUiModel(store: StoreDto?): OfferUiModel {
 
     // Dynamic calculation of hours left until surplus pickup closes (prioritizing pickup_end over closing_time)
     val targetEndTime = this.pickupEnd ?: store?.closingTime
-    val calculatedHoursToClose = calculateHoursRemaining(targetEndTime)
+    val openingTime = store?.openingTime
+
+    val (timeStatus, isOpenNow, remainingHours) = calculateTimeStatus(
+        openingTimeString = openingTime,
+        closingTimeString = targetEndTime
+    )
 
     // Formats pickup interval into readable display string
     val formattedStart = formatTimeToAmPm(this.pickupStart) ?: "8:00 PM"
@@ -61,15 +69,72 @@ fun OfferDto.toUiModel(store: StoreDto?): OfferUiModel {
         originalPrice = origPrice,
         distanceKm = 0.0,
         quantityLeft = this.quantityAvailable ?: 0,
-        hoursToClose = calculatedHoursToClose,
+        hoursToClose = remainingHours,
         pickupWindow = formattedPickupWindow,
         category = mappedCategory,
         isEligibleForNgoFree = this.isEligibleForNgoFree,
         storageType = "HOT",
         description = this.description ?: "Fresh surplus food ready for rescue.",
         latitude = store?.latitude,
-        longitude = store?.longitude
+        longitude = store?.longitude,
+        timeStatusText = timeStatus,
+        isCurrentlyOpen = isOpenNow
     )
+}
+
+// Evaluates current system time against store opening and closing intervals to derive dynamic status text
+private fun calculateTimeStatus(
+    openingTimeString: String?,
+    closingTimeString: String?
+): Triple<String, Boolean, Int> {
+    // If debug bypass is enabled, treat all stores as open and closing in 2 hours
+    if (DEBUG_BYPASS_OPERATING_HOURS) {
+        return Triple("Closes in 2h", true, 2)
+    }
+
+    val now = Calendar.getInstance()
+    val currentMinutes = (now.get(Calendar.HOUR_OF_DAY) * 60) + now.get(Calendar.MINUTE)
+
+    val openMinutes = parseTimeToMinutes(openingTimeString)
+    val closeMinutes = parseTimeToMinutes(closingTimeString)
+
+    // Default fallback when time records are unspecified
+    if (openMinutes == null && closeMinutes == null) {
+        return Triple("Closes in 2h", true, 2)
+    }
+
+    // Handles store opening anticipation if current time is prior to opening hours
+    if (openMinutes != null && currentMinutes < openMinutes) {
+        val diffMinutes = openMinutes - currentMinutes
+        val hours = (diffMinutes / 60).coerceAtLeast(1)
+        return Triple("Opens in ${hours}h", false, 0)
+    }
+
+    // Handles active operating window
+    if (closeMinutes != null) {
+        if (currentMinutes <= closeMinutes) {
+            val diffMinutes = closeMinutes - currentMinutes
+            val hours = (diffMinutes / 60).coerceAtLeast(1)
+            return Triple("Closes in ${hours}h", true, hours)
+        } else {
+            return Triple("Closed", false, 0)
+        }
+    }
+
+    return Triple("Closes in 2h", true, 2)
+}
+
+// Parses SQL 24-hour time strings safely into total minutes since midnight
+private fun parseTimeToMinutes(timeString: String?): Int? {
+    if (timeString.isNullOrBlank()) return null
+    return try {
+        val parts = timeString.split(":")
+        val hour = parts[0].trim().toInt()
+        val minute = if (parts.size > 1) parts[1].trim().take(2).toInt() else 0
+        (hour * 60) + minute
+    } catch (_: Exception) {
+        null
+    }
 }
 
 // Converts 24-hour SQL format (e.g., 20:30:00) safely to 12-hour AM/PM format (API 24 compatible)
@@ -82,33 +147,5 @@ private fun formatTimeToAmPm(timeStr: String?): String? {
         formatter.format(date)
     } catch (_: Exception) {
         timeStr
-    }
-}
-
-// Computes remaining hours until store/pickup closes, accounting for regular operating hours and midnight rollovers
-private fun calculateHoursRemaining(closingTimeString: String?): Int {
-    if (closingTimeString.isNullOrBlank()) return 2
-
-    return try {
-        val currentCalendar = Calendar.getInstance()
-        val currentHour = currentCalendar.get(Calendar.HOUR_OF_DAY)
-        val currentMinute = currentCalendar.get(Calendar.MINUTE)
-
-        val closingParts = closingTimeString.split(":")
-        val closingHour = closingParts[0].trim().toInt()
-        val closingMinute = if (closingParts.size > 1) closingParts[1].trim().take(2).toInt() else 0
-
-        val currentTotalMinutes = (currentHour * 60) + currentMinute
-        var closingTotalMinutes = (closingHour * 60) + closingMinute
-
-        // Accounts for stores with operating hours extending past midnight into early morning
-        if (closingTotalMinutes < currentTotalMinutes) {
-            closingTotalMinutes += 24 * 60
-        }
-
-        val diffMinutes = closingTotalMinutes - currentTotalMinutes
-        if (diffMinutes <= 0) 0 else (diffMinutes / 60).coerceAtLeast(1)
-    } catch (e: Exception) {
-        2
     }
 }
