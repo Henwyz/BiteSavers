@@ -11,11 +11,14 @@ import com.example.bitesavers.customer.discovery.ui.DiscoveryUiEvent
 import com.example.bitesavers.data.model.DiscoveryCategory
 import com.example.bitesavers.data.model.OfferUiModel
 import com.example.bitesavers.data.model.UserRole
+import com.example.bitesavers.data.remote.SupabaseClient
 import com.example.bitesavers.data.remote.UserSession
+import com.example.bitesavers.data.remote.dto.UserDto
 import com.example.bitesavers.data.repository.NotificationRepository
 import com.example.bitesavers.data.repository.OfferRepository
 import com.example.bitesavers.data.repository.SavedRepository
 import com.example.bitesavers.data.repository.UserRepository
+import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -296,29 +299,52 @@ class DiscoveryViewModel : ViewModel() {
         }
     }
 
-    fun onUserRoleChanged(role: UserRole) {
-        _uiState.update { current ->
-            val updatedCategories = if (role == UserRole.NGO) {
-                (current.availableCategories + DiscoveryCategory.FREE).distinct()
-            } else {
-                current.availableCategories.filterNot { it == DiscoveryCategory.FREE }
+    // Queries the users table in Supabase to verify if ngo_status is APPROVED before unlocking free claims
+    fun onUserRoleChanged(role: UserRole? = null) {
+        viewModelScope.launch {
+            val userId = UserSession.getUserId()
+            var isApprovedNgo = false
+
+            if (userId.isNotBlank()) {
+                try {
+                    val user = SupabaseClient.client.from("users")
+                        .select { filter { eq("id", userId) } }
+                        .decodeSingleOrNull<UserDto>()
+
+                    isApprovedNgo = user?.ngoStatus?.equals("APPROVED", ignoreCase = true) == true
+                } catch (e: Exception) {
+                    isApprovedNgo = false
+                }
             }
 
-            val updated = current.copy(
-                userRole = role,
-                availableCategories = updatedCategories,
-                selectedCategory = if (
-                    role == UserRole.CONSUMER && current.selectedCategory == DiscoveryCategory.FREE
-                ) DiscoveryCategory.ALL else current.selectedCategory
-            )
-            val filtered = applyFilters(updated, allOffers)
-            val baseLat = userLatitude ?: defaultLatitude
-            val baseLng = userLongitude ?: defaultLongitude
-            updated.copy(
-                offers = filtered,
-                stores = deriveStoresFromOffers(filtered, baseLat, baseLng),
-                nearbyMarkers = groupOffersByStore(filtered, baseLat, baseLng)
-            )
+            val effectiveRole = if (isApprovedNgo) UserRole.NGO else UserRole.CONSUMER
+
+            _uiState.update { current ->
+                // Unlocks the 'Claim for Free' category only if status is APPROVED in Supabase
+                val updatedCategories = if (isApprovedNgo) {
+                    (current.availableCategories + DiscoveryCategory.FREE).distinct()
+                } else {
+                    current.availableCategories.filterNot { it == DiscoveryCategory.FREE }
+                }
+
+                val updated = current.copy(
+                    userRole = effectiveRole,
+                    availableCategories = updatedCategories,
+                    selectedCategory = if (
+                        !isApprovedNgo && current.selectedCategory == DiscoveryCategory.FREE
+                    ) DiscoveryCategory.ALL else current.selectedCategory
+                )
+
+                val filtered = applyFilters(updated, allOffers)
+                val baseLat = userLatitude ?: defaultLatitude
+                val baseLng = userLongitude ?: defaultLongitude
+
+                updated.copy(
+                    offers = filtered,
+                    stores = deriveStoresFromOffers(filtered, baseLat, baseLng),
+                    nearbyMarkers = groupOffersByStore(filtered, baseLat, baseLng)
+                )
+            }
         }
     }
 

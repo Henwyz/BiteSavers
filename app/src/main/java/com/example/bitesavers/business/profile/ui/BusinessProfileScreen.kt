@@ -9,7 +9,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -89,7 +91,6 @@ fun BusinessProfileScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Edit button is ALWAYS clickable so user can edit Account details
                     IconButton(
                         onClick = onEditClick,
                         modifier = Modifier
@@ -231,11 +232,7 @@ fun BusinessProfileScreen(
                         label = stringResource(R.string.business_phone_label),
                         value = profile.phone
                     )
-                    BusinessInfoRow(
-                        icon = Icons.Filled.Storefront,
-                        label = stringResource(R.string.business_category_label),
-                        value = profile.category
-                    )
+                    // Category row removed here
                     BusinessInfoRow(
                         icon = Icons.Filled.AccessTime,
                         label = stringResource(R.string.business_operating_hours_title),
