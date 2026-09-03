@@ -1,5 +1,6 @@
 package com.example.bitesavers.customer.details.ui.components
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,7 +49,6 @@ fun FoodDetailSafetyBanner(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
             Icon(
                 painter = painterResource(id = iconResId),
                 contentDescription = stringResource(id = R.string.cd_safety_status_icon),
@@ -60,7 +60,11 @@ fun FoodDetailSafetyBanner(
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(
-                    text = if (isSafe) stringResource(id = R.string.detail_safety_verified) else stringResource(id = R.string.detail_temperature_alert),
+                    text = if (isSafe) {
+                        stringResource(id = R.string.detail_safety_verified)
+                    } else {
+                        stringResource(id = R.string.detail_temperature_alert)
+                    },
                     style = MaterialTheme.typography.titleSmall,
                     color = contentColor,
                     fontWeight = FontWeight.Bold
@@ -75,14 +79,29 @@ fun FoodDetailSafetyBanner(
     }
 }
 
-@Preview(showBackground = true)
+@Preview(name = "Safety Banner - Safe State - Light", showBackground = true)
+@Preview(name = "Safety Banner - Safe State - Dark", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
-private fun FoodDetailSafetyBannerPreview() {
+private fun FoodDetailSafetyBannerSafePreview() {
     BiteSaversTheme {
         Box(modifier = Modifier.padding(16.dp)) {
             FoodDetailSafetyBanner(
-                temperatureText = "Live temp: 60.0 °C - within safe hot storage zone",
+                temperatureText = "Live temp: 60.0°C - within safe hot holding (>= 55°C) zone",
                 isSafe = true
+            )
+        }
+    }
+}
+
+@Preview(name = "Safety Banner - Breach Alert - Light", showBackground = true)
+@Preview(name = "Safety Banner - Breach Alert - Dark", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Composable
+private fun FoodDetailSafetyBannerAlertPreview() {
+    BiteSaversTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            FoodDetailSafetyBanner(
+                temperatureText = "Live temp: 11.2°C - Alert: temperature breach!",
+                isSafe = false
             )
         }
     }

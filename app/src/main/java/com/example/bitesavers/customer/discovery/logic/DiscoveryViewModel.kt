@@ -342,9 +342,9 @@ class DiscoveryViewModel : ViewModel() {
 
         val filteredSequence = sourceList.asSequence()
             .filter { offer ->
-                // Offers must be unexpired or valid for viewing
-                offer.hoursToClose > 0 || state.isNgoApproved
+                offer.hoursToClose >= 0 || state.isNgoApproved
             }
+            // 2. Category Tab Filter:
             .filter { offer ->
                 when (state.selectedCategory) {
                     DiscoveryCategory.ALL -> true
@@ -358,6 +358,7 @@ class DiscoveryViewModel : ViewModel() {
                     }
                 }
             }
+            // 3. Search Query Filter:
             .filter { offer ->
                 query.isBlank() ||
                         offer.title.lowercase().contains(query) ||

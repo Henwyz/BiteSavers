@@ -869,4 +869,12 @@
     <string name="type_cold_temp_target">4.0°C</string>
     <string name="type_hot_storage">Hot Warmer Box</string>
     <string name="type_hot_temp_target">60.0°C</string>
+
+    <!-- Food Safety Banner & Details -->
+    <string name="detail_temp_safe_format">Live temp: %1$.1f°C - within safe %2$s zone</string>
+    <string name="detail_temp_breach_format">Live temp: %1$.1f°C - Alert: temperature breach!</string>
+    <string name="storage_zone_hot">hot holding (&gt;= 55°C)</string>
+    <string name="storage_zone_cold">cold storage (&lt;= 8°C)</string>
+    <string name="error_offer_not_found">Offer not found</string>
+    <string name="cd_warning_icon">Warning icon</string>
 </resources>

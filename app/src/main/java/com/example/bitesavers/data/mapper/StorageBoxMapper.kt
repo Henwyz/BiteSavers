@@ -5,10 +5,11 @@ import com.example.bitesavers.data.model.StorageBox
 import com.example.bitesavers.data.model.StorageType
 
 fun StorageBoxDto.toDomain(): StorageBox {
-    val type = try {
-        storageType?.let { StorageType.valueOf(it.uppercase().replace(" ", "_")) } ?: StorageType.ROOM_TEMP
-    } catch (e: Exception) {
-        StorageType.ROOM_TEMP
+    // Maps raw Supabase strings into binary temperature profiles: HOT_HOLD or CHILLED
+    val type = if (storageType?.contains("Hot", ignoreCase = true) == true) {
+        StorageType.HOT_HOLD
+    } else {
+        StorageType.CHILLED
     }
 
     return StorageBox(
@@ -17,6 +18,7 @@ fun StorageBoxDto.toDomain(): StorageBox {
         boxCode = boxCode,
         storageType = type,
         targetTemperature = targetTemperature,
-        currentTemperature = currentTemperature
+        currentTemperature = currentTemperature,
+        isLocked = isLocked
     )
 }
