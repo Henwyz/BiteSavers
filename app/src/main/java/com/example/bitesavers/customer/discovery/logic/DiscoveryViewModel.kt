@@ -335,6 +335,7 @@ class DiscoveryViewModel : ViewModel() {
     }
 
     // Applies search queries, role-based visibility, and rescue claim window criteria
+    // Applies search queries, role-based visibility, and rescue claim window criteria
     private fun applyFilters(state: DiscoveryUiState, sourceList: List<OfferUiModel>): List<OfferUiModel> {
         val query = state.searchQuery.trim().lowercase()
         val currentLat = userLatitude
@@ -342,8 +343,8 @@ class DiscoveryViewModel : ViewModel() {
 
         val filteredSequence = sourceList.asSequence()
             .filter { offer ->
-                // Offers must be unexpired or valid for viewing
-                offer.hoursToClose > 0 || state.isNgoApproved
+                // Ensures active quantity remains, while allowing ongoing deals or NGO claims
+                offer.quantityLeft > 0 && (offer.hoursToClose >= 0 || state.isNgoApproved)
             }
             .filter { offer ->
                 when (state.selectedCategory) {

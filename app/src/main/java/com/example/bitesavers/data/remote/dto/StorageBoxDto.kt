@@ -11,5 +11,6 @@ data class StorageBoxDto(
     @SerialName("storage_type") val storageType: String? = null,
     @SerialName("target_temperature") val targetTemperature: Double? = null,
     @SerialName("current_temperature") val currentTemperature: Double = 0.0,
+    @SerialName("is_locked") val isLocked: Boolean = true,
     @SerialName("last_synced_at") val lastSyncedAt: String? = null
 )
