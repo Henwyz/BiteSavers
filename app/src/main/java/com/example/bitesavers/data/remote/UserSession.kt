@@ -14,6 +14,7 @@ object UserSession {
     private const val PREFS_NAME = "bitesaver_user_session"
     private const val KEY_USER_ID = "saved_user_id"
     private const val KEY_USER_ROLE = "saved_user_role"
+    private const val KEY_STORE_STATUS = "saved_store_status" // Added to persist store status on disk
     private const val KEY_NOTIFIED_BANNER_IDS = "saved_notified_banner_ids"
 
     // Holds Android SharedPreferences instance once initialized
@@ -42,10 +43,12 @@ object UserSession {
             // Read previously saved values from the phone's disk storage
             val savedId = sharedPreferences?.getString(KEY_USER_ID, "").orEmpty()
             val savedRole = sharedPreferences?.getString(KEY_USER_ROLE, "CONSUMER").orEmpty()
+            val savedStoreStatus = sharedPreferences?.getString(KEY_STORE_STATUS, "PENDING").orEmpty() // Restores saved store status
 
-            // Restore the values into our in-memory StateFlows
+            // Restore the values into our in-memory StateFlows and variables
             _currentUserId.value = savedId
             _currentUserRole.value = savedRole
+            storeStatus = if (savedStoreStatus.isBlank()) "PENDING" else savedStoreStatus
         }
     }
 
@@ -112,6 +115,7 @@ object UserSession {
     fun clear() {
         _currentUserId.value = ""
         _currentUserRole.value = "CONSUMER"
+        storeStatus = "PENDING" // Reset store status on logout
 
         // Wipe the saved keys from the device
         sharedPreferences?.edit()
@@ -123,6 +127,7 @@ object UserSession {
 
     fun setStoreStatus(status: String) {
         storeStatus = status
+        sharedPreferences?.edit()?.putString(KEY_STORE_STATUS, status)?.commit() // Persists status change to disk
     }
 
     fun getStoreStatus(): String {

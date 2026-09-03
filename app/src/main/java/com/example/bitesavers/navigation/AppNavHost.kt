@@ -21,6 +21,7 @@ import com.example.bitesavers.business.restaurant.logic.PendingScreenViewModel
 import com.example.bitesavers.business.restaurant.logic.RegisterRestaurantViewModel
 import com.example.bitesavers.business.restaurant.ui.PendingApprovalScreen
 import com.example.bitesavers.business.restaurant.ui.RegisterRestaurantScreen
+import com.example.bitesavers.business.restaurant.ui.RejectedScreen
 import com.example.bitesavers.customer.navigation.CustomerNavHost
 import com.example.bitesavers.data.remote.UserSession
 import com.example.bitesavers.login.ui.LoginScreen
@@ -70,6 +71,7 @@ fun AppNavHost(
                     val destination = if (userRole.equals("business", ignoreCase = true)) {
                         when (UserSession.getStoreStatus()) {
                             "APPROVED" -> RootRoute.BusinessGraph.route
+                            "REJECTED" -> RootRoute.RejectedApproval.route // Added navigation handling for rejected status
                             "UNREGISTERED" -> RootRoute.RegisterRestaurant.route
                             else -> RootRoute.PendingApproval.route // PENDING or default
                         }
@@ -172,6 +174,17 @@ fun AppNavHost(
                 onLogout = {
                     navController.navigate(RootRoute.Login.route) {
                         popUpTo(RootRoute.BusinessGraph.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // 8. Rejected Approval Screen
+        composable(RootRoute.RejectedApproval.route) {
+            RejectedScreen(
+                onResubmitClicked = {
+                    navController.navigate(RootRoute.RegisterRestaurant.route) {
+                        popUpTo(RootRoute.RejectedApproval.route) { inclusive = true }
                     }
                 }
             )

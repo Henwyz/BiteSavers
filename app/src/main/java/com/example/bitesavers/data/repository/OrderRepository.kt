@@ -115,6 +115,11 @@ class OrderRepository {
 
                 merchantOwnerId = storeList.firstOrNull()?.ownerId
 
+                val isBiteSaverPay = !isFreeClaim && (
+                        paymentMethod.contains("BITESAVER", ignoreCase = true) ||
+                                paymentMethod.contains("PAY", ignoreCase = true)
+                        )
+
                 if (!merchantOwnerId.isNullOrBlank() && isBiteSaverPay) {
                     val merchant = client.from("users")
                         .select { filter { eq("id", merchantOwnerId) } }
@@ -126,6 +131,7 @@ class OrderRepository {
                             filter { eq("id", merchantOwnerId) }
                         }
                 }
+
             } catch (e: Exception) {
                 Log.e("OrderRepository", "Failed to update merchant wallet: ${e.message}")
             }

@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.bitesavers.R
 import com.example.bitesavers.data.remote.SupabaseClient
 import com.example.bitesavers.data.remote.UserSession
 import com.example.bitesavers.data.remote.dto.StoreDto
@@ -34,6 +35,10 @@ class RegisterRestaurantViewModel(application: Application) : AndroidViewModel(a
     var cleanupEndTime by mutableStateOf("10:30 PM")
         private set
 
+    // Loading state to prevent duplicate submissions on double-tap
+    var isLoading by mutableStateOf(false)
+        private set
+
     // Validation error states
     var cleanupTimeError by mutableStateOf<String?>(null)
         private set
@@ -57,24 +62,28 @@ class RegisterRestaurantViewModel(application: Application) : AndroidViewModel(a
 
     fun updateRestaurantName(value: String) {
         restaurantName = value
-        restaurantNameError = if (value.isBlank()) "Restaurant name is required" else null
+        val context = getApplication<Application>()
+        restaurantNameError = if (value.isBlank()) context.getString(R.string.error_restaurant_name_required) else null
     }
 
     fun updateAddress(value: String) {
         address = value
-        addressError = if (value.isBlank()) "Address is required" else null
+        val context = getApplication<Application>()
+        addressError = if (value.isBlank()) context.getString(R.string.error_address_required) else null
     }
 
     fun updateContactPhone(value: String) {
         contactPhone = value
-        contactPhoneError = if (value.isBlank()) "Contact phone is required" else null
+        val context = getApplication<Application>()
+        contactPhoneError = if (value.isBlank()) context.getString(R.string.error_contact_phone_required) else null
     }
 
     fun updateSsmNumber(value: String) {
+        val context = getApplication<Application>()
         if (value.all { it.isDigit() } && value.length <= 12) {
             ssmNumber = value
             ssmError = if (value.length != 12) {
-                "SSM number must be exactly 12 digits"
+                context.getString(R.string.error_ssm_invalid)
             } else {
                 null
             }
@@ -94,8 +103,9 @@ class RegisterRestaurantViewModel(application: Application) : AndroidViewModel(a
     }
 
     private fun validateTimes() {
+        val context = getApplication<Application>()
         if (!RegisterRestaurantValidation.isCleanupValid(closingTime, cleanupEndTime)) {
-            cleanupTimeError = "Cleanup time must be after closing time"
+            cleanupTimeError = context.getString(R.string.error_cleanup_time_invalid)
         } else {
             cleanupTimeError = null
         }
@@ -103,12 +113,14 @@ class RegisterRestaurantViewModel(application: Application) : AndroidViewModel(a
 
     fun updateStoreImageUri(uri: Uri?) {
         storeImageUri = uri
-        storeImageError = if (uri == null) "Store photo is required" else null
+        val context = getApplication<Application>()
+        storeImageError = if (uri == null) context.getString(R.string.error_store_photo_required) else null
     }
 
     fun updateSsmDocUri(uri: Uri?) {
         ssmDocUri = uri
-        ssmDocError = if (uri == null) "SSM document is required" else null
+        val context = getApplication<Application>()
+        ssmDocError = if (uri == null) context.getString(R.string.error_ssm_doc_required) else null
     }
 
     fun useDefaultPenangLocation() {
@@ -135,13 +147,16 @@ class RegisterRestaurantViewModel(application: Application) : AndroidViewModel(a
     }
 
     fun registerRestaurant(onSuccess: () -> Unit) {
-        // Final sanity check validation on submission trigger
-        restaurantNameError = if (restaurantName.isBlank()) "Restaurant name is required" else null
-        addressError = if (address.isBlank()) "Address is required" else null
-        contactPhoneError = if (contactPhone.isBlank()) "Contact phone is required" else null
-        ssmError = if (!RegisterRestaurantValidation.isSsmValid(ssmNumber)) "SSM number must be exactly 12 digits" else null
-        storeImageError = if (storeImageUri == null) "Store photo is required" else null
-        ssmDocError = if (ssmDocUri == null) "SSM document is required" else null
+        if (isLoading) return // Prevents multiple rapid clicks
+
+        // Final sanity check validation on submission trigger using string resources
+        val context = getApplication<Application>()
+        restaurantNameError = if (restaurantName.isBlank()) context.getString(R.string.error_restaurant_name_required) else null
+        addressError = if (address.isBlank()) context.getString(R.string.error_address_required) else null
+        contactPhoneError = if (contactPhone.isBlank()) context.getString(R.string.error_contact_phone_required) else null
+        ssmError = if (!RegisterRestaurantValidation.isSsmValid(ssmNumber)) context.getString(R.string.error_ssm_invalid) else null
+        storeImageError = if (storeImageUri == null) context.getString(R.string.error_store_photo_required) else null
+        ssmDocError = if (ssmDocUri == null) context.getString(R.string.error_ssm_doc_required) else null
 
         if (restaurantNameError != null || addressError != null || contactPhoneError != null ||
             ssmError != null || storeImageError != null || ssmDocError != null || cleanupTimeError != null) {
@@ -149,11 +164,19 @@ class RegisterRestaurantViewModel(application: Application) : AndroidViewModel(a
         }
 
         viewModelScope.launch {
+            isLoading = true
             try {
                 val (resolvedLat, resolvedLng) = LocationUtils.getCoordinatesFromAddress(
                     context = getApplication(),
                     address = address
                 )
+
+                // Validates if address is resolvable via Geocoder and blocks submission if it fails lookup
+                if (resolvedLat == 5.4674 && resolvedLng == 100.2790 && !address.contains("Penang", ignoreCase = true)) {
+                    addressError = context.getString(R.string.error_invalid_address)
+                    isLoading = false
+                    return@launch
+                }
 
                 val imageUrlStr = uploadFileToStorage(storeImageUri!!, "store-images", "store")
                 val ssmDocUrlStr = uploadFileToStorage(ssmDocUri!!, "ssm_documents", "ssm")
@@ -194,6 +217,8 @@ class RegisterRestaurantViewModel(application: Application) : AndroidViewModel(a
                 onSuccess()
             } catch (e: Exception) {
                 e.printStackTrace()
+            } finally {
+                isLoading = false
             }
         }
     }
