@@ -92,7 +92,7 @@ fun PendingApprovalScreen(
                         Text(text = "⚠️", fontSize = 20.sp)
                         Spacer(Modifier.width(12.dp))
                         Text(
-                            text = stringResource(R.string.pending_review_banner),
+                            text = stringResource(R.string.pending_sensor_deployment_msg),
                             color = MaterialTheme.colorScheme.onErrorContainer,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Medium

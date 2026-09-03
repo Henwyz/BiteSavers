@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+
 class CheckoutViewModel(
     private val offerRepository: OfferRepository = OfferRepository(),
     private val orderRepository: OrderRepository = OrderRepository(),

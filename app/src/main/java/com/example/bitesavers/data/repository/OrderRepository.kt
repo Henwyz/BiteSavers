@@ -10,7 +10,18 @@ import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.random.Random
+import com.example.bitesavers.data.remote.dto.NotificationDto
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import java.util.UUID
 
+// DTO to resolve merchant owner_id from stores table
+@Serializable
+private data class StoreOwnerInfo(
+    val id: String,
+    @SerialName("owner_id")
+    val ownerId: String
+)
 class OrderRepository {
     private val client = SupabaseClient.client
 
@@ -92,6 +103,55 @@ class OrderRepository {
                     .update({ set("wallet_balance", updatedBalance) }) {
                         filter { eq("id", uid) }
                     }
+            }
+// 6. Credit merchant wallet balance if paid via BiteSaver Pay
+            val resolvedStoreId = offer.storeId ?: "store_01"
+            var merchantOwnerId: String? = null
+
+            try {
+                val storeList = client.from("stores")
+                    .select { filter { eq("id", resolvedStoreId) } }
+                    .decodeList<StoreOwnerInfo>()
+
+                merchantOwnerId = storeList.firstOrNull()?.ownerId
+
+                val isBiteSaverPay = !isFreeClaim && (
+                        paymentMethod.contains("BITESAVER", ignoreCase = true) ||
+                                paymentMethod.contains("PAY", ignoreCase = true)
+                        )
+
+                if (!merchantOwnerId.isNullOrBlank() && isBiteSaverPay) {
+                    val merchant = client.from("users")
+                        .select { filter { eq("id", merchantOwnerId) } }
+                        .decodeSingle<UserDto>()
+
+                    val updatedMerchantBalance = (merchant.walletBalance ?: 0.0) + totalPrice
+                    client.from("users")
+                        .update({ set("wallet_balance", updatedMerchantBalance) }) {
+                            filter { eq("id", merchantOwnerId) }
+                        }
+                }
+
+            } catch (e: Exception) {
+                Log.e("OrderRepository", "Failed to update merchant wallet: ${e.message}")
+            }
+
+            // 7. Insert new order notification for the store merchant
+            if (!merchantOwnerId.isNullOrBlank()) {
+                try {
+                    val notifId = "notif_${UUID.randomUUID().toString().take(8)}"
+                    val merchantNotif = NotificationDto(
+                        id = notifId,
+                        userId = merchantOwnerId,
+                        orderId = insertedOrder.id,
+                        title = "New Order Received! 🛍️",
+                        message = "You received a new order (${insertedOrder.id}) for $quantity x ${offer.title}.",
+                        isRead = false
+                    )
+                    client.from("user_notifications").insert(merchantNotif)
+                } catch (e: Exception) {
+                    Log.e("OrderRepository", "Failed to notify merchant: ${e.message}")
+                }
             }
 
             insertedOrder.id

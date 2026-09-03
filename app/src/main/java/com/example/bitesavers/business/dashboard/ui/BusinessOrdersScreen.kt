@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import com.example.bitesavers.R
@@ -187,7 +188,8 @@ fun BusinessOrdersScreen(
 @Composable
 fun BusinessOrderCard(
     order: CheckOrderData,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onDeleteClick: () -> Unit = {}
 ) {
     val (statusBg, statusText, statusLabelRes) = when {
         order.status.equals("COMPLETED", ignoreCase = true) -> Triple(
@@ -208,6 +210,10 @@ fun BusinessOrderCard(
             R.string.status_ready_pickup
         )
     }
+
+    // check the status is completed or cancelled
+    val isFinalized = order.status.equals("COMPLETED", ignoreCase = true) ||
+            order.status.equals("CANCELLED", ignoreCase = true)
 
     Card(
         shape = RoundedCornerShape(16.dp),

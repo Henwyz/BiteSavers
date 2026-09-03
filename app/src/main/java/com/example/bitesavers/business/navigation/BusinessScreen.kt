@@ -21,6 +21,8 @@ sealed class BusinessScreen(val route: String) {
     object CancelOrder : BusinessScreen("business_cancel/{orderId}") {
         fun createRoute(orderId: String): String = "business_cancel/$orderId"
     }
+
+    data object Notification : BusinessScreen("business_notification")
 }
 /*
     data object Home : BusinessScreen("business_home")

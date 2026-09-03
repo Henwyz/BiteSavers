@@ -14,7 +14,7 @@ import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.launch
 
 class SignUpViewModel : ViewModel() {
-    var isBusiness by mutableStateOf(true)
+    var isBusiness by mutableStateOf(false)
         private set
     var fullName by mutableStateOf("")
         private set

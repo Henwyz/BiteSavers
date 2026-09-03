@@ -16,6 +16,7 @@ data class ListingItem(
     val quantity: Int = 1,
     val pickupStart: String = "09:00 PM",
     val pickupEnd: String = "09:30 PM",
+    val cleanupEndTime: String = "22:15:00",
     val isEligibleForNgoFree: Boolean = false,
     val status: String = "ACTIVE",
     val imageUrl: String? = null,
@@ -27,7 +28,7 @@ data class ListingItem(
         } else 0
 }
 
-fun OfferDto.toListingItem(defaultStart: String, defaultEnd: String): ListingItem {
+fun OfferDto.toListingItem(defaultStart: String, defaultEnd: String, defaultCleanup: String): ListingItem {
     return ListingItem(
         id = this.id,
         storeId = this.storeId ?: "",
@@ -41,6 +42,7 @@ fun OfferDto.toListingItem(defaultStart: String, defaultEnd: String): ListingIte
         quantity = this.quantityAvailable,
         pickupStart = this.pickupStart ?: defaultStart,
         pickupEnd = this.pickupEnd ?: defaultEnd,
+        cleanupEndTime = defaultCleanup, // Maps store cleanup limit
         status = this.status,
         imageUrl = this.imageUrl,
         isEligibleForNgoFree = this.isEligibleForNgoFree || this.discountedPrice == 0.0

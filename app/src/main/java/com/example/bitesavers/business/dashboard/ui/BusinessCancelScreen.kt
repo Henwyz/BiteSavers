@@ -44,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -53,11 +54,13 @@ import coil.compose.AsyncImage
 import com.example.bitesavers.R
 import com.example.bitesavers.business.dashboard.logic.CancelViewModel
 
-fun formatPaymentDisplayName(raw: String): String {
+@Composable
+fun getPaymentDisplayName(raw: String): String {
     return when (raw.uppercase()) {
-        "CASH", "CASH_ON_PICKUP" -> "Cash on Pickup"
-        "BITESAVER_PAY", "BITESAVERS_PAY" -> "BiteSavers Pay"
-        "CREDIT_CARD", "CARD" -> "Credit Card"
+        "CASH", "CASH_ON_PICKUP" -> stringResource(R.string.refund_method_cash)
+        "BITESAVER_PAY", "BITESAVERS_PAY" -> stringResource(R.string.refund_method_bitesaver)
+        "TNG_EWALLET", "TNG", "TOUCH_N_GO" -> stringResource(R.string.refund_method_tng)
+        "BANK_CARD", "CREDIT_CARD", "CARD", "DEBIT_CARD" -> stringResource(R.string.refund_method_credit_card)
         else -> raw.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }
     }
 }
@@ -88,7 +91,7 @@ fun BusinessCancelScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            painter = painterResource(id = R.drawable.ic_arrow_back),
                             contentDescription = stringResource(R.string.back_label)
                         )
                     }
@@ -114,7 +117,7 @@ fun BusinessCancelScreen(
             return@Scaffold
         }
 
-        val formattedPayment = formatPaymentDisplayName(order.paymentMethod)
+        val formattedPayment = getPaymentDisplayName(order.paymentMethod)
         val isCash = order.paymentMethod.contains("CASH", ignoreCase = true)
         val isBiteSaver = order.paymentMethod.equals("BITESAVER_PAY", ignoreCase = true)
 
@@ -274,7 +277,7 @@ fun BusinessCancelScreen(
                         verticalAlignment = Alignment.Top
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Warning,
+                            imageVector = Icons.Default.Warning, //mustbe change
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onTertiaryContainer,
                             modifier = Modifier.size(22.dp)

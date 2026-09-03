@@ -24,6 +24,13 @@ data class UserWalletDto(
     val walletBalance: Double = 0.0
 )
 
+// DTO to fetch owner_id from stores table
+@Serializable
+data class StoreOwnerDto(
+    val id: String,
+    @SerialName("owner_id")
+    val ownerId: String
+)
 class CancelViewModel : ViewModel() {
     var orderData by mutableStateOf<CheckOrderData?>(null)
         private set
@@ -86,11 +93,58 @@ class CancelViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             withContext(Dispatchers.Main) { isSubmitting = true }
             try {
-                // 1. Process Refund based on Payment Method
+                // Process Refund based on Payment Method
                 val isBiteSaverPay = currentOrder.paymentMethod.equals("BITESAVER_PAY", ignoreCase = true)
-                var refundMessageSuffix = "Refund of RM %.2f has been processed.".format(currentOrder.totalPrice)
+                val isTngPay = currentOrder.paymentMethod.contains("TNG", ignoreCase = true)
+                val isCardPay = currentOrder.paymentMethod.contains("CARD", ignoreCase = true)
+
+                val refundMessageSuffix = when {
+                    isBiteSaverPay -> "RM %.2f has been refunded to your BiteSavers wallet.".format(currentOrder.totalPrice)
+                    isTngPay -> "RM %.2f will be refunded to your Touch 'n Go eWallet within 1-3 working days.".format(currentOrder.totalPrice)
+                    isCardPay -> "RM %.2f will be refunded to your card within 3-5 working days.".format(currentOrder.totalPrice)
+                    else -> "Refund of RM %.2f has been recorded.".format(currentOrder.totalPrice)
+                }
 
                 if (isBiteSaverPay) {
+                    // Check merchant balance first before modifying any funds
+                    var storeOwnerId: String? = null
+                    if (currentOrder.storeId.isNotBlank()) {
+                        val storeResult = SupabaseClient.client.from("stores").select {
+                            filter { eq("id", currentOrder.storeId) }
+                        }.decodeList<StoreOwnerDto>()
+                        storeOwnerId = storeResult.firstOrNull()?.ownerId
+                    }
+
+                    if (storeOwnerId.isNullOrBlank()) {
+                        withContext(Dispatchers.Main) {
+                            errorMessageRes = null
+                            generalErrorText = "Store merchant account not found."
+                            isSubmitting = false
+                        }
+                        return@launch
+                    }
+
+                    val merchantList = SupabaseClient.client.from("users").select {
+                        filter { eq("id", storeOwnerId) }
+                    }.decodeList<UserWalletDto>()
+                    val merchant = merchantList.firstOrNull()
+
+                    // Guard check: Halt cancellation if merchant has insufficient balance
+                    if (merchant == null || merchant.walletBalance < currentOrder.totalPrice) {
+                        withContext(Dispatchers.Main) {
+                            errorMessageRes = R.string.error_merchant_insufficient_balance
+                            isSubmitting = false
+                        }
+                        return@launch
+                    }
+
+                    //Deduct from merchant balance
+                    val newMerchantBalance = merchant.walletBalance - currentOrder.totalPrice
+                    SupabaseClient.client.from("users").update({
+                        set("wallet_balance", newMerchantBalance)
+                    }) {
+                        filter { eq("id", merchant.id) }
+                    }
                     // Fetch and update customer wallet balance
                     val customerList = SupabaseClient.client.from("users").select {
                         filter { eq("id", currentOrder.userId) }
@@ -106,11 +160,30 @@ class CancelViewModel : ViewModel() {
                         }
                     }
 
-                    refundMessageSuffix = "RM %.2f has been refunded to your BiteSavers wallet.".format(currentOrder.totalPrice)
-                } else if (currentOrder.paymentMethod.contains("CASH", ignoreCase = true)) {
-                    refundMessageSuffix = "Please collect your cash refund of RM %.2f manually if paid.".format(currentOrder.totalPrice)
-                } else {
-                    refundMessageSuffix = "RM %.2f has been marked as refunded to your card.".format(currentOrder.totalPrice)
+                    if (currentOrder.storeId.isNotBlank()) {
+                        // Find the owner of this store
+                        val storeResult = SupabaseClient.client.from("stores").select {
+                            filter { eq("id", currentOrder.storeId) }
+                        }.decodeList<StoreOwnerDto>()
+
+                        val storeOwnerId = storeResult.firstOrNull()?.ownerId
+                        if (!storeOwnerId.isNullOrBlank()) {
+                            // Find merchant user record and deduct balance
+                            val merchantList = SupabaseClient.client.from("users").select {
+                                filter { eq("id", storeOwnerId) }
+                            }.decodeList<UserWalletDto>()
+
+                            val merchant = merchantList.firstOrNull()
+                            if (merchant != null) {
+                                val newMerchantBalance = (merchant.walletBalance - currentOrder.totalPrice).coerceAtLeast(0.0)
+                                SupabaseClient.client.from("users").update({
+                                    set("wallet_balance", newMerchantBalance)
+                                }) {
+                                    filter { eq("id", merchant.id) }
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // 2. Update orders table status & cancel reason

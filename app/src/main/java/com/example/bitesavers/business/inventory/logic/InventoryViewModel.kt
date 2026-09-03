@@ -41,6 +41,9 @@ class InventoryViewModel : ViewModel() {
     var defaultPickupEnd by mutableStateOf("07:00 PM")
         private set
 
+    var defaultCleanupEndTime by mutableStateOf("10:15 PM")
+        private set
+
     init {
         initStoreAndFetchListings()
     }
@@ -82,6 +85,7 @@ class InventoryViewModel : ViewModel() {
                 )
                 defaultPickupStart = suggestedStart
                 defaultPickupEnd = suggestedEnd
+                defaultCleanupEndTime = formatToAmPm(store.cleanupEndTime)
             }
 
             fetchListings()
@@ -102,10 +106,11 @@ class InventoryViewModel : ViewModel() {
 
                 // Maps items and formats any SQL 24-hour times into user-friendly 12-hour AM/PM
                 _listings.value = result.map { offer ->
-                    val item = offer.toListingItem(defaultPickupStart, defaultPickupEnd)
+                    val item = offer.toListingItem(defaultPickupStart, defaultPickupEnd, defaultCleanupEndTime)
                     item.copy(
                         pickupStart = formatToAmPm(item.pickupStart),
-                        pickupEnd = formatToAmPm(item.pickupEnd)
+                        pickupEnd = formatToAmPm(item.pickupEnd),
+                        cleanupEndTime = formatToAmPm(defaultCleanupEndTime)
                     )
                 }
             } catch (e: Exception) {
