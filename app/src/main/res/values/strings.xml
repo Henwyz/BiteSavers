@@ -615,8 +615,12 @@
     <string name="hint_time_default">06:00 PM</string>
     <string name="hint_pickup_start">05:00 PM</string>
     <string name="hint_pickup_end">07:00 PM</string>
+    <string name="label_storage_box">Storage Unit</string>
+    <string name="placeholder_select_storage_box">Select a storage box</string>
+    <string name="no_storage_box_warning">No storage box registered. Please add one in Temperature first.</string>
     <string name="btn_update_listing">Update Listing</string>
     <string name="btn_publish_listing">Publish Listing</string>
+    <string name="format_current_temp">Current: %.1f°C</string>
 
     <!-- Photo Selection -->
     <string name="title_choose_photo_source">Choose Photo Source</string>

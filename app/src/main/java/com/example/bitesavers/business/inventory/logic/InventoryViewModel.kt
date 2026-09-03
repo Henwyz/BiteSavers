@@ -13,6 +13,7 @@ import com.example.bitesavers.data.remote.SupabaseClient
 import com.example.bitesavers.data.remote.UserSession
 import com.example.bitesavers.data.remote.dto.OfferDto
 import com.example.bitesavers.data.remote.dto.StoreDto
+import com.example.bitesavers.data.dto.StorageBoxDto
 import com.example.bitesavers.util.DynamicPricingEngine
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.storage.storage
@@ -39,6 +40,9 @@ class InventoryViewModel : ViewModel() {
     var defaultPickupStart by mutableStateOf("05:00 PM")
         private set
     var defaultPickupEnd by mutableStateOf("07:00 PM")
+        private set
+
+    var storageBoxes by mutableStateOf<List<StorageBoxDto>>(emptyList())
         private set
 
     var defaultCleanupEndTime by mutableStateOf("10:15 PM")
@@ -89,6 +93,25 @@ class InventoryViewModel : ViewModel() {
             }
 
             fetchListings()
+            fetchStorageBoxes()
+        }
+    }
+
+    fun fetchStorageBoxes() {
+        if (currentStoreId.isBlank()) return
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val list = SupabaseClient.client.from("storage_boxes")
+                    .select {
+                        filter { eq("store_id", currentStoreId) }
+                    }
+                    .decodeList<StorageBoxDto>()
+                withContext(Dispatchers.Main) {
+                    storageBoxes = list
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 

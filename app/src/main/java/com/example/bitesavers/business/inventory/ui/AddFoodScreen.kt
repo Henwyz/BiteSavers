@@ -43,6 +43,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -68,6 +69,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.FileProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitesavers.R
 import com.example.bitesavers.business.inventory.data.ListingItem
 import com.example.bitesavers.business.inventory.logic.InventoryViewModel
@@ -98,6 +100,8 @@ fun AddFoodScreen(
     var weightKg by remember { mutableStateOf("0.35") }
     var pickupStartTime by remember { mutableStateOf("05:00 PM") }
     var pickupEndTime by remember { mutableStateOf("07:00 PM") }
+    var selectedBoxId by remember { mutableStateOf<String?>(null) }
+    var isBoxDropdownExpanded by remember { mutableStateOf(false) }
 
     // Toggle for dynamic pricing info dialog
     var showPricingInfoDialog by remember { mutableStateOf(false) }
@@ -109,6 +113,7 @@ fun AddFoodScreen(
     var showFullImagePreview by remember { mutableStateOf(false) }
 
     LaunchedEffect(editingItem, viewModel.defaultPickupStart, viewModel.defaultPickupEnd) {
+        viewModel.fetchStorageBoxes()
         foodName = editingItem?.name ?: ""
         description = editingItem?.description ?: ""
         category = editingItem?.category ?: "Bakery"
@@ -116,6 +121,7 @@ fun AddFoodScreen(
         discountPrice = editingItem?.discountPrice?.let { if (it > 0) "%.2f".format(it) else "" } ?: ""
         quantity = editingItem?.quantity?.let { if (it > 0) it.toString() else "1" } ?: "1"
         weightKg = editingItem?.weightKg?.toString() ?: "0.35"
+        selectedBoxId = editingItem?.storageBoxId
 
         // Use editing item's time, or fall back to store's automated suggestion
         pickupStartTime = editingItem?.pickupStart ?: viewModel.defaultPickupStart
@@ -135,6 +141,7 @@ fun AddFoodScreen(
     // Validate mandatory form fields before enabling publish
     val isFormValid = foodName.isNotBlank() &&
             category.isNotBlank() &&
+            !selectedBoxId.isNullOrBlank() &&
             (originalPrice.toDoubleOrNull() ?: 0.0) > 0.0 &&
             (discountPrice.toDoubleOrNull() ?: 0.0) > 0.0 &&
             ((discountPrice.toDoubleOrNull() ?: 0.0) <= (originalPrice.toDoubleOrNull() ?: 0.0)) &&
@@ -789,6 +796,134 @@ fun AddFoodScreen(
                 }
             }
 
+            // Storage Box Selector with current temperature display
+            Column(modifier = Modifier.fillMaxWidth()){
+                val availableBoxes = viewModel.storageBoxes
+                val hasBoxes = availableBoxes.isNotEmpty()
+                val selectedBox = availableBoxes.firstOrNull { it.id == selectedBoxId }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.label_storage_box),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+
+                    if (selectedBox != null) {
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                            )
+                        ) {
+                            Text(
+                                text = stringResource(R.string.format_current_temp, selectedBox.currentTemperature),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+
+                val displayBoxText = when {
+                    !hasBoxes -> stringResource(R.string.no_storage_box_warning)
+                    selectedBox != null -> "${selectedBox.boxCode} (${selectedBox.storageType ?: "General"})"
+                    else -> stringResource(R.string.placeholder_select_storage_box)
+                }
+
+                ExposedDropdownMenuBox(
+                    expanded = isBoxDropdownExpanded && hasBoxes,
+                    onExpandedChange = {
+                        if (hasBoxes) isBoxDropdownExpanded = !isBoxDropdownExpanded
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    OutlinedTextField(
+                        value = displayBoxText,
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = {
+                            if (hasBoxes) {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = isBoxDropdownExpanded)
+                            }
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            focusedBorderColor = if (!hasBoxes) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = if (!hasBoxes) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline,
+                            focusedTextColor = if (!hasBoxes) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = if (!hasBoxes) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+                        ),
+                        supportingText = {
+                            if (!hasBoxes) {
+                                Text(
+                                    text = stringResource(R.string.no_storage_box_warning),
+                                    color = MaterialTheme.colorScheme.error,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = isBoxDropdownExpanded && hasBoxes,
+                        onDismissRequest = { isBoxDropdownExpanded = false },
+                        modifier = Modifier.background(MaterialTheme.colorScheme.surface)
+                    ) {
+                        availableBoxes.forEach { box ->
+                            DropdownMenuItem(
+                                text = {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = box.boxCode,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = box.storageType ?: "General",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        Text(
+                                            text = stringResource(R.string.format_current_temp, box.currentTemperature),
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    selectedBoxId = box.id
+                                    isBoxDropdownExpanded = false
+                                },
+                                contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                            )
+                        }
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(10.dp))
 
             Button(
@@ -806,6 +941,7 @@ fun AddFoodScreen(
                             weightKg = weightKg.toDoubleOrNull() ?: editingItem.weightKg,
                             pickupStart = pickupStartTime.trim(),
                             pickupEnd = pickupEndTime.trim(),
+                            storageBoxId = selectedBoxId,
                             imageUrl = if (myFoodImage != null) null else existingImageUrl,
                             imageBitmap = myFoodImage
                         )
@@ -823,6 +959,7 @@ fun AddFoodScreen(
                             pickupStart = pickupStartTime.trim(),
                             pickupEnd = pickupEndTime.trim(),
                             status = "ACTIVE",
+                            storageBoxId = selectedBoxId,
                             imageBitmap = myFoodImage
                         )
                         viewModel.addListing(newItem)
@@ -902,7 +1039,7 @@ fun FormField(
 private fun AddFoodScreenPreview() {
     BiteSaversTheme {
         AddFoodScreen(
-            viewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+            viewModel = viewModel(),
             onNavigateBack = {}
         )
     }
