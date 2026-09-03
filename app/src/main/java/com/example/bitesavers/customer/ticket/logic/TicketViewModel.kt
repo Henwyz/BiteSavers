@@ -69,7 +69,8 @@ class TicketViewModel(
 
             val order = orderRepository.fetchOrderById(orderId)
             if (order != null) {
-                val offer = offerRepository.fetchOfferById(order.offerId)
+                val offerId = order.offerId.orEmpty() // 👈 1. Safe offerId
+                val offer = if (offerId.isNotBlank()) offerRepository.fetchOfferById(offerId) else null
 
                 val originalTotal = (offer?.originalPrice ?: 0.0) * order.quantity
                 val moneySaved = (originalTotal - order.totalPrice).coerceAtLeast(0.0)
@@ -79,11 +80,13 @@ class TicketViewModel(
                 // Strips the database table prefix while preserving all original digits for customer ticket display
                 val shortOrderId = "BS-" + orderId.removePrefix("ord_").uppercase()
 
-                val formattedPaymentMethod = when (order.paymentMethod.uppercase()) {
+                // 2. Safe payment method formatting
+                val rawPayment = order.paymentMethod?.uppercase() ?: ""
+                val formattedPaymentMethod = when (rawPayment) {
                     "BITESAVER_PAY" -> "BiteSaver Pay"
                     "TNG_EWALLET", "TNG" -> "Touch 'n Go eWallet"
                     "CASH_ON_PICKUP", "CASH" -> "Cash on Pickup"
-                    else -> order.paymentMethod
+                    else -> order.paymentMethod ?: "BiteSaver Pay"
                 }
 
                 val isCompleted = order.status.equals("COMPLETED", ignoreCase = true)
@@ -98,7 +101,7 @@ class TicketViewModel(
                     it.copy(
                         orderId = shortOrderId,
                         rawOrderId = orderId,
-                        storeId = order.storeId,
+                        storeId = order.storeId.orEmpty(), // 👈 3. Safe storeId
                         storeName = offer?.storeName ?: "Store",
                         pickupWindow = "Today, until closing",
                         itemName = "${offer?.title ?: "Surprise Bag"} x${order.quantity}",
@@ -107,7 +110,7 @@ class TicketViewModel(
                         savedAmount = moneySaved,
                         co2Saved = co2Saved,
                         pin = pin,
-                        orderStatus = order.status,
+                        orderStatus = order.status ?: "PENDING", // 👈 4. Safe status
                         isCompleted = isCompleted,
                         isReviewSubmitted = alreadyReviewed,
                         showReviewSheet = shouldShowReview,

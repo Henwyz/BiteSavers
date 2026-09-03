@@ -84,7 +84,8 @@ class MainActivity : ComponentActivity() {
 
                             for (order in newlyCompletedOrders) {
                                 val orderId = order.id.orEmpty()
-                                val offer = offerRepository.fetchOfferById(order.offerId)
+                                val offerId = order.offerId.orEmpty() // 👈 Safely unwraps nullable String?
+                                val offer = if (offerId.isNotBlank()) offerRepository.fetchOfferById(offerId) else null
                                 val storeName = offer?.storeName ?: "BiteSavers Store"
 
                                 // Strips the database table prefix while preserving all actual order numbers

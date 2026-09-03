@@ -132,4 +132,21 @@ class ProfileRepository {
                 filter { eq("id", userId) }
             }
     }
+
+    // =================================================================
+    // 4. ORDER & ANALYTICS OPERATIONS (orders table)
+    // =================================================================
+    suspend fun getOrdersByStoreId(storeId: String): List<OrderDto> {
+        return try {
+            postgrest.from("orders")
+                .select {
+                    filter { eq("store_id", storeId) }
+                    order("created_at", Order.DESCENDING)
+                }
+                .decodeList<OrderDto>()
+        } catch (e: Exception) {
+            Log.e("ProfileRepository", "Error fetching orders for store_id '$storeId'", e)
+            emptyList()
+        }
+    }
 }

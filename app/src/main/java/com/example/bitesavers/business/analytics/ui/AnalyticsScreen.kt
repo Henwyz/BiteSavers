@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,6 +33,11 @@ import com.example.bitesavers.business.analytics.logic.AnalyticsViewModel
 @Composable
 fun AnalyticsScreen(viewModel: AnalyticsViewModel = viewModel()) {
     val analytics by viewModel.analytics.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadAnalytics()
+    }
 
     Column(
         modifier = Modifier
@@ -39,6 +45,10 @@ fun AnalyticsScreen(viewModel: AnalyticsViewModel = viewModel()) {
             .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
     ) {
+        if (isLoading) {
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+        }
+
         // ---------- Header ----------
         Column(
             modifier = Modifier
@@ -60,7 +70,11 @@ fun AnalyticsScreen(viewModel: AnalyticsViewModel = viewModel()) {
             )
         }
 
-        Column(modifier = Modifier.padding(20.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(20.dp)
+                .padding(bottom = 80.dp)
+        ) {
             // ---------- 2x2 stat grid ----------
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 StatMetricCard(
@@ -71,7 +85,7 @@ fun AnalyticsScreen(viewModel: AnalyticsViewModel = viewModel()) {
                     label = stringResource(R.string.analytics_revenue_recovered),
                     value = "RM ${analytics.revenueRecoveredRM.toInt()}",
                     changeText = stringResource(R.string.analytics_change_this_week, analytics.revenueChangePercent),
-                    showTrendArrow = true
+                    showTrendArrow = analytics.revenueChangePercent >= 0
                 )
                 StatMetricCard(
                     modifier = Modifier.weight(1f),
@@ -81,7 +95,7 @@ fun AnalyticsScreen(viewModel: AnalyticsViewModel = viewModel()) {
                     label = stringResource(R.string.analytics_meals_rescued),
                     value = "${analytics.mealsRescued}",
                     changeText = stringResource(R.string.analytics_change_vs_last_week, analytics.mealsChangePercent),
-                    showTrendArrow = true
+                    showTrendArrow = analytics.mealsChangePercent >= 0
                 )
             }
             Spacer(Modifier.height(12.dp))

@@ -64,11 +64,12 @@ class OrdersViewModel : ViewModel() {
 
                 val mappedList = rawOrders.map { order ->
                     async {
-                        val offer = offerRepository.fetchOfferById(order.offerId)
+                        val offerId = order.offerId.orEmpty() // 👈 Safely unwraps nullable String?
+                        val offer = if (offerId.isNotBlank()) offerRepository.fetchOfferById(offerId) else null
                         val originalTotal = (offer?.originalPrice ?: 0.0) * order.quantity
                         val saved = (originalTotal - order.totalPrice).coerceAtLeast(0.0)
 
-                        val statusType = when (order.status.uppercase()) {
+                        val statusType = when (order.status?.uppercase()) { // 👈 Safe null check
                             "COMPLETED" -> OrderStatusType.COMPLETED
                             "CANCELLED" -> OrderStatusType.CANCELLED
                             else -> OrderStatusType.READY_FOR_PICKUP

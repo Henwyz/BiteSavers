@@ -42,12 +42,6 @@ private val PLACEHOLDER_PROFILE = UserProfileUiModel(
     co2ReducedKg = 0.0
 )
 
-/**
- * Backed by real Supabase data (users + ngo_applications tables) via
- * ProfileRepository and UserRepository, keyed off UserSession.currentUserId.
- * MainActivity's business/customer toggle updates UserSession, which this
- * ViewModel observes and reloads from automatically.
- */
 class ProfileViewModel : ViewModel() {
 
     private val repository = ProfileRepository()
@@ -58,14 +52,9 @@ class ProfileViewModel : ViewModel() {
     private val _profile = MutableStateFlow(PLACEHOLDER_PROFILE)
     val profile: StateFlow<UserProfileUiModel> = _profile.asStateFlow()
 
-    // The currently APPROVED NGO application row for this user (most recent
-    // one with status = "APPROVED"), or null if never approved.
     private val _activeNgoDetails = MutableStateFlow<NgoApplicationUiModel?>(null)
     val activeNgoDetails: StateFlow<NgoApplicationUiModel?> = _activeNgoDetails.asStateFlow()
 
-    // True if the single most recent ngo_applications row for this user has
-    // status = "PENDING" — i.e. an edit was submitted and hasn't been
-    // approved/rejected yet. Derived from real rows now, not a local flag.
     private val _hasPendingEdit = MutableStateFlow(false)
     val hasPendingEdit: StateFlow<Boolean> = _hasPendingEdit.asStateFlow()
 
@@ -75,8 +64,6 @@ class ProfileViewModel : ViewModel() {
     private val _loadError = MutableStateFlow<String?>(null)
     val loadError: StateFlow<String?> = _loadError.asStateFlow()
 
-    // The draft form currently being filled in — used by NgoRegistrationScreen
-    // for both the register flow and the edit flow.
     private val _ngoApplication = MutableStateFlow(NgoApplicationUiModel())
     val ngoApplication: StateFlow<NgoApplicationUiModel> = _ngoApplication.asStateFlow()
 
@@ -92,7 +79,6 @@ class ProfileViewModel : ViewModel() {
     private val _submissionState = MutableStateFlow<SubmissionState>(SubmissionState.Idle)
     val submissionState: StateFlow<SubmissionState> = _submissionState.asStateFlow()
 
-    // Manages visibility and input validation for consumer profile editing dialog
     private val _showEditProfileDialog = MutableStateFlow(false)
     val showEditProfileDialog: StateFlow<Boolean> = _showEditProfileDialog.asStateFlow()
 
@@ -105,7 +91,6 @@ class ProfileViewModel : ViewModel() {
     private val _isUpdatingProfile = MutableStateFlow(false)
     val isUpdatingProfile: StateFlow<Boolean> = _isUpdatingProfile.asStateFlow()
 
-    // Manages visibility and state for Change Password dialog
     private val _showChangePasswordDialog = MutableStateFlow(false)
     val showChangePasswordDialog: StateFlow<Boolean> = _showChangePasswordDialog.asStateFlow()
 
@@ -126,8 +111,6 @@ class ProfileViewModel : ViewModel() {
     private var pendingSubmitMode = NgoFormMode.REGISTER
 
     init {
-        // Reload whenever the active user changes (e.g. MainActivity's
-        // Customer/Business toggle flips and calls UserSession.setUserId).
         viewModelScope.launch {
             UserSession.currentUserId.collectLatest { userId ->
                 if (userId.isNotBlank()) {
@@ -144,7 +127,6 @@ class ProfileViewModel : ViewModel() {
             val userDto = repository.getUser(userId)
             val baseProfile = userDto.toUiModel()
 
-            // Aggregates real completed orders to calculate exact savings and impact
             val rawOrders = orderRepository.fetchCustomerOrders()
             val completedOrders = rawOrders.filter { it.status.equals("COMPLETED", ignoreCase = true) }
 
@@ -154,7 +136,8 @@ class ProfileViewModel : ViewModel() {
 
             completedOrders.map { order ->
                 viewModelScope.async {
-                    val offer = offerRepository.fetchOfferById(order.offerId)
+                    val offerId = order.offerId.orEmpty() // 👈 Safely unwrap offerId
+                    val offer = if (offerId.isNotBlank()) offerRepository.fetchOfferById(offerId) else null
                     val originalTotal = (offer?.originalPrice ?: 0.0) * order.quantity
                     val saved = (originalTotal - order.totalPrice).coerceAtLeast(0.0)
                     val weight = order.totalWeightKg ?: (0.3 * order.quantity)
@@ -166,7 +149,6 @@ class ProfileViewModel : ViewModel() {
                 completedCount += qty
             }
 
-            // Calculates 2.5 kg CO2e reduced per 1.0 kg of rescued food
             val computedCo2 = totalWeightKg * 2.5
 
             _profile.value = baseProfile.copy(
@@ -175,7 +157,7 @@ class ProfileViewModel : ViewModel() {
                 co2ReducedKg = computedCo2
             )
 
-            val applications = repository.getNgoApplications(userId) // already newest-first
+            val applications = repository.getNgoApplications(userId)
             _activeNgoDetails.value = applications.firstOrNull { it.status == "APPROVED" }?.toUiModel()
             _hasPendingEdit.value = applications.firstOrNull()?.status == "PENDING"
         } catch (e: Exception) {
@@ -191,20 +173,17 @@ class ProfileViewModel : ViewModel() {
 
     // ---------- Consumer Edit Profile Handlers ----------
 
-    // Opens edit profile dialog pre-populated with current display name
     fun openEditProfileDialog() {
         _editProfileName.value = _profile.value.name
         _editProfileError.value = null
         _showEditProfileDialog.value = true
     }
 
-    // Closes edit profile dialog and cleans up error state
     fun dismissEditProfileDialog() {
         _showEditProfileDialog.value = false
         _editProfileError.value = null
     }
 
-    // Updates name input buffer and clears error upon valid keystrokes
     fun onEditProfileNameChange(newName: String) {
         _editProfileName.value = newName
         if (_editProfileError.value != null && newName.isNotBlank()) {
@@ -212,7 +191,6 @@ class ProfileViewModel : ViewModel() {
         }
     }
 
-    // Persists updated name to Supabase and reloads user profile data
     fun saveProfileChanges() {
         val trimmedName = _editProfileName.value.trim()
         if (trimmedName.isBlank()) {
@@ -236,7 +214,6 @@ class ProfileViewModel : ViewModel() {
 
     // ---------- Change Password Handlers ----------
 
-    // Opens change password dialog and resets form fields
     fun openChangePasswordDialog() {
         _newPassword.value = ""
         _confirmPassword.value = ""
@@ -244,25 +221,21 @@ class ProfileViewModel : ViewModel() {
         _showChangePasswordDialog.value = true
     }
 
-    // Closes change password dialog
     fun dismissChangePasswordDialog() {
         _showChangePasswordDialog.value = false
         _passwordError.value = null
     }
 
-    // Tracks input buffer for new password
     fun onNewPasswordChange(input: String) {
         _newPassword.value = input
         if (_passwordError.value != null) _passwordError.value = null
     }
 
-    // Tracks input buffer for password confirmation
     fun onConfirmPasswordChange(input: String) {
         _confirmPassword.value = input
         if (_passwordError.value != null) _passwordError.value = null
     }
 
-    // Validates password equality and minimum length before calling Supabase Auth
     fun savePasswordChanges(
         lengthErrorMessage: String,
         mismatchErrorMessage: String,
@@ -282,14 +255,15 @@ class ProfileViewModel : ViewModel() {
 
         viewModelScope.launch {
             _isChangingPassword.value = true
-            val result = repository.updateUserPassword(pass)
-            if (result.isSuccess) {
+            try {
+                repository.updateUserPassword(pass)
                 _showChangePasswordDialog.value = false
                 onSuccess()
-            } else {
-                _passwordError.value = result.exceptionOrNull()?.message ?: "Failed to update password"
+            } catch (e: Exception) {
+                _passwordError.value = e.message ?: "Failed to update password"
+            } finally {
+                _isChangingPassword.value = false
             }
-            _isChangingPassword.value = false
         }
     }
 
@@ -445,19 +419,14 @@ class ProfileViewModel : ViewModel() {
             try {
                 when (mode) {
                     NgoFormMode.REGISTER -> {
-                        // MVP: auto-approve, no admin review queue exists.
                         repository.insertNgoApplication(application.toInsertDto(userId, status = "APPROVED"))
                         repository.updateUserNgoStatus(userId, status = "APPROVED", orgName = application.organizationName)
                     }
                     NgoFormMode.EDIT -> {
-                        // Insert as PENDING — deliberately does NOT update
-                        // the users table, so the active/displayed details
-                        // stay whatever the latest APPROVED row says, per
-                        // the "changes apply only after approval" behavior.
                         repository.insertNgoApplication(application.toInsertDto(userId, status = "PENDING"))
                     }
                 }
-                loadProfileData(userId) // refresh from the real DB so the UI reflects what was actually saved
+                loadProfileData(userId)
                 _submissionState.value = SubmissionState.Success
             } catch (e: Exception) {
                 _submissionState.value = SubmissionState.Error("Submission failed: ${e.message}")
@@ -483,7 +452,6 @@ class ProfileViewModel : ViewModel() {
         }
     }
 
-    // Signs out user, wipes persistent session from disk, and invalidates Supabase auth
     fun signOut(onSignedOut: () -> Unit) {
         viewModelScope.launch {
             try {
@@ -492,7 +460,6 @@ class ProfileViewModel : ViewModel() {
             } catch (e: Exception) {
                 android.util.Log.e("ProfileViewModel", "Supabase signOut error: ${e.message}")
             } finally {
-                // Wipes local disk and memory session
                 UserSession.clear()
                 onSignedOut()
             }
