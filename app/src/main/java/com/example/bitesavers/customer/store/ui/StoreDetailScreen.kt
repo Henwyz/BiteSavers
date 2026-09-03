@@ -2,6 +2,7 @@ package com.example.bitesavers.customer.store.ui
 
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -99,7 +100,7 @@ fun StoreDetailScreenContent(
                     IconButton(onClick = { onEvent(StoreDetailUiEvent.OnBackClicked) }) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_arrow_back),
-                            contentDescription = null,
+                            contentDescription = stringResource(R.string.action_back),
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -120,7 +121,10 @@ fun StoreDetailScreenContent(
         ) {
             when {
                 uiState.isLoading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center),
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
                 uiState.errorMessage != null -> {
                     Text(
@@ -207,13 +211,14 @@ private fun openWhatsApp(context: Context, phoneNumber: String?) {
     try {
         context.startActivity(intent)
     } catch (e: Exception) {
-        Toast.makeText(context, "WhatsApp not installed", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.store_whatsapp_not_installed), Toast.LENGTH_SHORT).show()
     }
 }
 
-// ---------- Screen Preview ----------
+// ---------- Screen Previews ----------
 
-@Preview(showBackground = true)
+@Preview(name = "Light Mode", showBackground = true)
+@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
 private fun StoreDetailScreenPreview() {
     BiteSaversTheme {
@@ -221,33 +226,34 @@ private fun StoreDetailScreenPreview() {
             uiState = StoreDetailUiState(
                 isLoading = false,
                 store = StoreDetailUiModel(
-                    id = "store_1",
-                    name = "Bakery Delights (Gurney Plaza)",
-                    address = "170-G-40, Plaza Gurney, Persiaran Gurney",
-                    rating = 4.9,
-                    contactPhone = "+60123456789",
-                    operatingHours = "Mon – Sun: 10:00 AM - 9:30 PM"
+                    id = "store_01",
+                    name = "BiteSaver Heritage Kopitiam",
+                    address = "45 Lebuh Chulia, George Town, Penang",
+                    rating = 4.8,
+                    contactPhone = "+60124567890",
+                    operatingHours = "Mon – Sun: 8:00 AM - 9:30 PM"
                 ),
                 offers = listOf(
                     OfferUiModel(
-                        id = "1",
-                        title = "Artisan Pastry Surprise Box",
-                        storeName = "Bakery Delights (Gurney Plaza)",
-                        storeRating = 4.9,
-                        imageResId = R.drawable.food_spaghetti,
+                        id = "off_01",
+                        storeId = "store_01",
+                        title = "Nasi Lemak & Toast Bundle",
+                        storeName = "BiteSaver Heritage Kopitiam",
+                        storeRating = 4.8,
+                        imageResId = R.drawable.ic_launcher_foreground,
                         imageUrl = null,
-                        discountPercent = 55,
-                        currentPrice = 12.00,
-                        originalPrice = 28.00,
+                        discountPercent = 52,
+                        currentPrice = 8.50,
+                        originalPrice = 18.00,
                         distanceKm = 1.2,
                         quantityLeft = 4,
                         hoursToClose = 2,
-                        pickupWindow = "Today, 8:00 PM - 9:30 PM",
-                        category = DiscoveryCategory.BAKERY,
-                        isEligibleForNgoFree = false,
-                        liveTemperature = 25.0,
-                        storageType = "AMBIENT",
-                        description = "Freshly baked croissants and artisan pastries."
+                        pickupWindow = "Today, 8:00 PM - 10:00 PM",
+                        category = DiscoveryCategory.HOT_MEALS,
+                        isEligibleForNgoFree = true,
+                        liveTemperature = 60.0,
+                        storageType = "HOT",
+                        description = "Fresh surplus chicken rendang bento box."
                     )
                 )
             ),

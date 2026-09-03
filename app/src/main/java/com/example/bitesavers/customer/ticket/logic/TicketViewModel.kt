@@ -75,7 +75,9 @@ class TicketViewModel(
                 val moneySaved = (originalTotal - order.totalPrice).coerceAtLeast(0.0)
                 val co2Saved = abs(0.8 * order.quantity)
                 val pin = order.pickupPin ?: (((abs(orderId.hashCode()) % 9000) + 1000).toString())
-                val shortOrderId = "BS-" + orderId.takeLast(5).uppercase()
+
+                // Strips the database table prefix while preserving all original digits for customer ticket display
+                val shortOrderId = "BS-" + orderId.removePrefix("ord_").uppercase()
 
                 val formattedPaymentMethod = when (order.paymentMethod.uppercase()) {
                     "BITESAVER_PAY" -> "BiteSaver Pay"

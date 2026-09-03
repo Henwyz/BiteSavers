@@ -30,7 +30,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bitesavers.R
-import com.example.bitesavers.ui.theme.BiteSaverColors
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @Composable
@@ -40,7 +39,7 @@ fun TermsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BiteSaverColors.HeaderGreen)
+            .background(MaterialTheme.colorScheme.secondary)
     ) {
 
         Row(
@@ -53,12 +52,12 @@ fun TermsScreen(
                 onClick = onNavigateBack,
                 modifier = Modifier
                     .size(40.dp)
-                    .background(BiteSaverColors.White, CircleShape)
+                    .background(MaterialTheme.colorScheme.surface, CircleShape)
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_arrow_back),
                     contentDescription = stringResource(R.string.cd_back_button),
-                    tint = BiteSaverColors.HeaderGreen
+                    tint = MaterialTheme.colorScheme.secondary
                 )
             }
 
@@ -66,7 +65,7 @@ fun TermsScreen(
 
             Text(
                 text = "Terms & Privacy Policy",
-                color = BiteSaverColors.White,
+                color = MaterialTheme.colorScheme.onSecondary,
                 style = MaterialTheme.typography.titleMedium,
                 fontSize = 22.sp
             )
@@ -77,7 +76,7 @@ fun TermsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(BiteSaverColors.SoftGreen)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(horizontal = 16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
@@ -87,8 +86,9 @@ fun TermsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 24.dp),
-                colors = CardDefaults.cardColors(containerColor = BiteSaverColors.OffWhite),
-                shape = RoundedCornerShape(24.dp)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                shape = RoundedCornerShape(24.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Column(
                     modifier = Modifier
@@ -99,13 +99,13 @@ fun TermsScreen(
                         text = "1. Terms of Service",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = BiteSaverColors.HeaderGreen,
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     Text(
                         text = "Welcome to BiteSavers! By creating an account and using our surplus food saving platform, you agree to comply with and be bound by the following terms. Please read them carefully before making any transactions or reservations.",
                         fontSize = 14.sp,
-                        color = BiteSaverColors.HeaderGreen,
+                        color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
 
@@ -113,13 +113,13 @@ fun TermsScreen(
                         text = "2. User Accounts & Responsibilities",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = BiteSaverColors.HeaderGreen,
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     Text(
                         text = "You are responsible for keeping your password secure. BiteSavers is not liable for any loss or damage arising from your failure to protect your account information or personal password.",
                         fontSize = 14.sp,
-                        color = BiteSaverColors.HeaderGreen,
+                        color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
 
@@ -127,13 +127,13 @@ fun TermsScreen(
                         text = "3. Privacy Policy",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = BiteSaverColors.HeaderGreen,
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     Text(
                         text = "We value your privacy. Any information you provide—such as your name, email, and contact number—is collected securely to facilitate food rescue orders and user verification via Supabase. We do not sell or share your data with unauthorized third parties.",
                         fontSize = 14.sp,
-                        color = BiteSaverColors.HeaderGreen,
+                        color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
 
@@ -141,13 +141,13 @@ fun TermsScreen(
                         text = "4. Contact Us",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = BiteSaverColors.HeaderGreen,
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     Text(
                         text = "If you have any questions regarding these terms or your personal data, feel free to reach out to our team through the app support section.",
                         fontSize = 14.sp,
-                        color = BiteSaverColors.HeaderGreen
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
@@ -155,10 +155,3 @@ fun TermsScreen(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun TermsScreenPreview() {
-    BiteSaversTheme {
-        TermsScreen(onNavigateBack = {})
-    }
-}

@@ -19,13 +19,15 @@ class OfferRepository {
                 .select {
                     filter {
                         gt("quantity_available", 0)
-                        eq("status", "ACTIVE")
+                        // Matches the status in the seeded database records
+                        isIn("status", listOf("AVAILABLE", "ACTIVE"))
                     }
                 }
                 .decodeList<OfferDto>()
 
-            // Fetch all stores referenced in these offers
-            val storeIds = offers.mapNotNull { it.storeId }.distinct()
+            // Fetch all stores referenced by their clean text IDs (e.g. store_01, store_02)
+            // Uses mapNotNull to guarantee a non-null List<String> for the Supabase filter
+            val storeIds: List<String> = offers.mapNotNull { it.storeId }.distinct()
             val storesMap = if (storeIds.isNotEmpty()) {
                 client.from("stores")
                     .select {
@@ -56,14 +58,17 @@ class OfferRepository {
                 .select { filter { eq("id", offerId) } }
                 .decodeSingle<OfferDto>()
 
-            val store = offer.storeId?.let { sId ->
+            val targetStoreId = offer.storeId
+            val store = if (!targetStoreId.isNullOrBlank()) {
                 try {
                     client.from("stores")
-                        .select { filter { eq("id", sId) } }
+                        .select { filter { eq("id", targetStoreId) } }
                         .decodeSingle<StoreDto>()
                 } catch (_: Exception) {
                     null
                 }
+            } else {
+                null
             }
 
             offer.toUiModel(store)
@@ -86,7 +91,8 @@ class OfferRepository {
                 }
                 .decodeList<OfferDto>()
 
-            val storeIds = offers.mapNotNull { it.storeId }.distinct()
+            // Uses mapNotNull to guarantee a non-null List<String> for the Supabase filter
+            val storeIds: List<String> = offers.mapNotNull { it.storeId }.distinct()
             val storesMap = if (storeIds.isNotEmpty()) {
                 client.from("stores")
                     .select {

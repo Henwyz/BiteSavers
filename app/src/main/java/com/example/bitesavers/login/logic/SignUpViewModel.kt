@@ -20,8 +20,6 @@ class SignUpViewModel : ViewModel() {
         private set
     var email by mutableStateOf("")
         private set
-    var phoneNumber by mutableStateOf("")
-        private set
     var password by mutableStateOf("")
         private set
     var confirmPassword by mutableStateOf("")
@@ -32,8 +30,6 @@ class SignUpViewModel : ViewModel() {
     var fullNameError by mutableStateOf<String?>(null)
         private set
     var emailError by mutableStateOf<String?>(null)
-        private set
-    var phoneError by mutableStateOf<String?>(null)
         private set
     var passwordError by mutableStateOf<String?>(null)
         private set
@@ -54,10 +50,6 @@ class SignUpViewModel : ViewModel() {
         email = value
         emailError = null
     }
-    fun updatePhoneNumber(value: String) {
-        phoneNumber = value
-        phoneError = null
-    }
     fun updatePassword(value: String) {
         password = value
         passwordError = null
@@ -72,7 +64,6 @@ class SignUpViewModel : ViewModel() {
         val errors = SignUpValidation.validate(
             fullName = fullName,
             email = email,
-            phone = phoneNumber,
             pass = password,
             confirmPass = confirmPassword,
             termsAccepted = termsAccepted
@@ -80,7 +71,6 @@ class SignUpViewModel : ViewModel() {
 
         fullNameError = errors.fullName
         emailError = errors.email
-        phoneError = errors.phone
         passwordError = errors.password
         confirmPasswordError = errors.confirmPassword
 

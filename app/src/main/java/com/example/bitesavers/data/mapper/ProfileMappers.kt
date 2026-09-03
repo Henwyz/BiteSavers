@@ -11,7 +11,6 @@ import com.example.bitesavers.data.remote.dto.UserDto
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
-import java.util.UUID
 
 // ---------- users table <-> UserProfileUiModel ----------
 
@@ -21,10 +20,10 @@ fun UserDto.toUiModel(): UserProfileUiModel = UserProfileUiModel(
     email = email,
     avatarInitials = computeInitials(name),
     memberSinceLabel = formatMemberSince(createdAt),
-    walletBalance = walletBalance,
+    walletBalance = walletBalance ?: 0.0,
     ngoStatus = ngoStatus.toEnumOrNull<NgoStatus>() ?: NgoStatus.NONE,
     ngoOrgName = ngoOrgName,
-    mealsRescued = mealsRescued
+    mealsRescued = mealsRescued ?: 0
 )
 
 // ---------- ngo_applications table <-> NgoApplicationUiModel ----------
@@ -44,10 +43,13 @@ fun NgoApplicationDto.toUiModel(): NgoApplicationUiModel = NgoApplicationUiModel
     reasonForChange = reasonForChange.orEmpty()
 )
 
+// Generates clean, human-readable primary key matching Supabase seed format (e.g. ngo_app_172530)
+private fun generateNgoAppId(): String = "ngo_app_${System.currentTimeMillis().toString().takeLast(6)}"
+
 /** Builds the row to insert when submitting the registration/edit form. */
 fun NgoApplicationUiModel.toInsertDto(userId: String, status: String): NgoApplicationInsertDto =
     NgoApplicationInsertDto(
-        id = UUID.randomUUID().toString(),
+        id = generateNgoAppId(),
         userId = userId,
         organizationName = organizationName,
         registrationType = registrationType.name,
@@ -75,15 +77,6 @@ private fun computeInitials(name: String): String =
         .joinToString("")
         .ifBlank { "?" }
 
-/**
- * ASSUMPTION: Postgrest/PostgREST typically returns timestamps in ISO-8601
- * with a "T" separator (e.g. "2026-08-25T12:27:52.531121+00:00"), which is
- * what this parses. Table Editor's own display ("2026-08-25 12:27:52...")
- * is Postgres's internal text form, not necessarily what the JSON API
- * actually sends — if this always falls through to the fallback string
- * below, log the raw `createdAt` value once to see its real format and
- * adjust the patterns tried here.
- */
 private fun formatMemberSince(createdAt: String?): String {
     val patterns = listOf(
         "yyyy-MM-dd'T'HH:mm:ss",
@@ -94,8 +87,6 @@ private fun formatMemberSince(createdAt: String?): String {
             val parser = SimpleDateFormat(pattern, Locale.US).apply {
                 timeZone = TimeZone.getTimeZone("UTC")
             }
-            // Strip fractional seconds and timezone suffix before parsing —
-            // both vary in length/format and aren't needed for a display label.
             val cleaned = createdAt?.substringBefore(".")?.substringBefore("+")?.trim()
             val date = parser.parse(cleaned) ?: continue
             val displayFormat = SimpleDateFormat("d MMMM yyyy", Locale.US)
@@ -104,5 +95,5 @@ private fun formatMemberSince(createdAt: String?): String {
             // try the next pattern
         }
     }
-    return "Member since $createdAt" // last-resort fallback, at least shows something real
+    return "Member since $createdAt"
 }

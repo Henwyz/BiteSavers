@@ -14,6 +14,9 @@ import kotlin.random.Random
 class OrderRepository {
     private val client = SupabaseClient.client
 
+    // Generates clean, human-readable IDs matching Supabase seed format (e.g. ord_1725301234)
+    private fun generateOrderId(): String = "ord_${System.currentTimeMillis().toString().takeLast(6)}"
+
     suspend fun placeOrder(
         offerId: String,
         userRole: String,
@@ -49,10 +52,12 @@ class OrderRepository {
 
             // Generates a 4-digit numeric pickup verification PIN
             val pickupPin = Random.nextInt(1000, 10000).toString()
+            val cleanOrderId = generateOrderId()
 
             val order = OrderDto(
+                id = cleanOrderId,
                 userId = uid,
-                storeId = offer.storeId ?: "s1",
+                storeId = offer.storeId ?: "store_01",
                 offerId = offerId,
                 quantity = quantity,
                 totalPrice = totalPrice,
@@ -63,7 +68,7 @@ class OrderRepository {
                 pickupPin = pickupPin
             )
 
-            // 3. Create the order
+            // 3. Create the order with readable ID
             val insertedOrder = client.from("orders")
                 .insert(order) { select() }
                 .decodeSingle<OrderDto>()

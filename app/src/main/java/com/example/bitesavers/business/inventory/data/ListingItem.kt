@@ -1,64 +1,68 @@
 package com.example.bitesavers.business.inventory.data
 
 import android.graphics.Bitmap
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
+import com.example.bitesavers.data.remote.dto.OfferDto
 
-@Serializable
 data class ListingItem(
-    @SerialName("id")
     val id: String = "",
-
-    @SerialName("store_id")
-    val storeId: String = "33333333-3333-3333-3333-333333333333",
-
-    @SerialName("storage_box_id")
+    val storeId: String = "",
     val storageBoxId: String? = null,
-
-    @SerialName("title")
     val name: String = "",
-
-    @SerialName("description")
     val description: String = "",
-
-    @SerialName("category")
-    val category: String = "",
-
-    @SerialName("original_price")
+    val category: String = "Bakery",
     val originalPrice: Double = 0.0,
-
-    @SerialName("discounted_price")
     val discountPrice: Double = 0.0,
-
-    @SerialName("weight_kg")
-    val weightKg: Double? = null,
-
-    @SerialName("quantity_available")
+    val weightKg: Double = 0.3,
     val quantity: Int = 1,
-
-    @SerialName("pickup_start")
-    val pickupStart: String? = "17:00:00",
-
-    @SerialName("pickup_end")
-    val pickupEnd: String? = "19:00:00",
-
-    @SerialName("is_eligible_for_ngo_free")
+    val pickupStart: String = "09:00 PM",
+    val pickupEnd: String = "09:30 PM",
     val isEligibleForNgoFree: Boolean = false,
-
     val status: String = "ACTIVE",
-
-    @SerialName("image_url")
     val imageUrl: String? = null,
-
-    @SerialName("created_at")
-    val createdAt: String? = null,
-
-    @Transient
     val imageBitmap: Bitmap? = null
 ) {
     val discountPercent: Int
         get() = if (originalPrice > 0) {
-            (((originalPrice - discountPrice) / originalPrice) * 100).toInt()
+            (((originalPrice - discountPrice) / originalPrice) * 100).toInt().coerceAtLeast(0)
         } else 0
+}
+
+fun OfferDto.toListingItem(defaultStart: String, defaultEnd: String): ListingItem {
+    return ListingItem(
+        id = this.id,
+        storeId = this.storeId ?: "",
+        storageBoxId = this.storageBoxId,
+        name = this.title,
+        description = this.description ?: "",
+        category = this.category ?: "Bakery",
+        originalPrice = this.originalPrice,
+        discountPrice = this.discountedPrice,
+        weightKg = this.weightKg,
+        quantity = this.quantityAvailable,
+        pickupStart = this.pickupStart ?: defaultStart,
+        pickupEnd = this.pickupEnd ?: defaultEnd,
+        status = this.status,
+        imageUrl = this.imageUrl,
+        isEligibleForNgoFree = this.isEligibleForNgoFree
+    )
+}
+
+fun ListingItem.toDto(resolvedStoreId: String): OfferDto {
+    return OfferDto(
+        id = this.id,
+        storeId = resolvedStoreId,
+        storageBoxId = this.storageBoxId,
+        title = this.name,
+        description = this.description.ifBlank { null },
+        category = this.category,
+        originalPrice = this.originalPrice,
+        discountedPrice = this.discountPrice,
+        weightKg = this.weightKg,
+        quantityAvailable = this.quantity,
+        pickupStart = this.pickupStart,
+        pickupEnd = this.pickupEnd,
+        status = this.status,
+        imageUrl = this.imageUrl,
+        isEligibleForNgoFree = this.isEligibleForNgoFree
+    )
 }

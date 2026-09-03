@@ -6,37 +6,31 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class StoreDto(
     @SerialName("id")
-    val id: String? = null,
+    val id: String = "",
 
     @SerialName("owner_id")
     val ownerId: String? = null,
 
     @SerialName("name")
-    val name: String? = null,
+    val name: String,
 
     @SerialName("address")
-    val address: String? = null,
+    val address: String,
 
     @SerialName("latitude")
-    val latitude: Double? = null,
+    val latitude: Double = 5.4674,
 
     @SerialName("longitude")
-    val longitude: Double? = null,
-
-    @SerialName("rating")
-    val rating: Double? = null,
-
-    @SerialName("contact_phone")
-    val contactPhone: String? = null,
+    val longitude: Double = 100.2790,
 
     @SerialName("opening_time")
-    val openingTime: String? = null,
+    val openingTime: String, // e.g. "08:00:00"
 
     @SerialName("closing_time")
-    val closingTime: String? = null,
+    val closingTime: String, // e.g. "21:30:00"
 
     @SerialName("cleanup_end_time")
-    val cleanupEndTime: String? = null,
+    val cleanupEndTime: String = "22:15:00", // e.g. "22:15:00"
 
     @SerialName("image_url")
     val imageUrl: String? = null,
@@ -44,8 +38,14 @@ data class StoreDto(
     @SerialName("created_at")
     val createdAt: String? = null,
 
+    @SerialName("rating")
+    val rating: Double? = null,
+
+    @SerialName("contact_phone")
+    val contactPhone: String? = null,
+
     @SerialName("status")
-    val status: String? = null,
+    val status: String? = "PENDING", // PENDING, APPROVED, REJECTED
 
     @SerialName("reason_for_change")
     val reasonForChange: String? = null,

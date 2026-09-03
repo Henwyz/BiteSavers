@@ -19,6 +19,9 @@ class SavedRepository {
         val savedOfferIds: StateFlow<Set<String>> = _savedOfferIds.asStateFlow()
     }
 
+    // Generates human-readable ID matching Supabase seed format (e.g., save_1001 or save_timestamp)
+    private fun generateSaveId(): String = "save_${System.currentTimeMillis().toString().takeLast(6)}"
+
     suspend fun loadUserSavedOffers(userId: String) = withContext(Dispatchers.IO) {
         try {
             val list = client.from("saved_offers")
@@ -49,8 +52,13 @@ class SavedRepository {
                     }
                 }
             } else {
+                // Inserts clean readable primary key
                 client.from("saved_offers").insert(
-                    SavedOfferDto(userId = userId, offerId = offerId)
+                    SavedOfferDto(
+                        id = generateSaveId(),
+                        userId = userId,
+                        offerId = offerId
+                    )
                 )
             }
         } catch (e: Exception) {

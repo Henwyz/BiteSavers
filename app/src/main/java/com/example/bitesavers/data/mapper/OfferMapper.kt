@@ -5,7 +5,9 @@ import com.example.bitesavers.data.model.DiscoveryCategory
 import com.example.bitesavers.data.model.OfferUiModel
 import com.example.bitesavers.data.remote.dto.OfferDto
 import com.example.bitesavers.data.remote.dto.StoreDto
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Locale
 
 fun OfferDto.toUiModel(store: StoreDto?): OfferUiModel {
     val origPrice = originalPrice ?: 0.0
@@ -29,42 +31,61 @@ fun OfferDto.toUiModel(store: StoreDto?): OfferUiModel {
         else -> DiscoveryCategory.ALL
     }
 
-    // Dynamic calculation of hours left until store closing time
-    val calculatedHoursToClose = calculateHoursRemaining(store?.closingTime)
+    // Dynamic calculation of hours left until surplus pickup closes (prioritizing pickup_end over closing_time)
+    val targetEndTime = this.pickupEnd ?: store?.closingTime
+    val calculatedHoursToClose = calculateHoursRemaining(targetEndTime)
+
+    // Formats pickup interval into readable display string
+    val formattedStart = formatTimeToAmPm(this.pickupStart) ?: "8:00 PM"
+    val formattedEnd = formatTimeToAmPm(this.pickupEnd) ?: "10:00 PM"
+    val formattedPickupWindow = "Today, $formattedStart - $formattedEnd"
 
     // Selects a category-appropriate local fallback drawable when imageUrl is unavailable
     val fallbackImageResId = when (mappedCategory) {
-        DiscoveryCategory.BAKERY -> R.drawable.food_spaghetti // Replace with R.drawable.food_croissant / bakery drawable if available
-        DiscoveryCategory.HOT_MEALS -> R.drawable.food_spaghetti
-        DiscoveryCategory.DESSERTS -> R.drawable.food_spaghetti // Replace with dessert drawable if available
-        DiscoveryCategory.BEVERAGES -> R.drawable.food_spaghetti // Replace with drink drawable if available
-        else -> R.drawable.food_spaghetti
+        DiscoveryCategory.BAKERY -> R.drawable.ic_launcher_foreground
+        DiscoveryCategory.HOT_MEALS -> R.drawable.ic_launcher_foreground
+        DiscoveryCategory.DESSERTS -> R.drawable.ic_launcher_foreground
+        DiscoveryCategory.BEVERAGES -> R.drawable.ic_launcher_foreground
+        else -> R.drawable.ic_launcher_foreground
     }
 
     return OfferUiModel(
         id = this.id,
-        storeId = this.storeId ?: store?.id ?: "", // Maps foreign key store ID from Supabase
+        storeId = this.storeId ?: store?.id ?: "store_01", // Maps foreign key store ID from Supabase
         title = this.title,
         storeName = store?.name ?: "Store",
         storeRating = store?.rating ?: 4.8,
         imageUrl = this.imageUrl,
-        discountPercent = if (this.originalPrice > 0) {
-            (((this.originalPrice - this.discountedPrice) / this.originalPrice) * 100).toInt()
-        } else 0,
-        currentPrice = this.discountedPrice,
-        originalPrice = this.originalPrice,
+        discountPercent = calculatedDiscount,
+        currentPrice = discPrice,
+        originalPrice = origPrice,
         distanceKm = 0.0,
-        quantityLeft = this.quantityAvailable,
-        hoursToClose = 2,
-        category = DiscoveryCategory.entries.find { it.name.equals(this.category, ignoreCase = true) }
-            ?: DiscoveryCategory.HOT_MEALS,
+        quantityLeft = this.quantityAvailable ?: 0,
+        hoursToClose = calculatedHoursToClose,
+        pickupWindow = formattedPickupWindow,
+        category = mappedCategory,
         isEligibleForNgoFree = this.isEligibleForNgoFree,
+        storageType = "HOT",
+        description = this.description ?: "Fresh surplus food ready for rescue.",
         latitude = store?.latitude,
         longitude = store?.longitude
     )
 }
 
-// Computes remaining hours until store closes, accounting for regular operating hours and midnight rollovers
+// Converts 24-hour SQL format (e.g., 20:30:00) safely to 12-hour AM/PM format (API 24 compatible)
+private fun formatTimeToAmPm(timeStr: String?): String? {
+    if (timeStr.isNullOrBlank()) return null
+    return try {
+        val parser = SimpleDateFormat("HH:mm", Locale.getDefault())
+        val date = parser.parse(timeStr.trim().take(5)) ?: return timeStr
+        val formatter = SimpleDateFormat("h:mm a", Locale.getDefault())
+        formatter.format(date)
+    } catch (_: Exception) {
+        timeStr
+    }
+}
+
+// Computes remaining hours until store/pickup closes, accounting for regular operating hours and midnight rollovers
 private fun calculateHoursRemaining(closingTimeString: String?): Int {
     if (closingTimeString.isNullOrBlank()) return 2
 
@@ -75,7 +96,7 @@ private fun calculateHoursRemaining(closingTimeString: String?): Int {
 
         val closingParts = closingTimeString.split(":")
         val closingHour = closingParts[0].trim().toInt()
-        val closingMinute = if (closingParts.size > 1) closingParts[1].trim().toInt() else 0
+        val closingMinute = if (closingParts.size > 1) closingParts[1].trim().take(2).toInt() else 0
 
         val currentTotalMinutes = (currentHour * 60) + currentMinute
         var closingTotalMinutes = (closingHour * 60) + closingMinute
@@ -86,7 +107,7 @@ private fun calculateHoursRemaining(closingTimeString: String?): Int {
         }
 
         val diffMinutes = closingTotalMinutes - currentTotalMinutes
-        if (diffMinutes <= 0) 1 else (diffMinutes / 60).coerceAtLeast(1)
+        if (diffMinutes <= 0) 0 else (diffMinutes / 60).coerceAtLeast(1)
     } catch (e: Exception) {
         2
     }
