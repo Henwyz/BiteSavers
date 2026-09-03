@@ -670,6 +670,7 @@
     <!-- ================================================================= -->
     <string name="title_all_orders">Customer Orders</string>
     <string name="tab_all">All</string>
+    <string name="tab_readyforpickup">Ready for Pickup</string>
     <string name="tab_pending">Pending</string>
     <string name="tab_completed">Completed</string>
     <string name="tab_cancelled">Cancelled</string>
