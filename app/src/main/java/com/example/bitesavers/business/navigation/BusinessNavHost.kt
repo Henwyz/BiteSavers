@@ -40,6 +40,7 @@ import com.example.bitesavers.business.sharedUI.BusinessBottomNavigationBar
 import com.example.bitesavers.business.temperature.logic.TemperatureViewModel
 import com.example.bitesavers.business.temperature.ui.AddBoxScreen
 import com.example.bitesavers.business.temperature.ui.TemperatureScreen
+import com.example.bitesavers.business.dashboard.ui.BusinessNotificationScreen
 
 @Composable
 fun BusinessNavHost(
@@ -200,7 +201,7 @@ fun BusinessNavHost(
                 )
             }
 
-            // 7. TEMPERATURE MONITOR SCREEN
+            // 9. TEMPERATURE MONITOR SCREEN
             composable(BusinessScreen.Temperature.route) {
                 val currentStoreId = dashboardViewModel.currentStoreId ?: ""
 
@@ -247,7 +248,7 @@ fun BusinessNavHost(
                 )
             }
 
-            // 9. CHECK CUSTOMER ORDER SCREEN
+            // 11. CHECK CUSTOMER ORDER SCREEN
             composable(BusinessScreen.BusinessOrders.route) {
                 // Collect the existing recentOrders flow from your DashboardViewModel
                 val orders by dashboardViewModel.recentOrders.collectAsState()
@@ -263,16 +264,7 @@ fun BusinessNavHost(
                 )
             }
 
-            composable(BusinessScreen.AddBox.route) {
-                AddBoxScreen(
-                    onNavigateBack = { navController.popBackStack() },
-                    onUnitAdded = { unitName, unitType ->
-                        navController.popBackStack()
-                    }
-                )
-            }
-
-            // 9. Business Verification Check
+            // 12. BUSINESS VERIFICATION CHECK
             composable(
                 route = BusinessScreen.Verification.route,
                 arguments = listOf(
@@ -299,7 +291,7 @@ fun BusinessNavHost(
                 )
             }
 
-            // 10. Business Cancel Order
+            // 13. BUSINESS CANCEL ORDER
             composable(
                 route = BusinessScreen.CancelOrder.route,
                 arguments = listOf(navArgument("orderId") { type = NavType.StringType })
@@ -313,6 +305,17 @@ fun BusinessNavHost(
                         // Refresh orders and pop back to order lists
                         dashboardViewModel.fetchOrdersFromSupabase()
                         navController.popBackStack(BusinessScreen.BusinessOrders.route, inclusive = false)
+                    }
+                )
+            }
+
+            // 14. BUSINESS NOTIFICATION SCREEN
+            composable(BusinessScreen.Notification.route) {
+                BusinessNotificationScreen(
+                    viewModel = dashboardViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToOrderDetails = { orderId ->
+                        navController.navigate(BusinessScreen.Verification.createRoute(orderId))
                     }
                 )
             }
