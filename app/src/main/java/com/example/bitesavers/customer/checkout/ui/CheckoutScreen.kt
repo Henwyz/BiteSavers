@@ -140,6 +140,9 @@ fun CheckoutScreen(
                     CheckoutPaymentCard(
                         paymentMethod = state.selectedPaymentMethod,
                         walletBalance = state.walletBalance,
+                        isTngLinked = state.isTngLinked,
+                        tngPhone = state.tngPhone,
+                        savedCardDigits = state.savedCardDigits,
                         onChangeClick = { onEvent(CheckoutUiEvent.OnChangePaymentClicked) }
                     )
 
@@ -152,6 +155,9 @@ fun CheckoutScreen(
                 PaymentMethodSelectionSheet(
                     selectedMethod = state.selectedPaymentMethod,
                     walletBalance = state.walletBalance,
+                    isTngLinked = state.isTngLinked,
+                    tngPhone = state.tngPhone,
+                    savedCardDigits = state.savedCardDigits,
                     onMethodSelect = { method ->
                         onEvent(CheckoutUiEvent.OnSelectPaymentMethod(method))
                     },

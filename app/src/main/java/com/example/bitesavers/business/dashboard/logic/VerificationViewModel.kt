@@ -1,5 +1,6 @@
 package com.example.bitesavers.business.dashboard.logic
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -7,8 +8,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bitesavers.business.dashboard.data.CheckOrderData
 import com.example.bitesavers.data.remote.SupabaseClient
+import com.example.bitesavers.data.remote.dto.NgoApplicationDto
 import com.example.bitesavers.data.remote.dto.NotificationDto
+import com.example.bitesavers.data.remote.dto.UserDto
+import com.example.bitesavers.util.GmailSender
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -31,7 +37,7 @@ class VerificationViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val result = SupabaseClient.client.from("orders").select(
-                    columns = io.github.jan.supabase.postgrest.query.Columns.raw("*, offers(*)")
+                    columns = Columns.raw("*, offers(*)")
                 ) {
                     filter {
                         eq("id", orderId)
@@ -60,7 +66,7 @@ class VerificationViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             isVerifying = true
             try {
-                // Update order status to COMPLETED in Supabase
+                // 2. Update order status to COMPLETED in Supabase
                 SupabaseClient.client.from("orders").update(
                     {
                         set("status", "COMPLETED")
@@ -71,7 +77,7 @@ class VerificationViewModel : ViewModel() {
                     }
                 }
 
-                //Insert notification for customer
+                // 3. Insert in-app notification for customer
                 val notifId = "notif_${UUID.randomUUID().toString().take(8)}"
                 val notification = NotificationDto(
                     id = notifId,
@@ -81,9 +87,19 @@ class VerificationViewModel : ViewModel() {
                     message = "Order ${currentOrder.shortOrderId} has been picked up from the store.",
                     isRead = false
                 )
-                SupabaseClient.client.from("user_notifications").insert(notification)
+                try {
+                    SupabaseClient.client.from("user_notifications").insert(notification)
+                } catch (e: Exception) {
+                    Log.w("VerificationViewModel", "Could not insert notification: ${e.message}")
+                }
 
-                //Update local state
+                // 4. NGO AUTOMATED EMAIL TRIGGER
+                // If this is a free NGO claim, fetch the NGO contact email and send confirmation
+                if (currentOrder.isNgoFreeClaim) {
+                    sendAutomatedNgoEmail(currentOrder)
+                }
+
+                // 5. Update local state
                 orderData = currentOrder.copy(status = "COMPLETED")
                 isSuccessDialogOpen = true
             } catch (e: Exception) {
@@ -92,6 +108,50 @@ class VerificationViewModel : ViewModel() {
             } finally {
                 isVerifying = false
             }
+        }
+    }
+
+    private suspend fun sendAutomatedNgoEmail(order: CheckOrderData) {
+        // 1. Guard check: Only proceed if this order was placed as a free NGO claim
+        if (!order.isNgoFreeClaim) {
+            Log.d("VerificationViewModel", "Regular order. Skipping NGO email.")
+            return
+        }
+
+        try {
+            // 2. Strictly check if the user is an APPROVED active NGO
+            val approvedApplication = SupabaseClient.client.from("ngo_applications")
+                .select {
+                    filter {
+                        eq("user_id", order.userId)
+                        eq("status", "APPROVED") // 👈 Must be APPROVED in Supabase
+                    }
+                    order("created_at", Order.DESCENDING)
+                }
+                .decodeList<NgoApplicationDto>()
+                .firstOrNull()
+
+            if (approvedApplication == null) {
+                Log.w("VerificationViewModel", "No active APPROVED NGO record found for user ${order.userId}. Skipping email.")
+                return
+            }
+
+            val recipientEmail = approvedApplication.contactEmail
+            val orgName = approvedApplication.organizationName
+
+            // 3. Trigger email to the active NGO's registered contact email
+            if (!recipientEmail.isNullOrBlank()) {
+                Log.d("VerificationViewModel", "Sending automated email to active NGO: $recipientEmail")
+                GmailSender.sendNgoClaimConfirmation(
+                    recipientEmail = recipientEmail,
+                    ngoOrgName = orgName,
+                    orderId = order.shortOrderId,
+                    itemName = order.displayItemName.ifBlank { "Surprise Surplus Meal" },
+                    quantity = order.quantity
+                )
+            }
+        } catch (e: Exception) {
+            Log.e("VerificationViewModel", "Error verifying active NGO status for email", e)
         }
     }
 

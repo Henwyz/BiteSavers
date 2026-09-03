@@ -1,5 +1,6 @@
 package com.example.bitesavers.business.restaurant.ui
 
+import android.app.TimePickerDialog
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -30,6 +31,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitesavers.R
 import com.example.bitesavers.business.restaurant.logic.RegisterRestaurantViewModel
 import java.io.File
+import java.util.Calendar
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,6 +45,10 @@ fun RegisterRestaurantScreen(
 
     var showImagePick by remember { mutableStateOf(false) }
     var tempImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    var showOpeningTimePicker by remember { mutableStateOf(false) }
+    var showClosingTimePicker by remember { mutableStateOf(false) }
+    var showCleanupTimePicker by remember { mutableStateOf(false) }
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -61,6 +68,66 @@ fun RegisterRestaurantScreen(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let { viewModel.updateSsmDocUri(it) }
+    }
+
+    // Opening Time Dialog with AM/PM
+    if (showOpeningTimePicker) {
+        val calendar = Calendar.getInstance()
+        TimePickerDialog(
+            context,
+            { _, hour, minute ->
+                val amPm = if (hour < 12) "AM" else "PM"
+                val hour12 = if (hour == 0) 12 else if (hour > 12) hour - 12 else hour
+                val formatted = String.format(Locale.getDefault(), "%02d:%02d %s", hour12, minute, amPm)
+                viewModel.updateOpeningTime(formatted)
+                showOpeningTimePicker = false
+            },
+            calendar.get(Calendar.HOUR_OF_DAY),
+            calendar.get(Calendar.MINUTE),
+            false
+        ).apply {
+            setOnDismissListener { showOpeningTimePicker = false }
+        }.show()
+    }
+
+    // Closing Time Dialog with AM/PM
+    if (showClosingTimePicker) {
+        val calendar = Calendar.getInstance()
+        TimePickerDialog(
+            context,
+            { _, hour, minute ->
+                val amPm = if (hour < 12) "AM" else "PM"
+                val hour12 = if (hour == 0) 12 else if (hour > 12) hour - 12 else hour
+                val formatted = String.format(Locale.getDefault(), "%02d:%02d %s", hour12, minute, amPm)
+                viewModel.updateClosingTime(formatted)
+                showClosingTimePicker = false
+            },
+            calendar.get(Calendar.HOUR_OF_DAY),
+            calendar.get(Calendar.MINUTE),
+            false
+        ).apply {
+            setOnDismissListener { showClosingTimePicker = false }
+        }.show()
+    }
+
+    // Cleanup Time Dialog with AM/PM
+    if (showCleanupTimePicker) {
+        val calendar = Calendar.getInstance()
+        TimePickerDialog(
+            context,
+            { _, hour, minute ->
+                val amPm = if (hour < 12) "AM" else "PM"
+                val hour12 = if (hour == 0) 12 else if (hour > 12) hour - 12 else hour
+                val formatted = String.format(Locale.getDefault(), "%02d:%02d %s", hour12, minute, amPm)
+                viewModel.updateCleanupEndTime(formatted)
+                showCleanupTimePicker = false
+            },
+            calendar.get(Calendar.HOUR_OF_DAY),
+            calendar.get(Calendar.MINUTE),
+            false
+        ).apply {
+            setOnDismissListener { showCleanupTimePicker = false }
+        }.show()
     }
 
     // Modal Bottom Sheet for Store Photo Source Selection
@@ -123,7 +190,6 @@ fun RegisterRestaurantScreen(
         }
     }
 
-    // Main layout with green header matching other screens
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -145,7 +211,7 @@ fun RegisterRestaurantScreen(
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_arrow_back),
-                    contentDescription = stringResource(R.string.cd_back_button),
+                    contentDescription = null,
                     tint = MaterialTheme.colorScheme.secondary
                 )
             }
@@ -153,17 +219,15 @@ fun RegisterRestaurantScreen(
             Text(
                 text = stringResource(R.string.register_restaurant_title),
                 color = MaterialTheme.colorScheme.onSecondary,
-                style = MaterialTheme.typography.titleMedium,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
 
-            Box(modifier = Modifier.size(40.dp)) // Spacer for title balance
+            Box(modifier = Modifier.size(40.dp))
         }
 
         Spacer(Modifier.height(8.dp))
 
-        // Form Body Content with Background Color Container
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -177,11 +241,15 @@ fun RegisterRestaurantScreen(
                 value = viewModel.restaurantName,
                 onValueChange = { viewModel.updateRestaurantName(it) },
                 placeholder = { Text(stringResource(R.string.restaurant_name_hint), color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                isError = viewModel.restaurantNameError != null,
                 colors = textFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(50),
                 singleLine = true
             )
+            if (viewModel.restaurantNameError != null) {
+                Text(text = viewModel.restaurantNameError!!, color = MaterialTheme.colorScheme.error, fontSize = 12.sp, modifier = Modifier.padding(start = 16.dp, top = 4.dp))
+            }
 
             Spacer(Modifier.height(16.dp))
 
@@ -192,48 +260,57 @@ fun RegisterRestaurantScreen(
                 onValueChange = { viewModel.updateContactPhone(it) },
                 placeholder = { Text(stringResource(R.string.contact_phone_hint), color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                isError = viewModel.contactPhoneError != null,
                 colors = textFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(50),
                 singleLine = true
             )
+            if (viewModel.contactPhoneError != null) {
+                Text(text = viewModel.contactPhoneError!!, color = MaterialTheme.colorScheme.error, fontSize = 12.sp, modifier = Modifier.padding(start = 16.dp, top = 4.dp))
+            }
 
             Spacer(Modifier.height(16.dp))
 
-            // Address & Geocoding Fallback Option
+            // Address Field
             FormLabel(stringResource(R.string.address_label))
             OutlinedTextField(
                 value = viewModel.address,
                 onValueChange = { viewModel.updateAddress(it) },
                 placeholder = { Text(stringResource(R.string.address_hint), color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                isError = viewModel.addressError != null,
                 colors = textFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(30),
                 maxLines = 3
             )
-            Spacer(Modifier.height(4.dp))
-            OutlinedButton(
-                onClick = { viewModel.useDefaultPenangLocation() },
-                modifier = Modifier.align(Alignment.End),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
-            ) {
-                Text(stringResource(R.string.use_default_penang_fallback), fontSize = 11.sp)
+            if (viewModel.addressError != null) {
+                Text(text = viewModel.addressError!!, color = MaterialTheme.colorScheme.error, fontSize = 12.sp, modifier = Modifier.padding(start = 16.dp, top = 4.dp))
             }
 
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(16.dp))
 
-            // 12-Digit SSM Number
+            // 12-Digit SSM Number with Error State
             FormLabel(stringResource(R.string.ssm_number_label))
             OutlinedTextField(
                 value = viewModel.ssmNumber,
-                onValueChange = { if (it.length <= 12) viewModel.updateSsmNumber(it) },
+                onValueChange = { viewModel.updateSsmNumber(it) },
                 placeholder = { Text(stringResource(R.string.ssm_number_hint), color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                isError = viewModel.ssmError != null,
                 colors = textFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(50),
                 singleLine = true
             )
+            if (viewModel.ssmError != null) {
+                Text(
+                    text = viewModel.ssmError!!,
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                )
+            }
 
             Spacer(Modifier.height(16.dp))
 
@@ -255,6 +332,9 @@ fun RegisterRestaurantScreen(
                     text = if (viewModel.storeImageUri != null) stringResource(R.string.store_photo_attached) else stringResource(R.string.take_upload_store_photo),
                     color = MaterialTheme.colorScheme.primary
                 )
+            }
+            if (viewModel.storeImageError != null) {
+                Text(text = viewModel.storeImageError!!, color = MaterialTheme.colorScheme.error, fontSize = 12.sp, modifier = Modifier.padding(start = 16.dp, top = 4.dp))
             }
 
             Spacer(Modifier.height(16.dp))
@@ -278,6 +358,9 @@ fun RegisterRestaurantScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
             }
+            if (viewModel.ssmDocError != null) {
+                Text(text = viewModel.ssmDocError!!, color = MaterialTheme.colorScheme.error, fontSize = 12.sp, modifier = Modifier.padding(start = 16.dp, top = 4.dp))
+            }
 
             Spacer(Modifier.height(16.dp))
 
@@ -285,41 +368,61 @@ fun RegisterRestaurantScreen(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Column(modifier = Modifier.weight(1f)) {
                     FormLabel(stringResource(R.string.opening_time_label))
-                    OutlinedTextField(
-                        value = viewModel.openingTime,
-                        onValueChange = { viewModel.updateOpeningTime(it) },
-                        colors = textFieldColors(),
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(50),
-                        singleLine = true
-                    )
+                    Box(modifier = Modifier.clickable { showOpeningTimePicker = true }) {
+                        OutlinedTextField(
+                            value = viewModel.openingTime,
+                            onValueChange = {},
+                            readOnly = true,
+                            enabled = false,
+                            colors = textFieldColors(),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(50),
+                            singleLine = true
+                        )
+                    }
                 }
                 Column(modifier = Modifier.weight(1f)) {
                     FormLabel(stringResource(R.string.closing_time_label))
-                    OutlinedTextField(
-                        value = viewModel.closingTime,
-                        onValueChange = { viewModel.updateClosingTime(it) },
-                        colors = textFieldColors(),
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(50),
-                        singleLine = true
-                    )
+                    Box(modifier = Modifier.clickable { showClosingTimePicker = true }) {
+                        OutlinedTextField(
+                            value = viewModel.closingTime,
+                            onValueChange = {},
+                            readOnly = true,
+                            enabled = false,
+                            colors = textFieldColors(),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(50),
+                            singleLine = true
+                        )
+                    }
                 }
             }
 
             Spacer(Modifier.height(16.dp))
 
-            // Cleanup End Time
+            // Cleanup End Time with 12-Hour Picker & Validation Error
             FormLabel(stringResource(R.string.cleanup_end_time_label))
-            OutlinedTextField(
-                value = viewModel.cleanupEndTime,
-                onValueChange = { viewModel.updateCleanupEndTime(it) },
-                placeholder = { Text(stringResource(R.string.cleanup_end_time_hint), color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                colors = textFieldColors(),
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(50),
-                singleLine = true
-            )
+            Box(modifier = Modifier.clickable { showCleanupTimePicker = true }) {
+                OutlinedTextField(
+                    value = viewModel.cleanupEndTime,
+                    onValueChange = {},
+                    readOnly = true,
+                    enabled = false,
+                    isError = viewModel.cleanupTimeError != null,
+                    colors = textFieldColors(),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(50),
+                    singleLine = true
+                )
+            }
+            if (viewModel.cleanupTimeError != null) {
+                Text(
+                    text = viewModel.cleanupTimeError!!,
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                )
+            }
 
             Spacer(Modifier.height(20.dp))
 
@@ -337,10 +440,6 @@ fun RegisterRestaurantScreen(
                         onRestaurantRegistered()
                     }
                 },
-                enabled = viewModel.restaurantName.isNotBlank() &&
-                        viewModel.address.isNotBlank() &&
-                        viewModel.contactPhone.isNotBlank() &&
-                        viewModel.ssmNumber.length == 12,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
@@ -382,6 +481,7 @@ fun textFieldColors() = OutlinedTextFieldDefaults.colors(
     errorContainerColor = MaterialTheme.colorScheme.surfaceVariant,
     focusedTextColor = MaterialTheme.colorScheme.onSurface,
     unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+    disabledTextColor = MaterialTheme.colorScheme.onSurface,
     focusedBorderColor = MaterialTheme.colorScheme.primary,
     unfocusedBorderColor = MaterialTheme.colorScheme.outline
 )

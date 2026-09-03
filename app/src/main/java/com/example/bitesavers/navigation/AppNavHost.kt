@@ -11,11 +11,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.bitesavers.business.navigation.BusinessNavHost
+import com.example.bitesavers.business.restaurant.logic.PendingScreenViewModel
+import com.example.bitesavers.business.restaurant.logic.RegisterRestaurantViewModel
+import com.example.bitesavers.business.restaurant.ui.PendingApprovalScreen
+import com.example.bitesavers.business.restaurant.ui.RegisterRestaurantScreen
 import com.example.bitesavers.customer.navigation.CustomerNavHost
 import com.example.bitesavers.data.remote.UserSession
 import com.example.bitesavers.login.ui.LoginScreen
@@ -27,18 +32,7 @@ fun AppNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
     // Determine initial destination dynamically from saved disk session
-    startDestination: String = remember {
-        if (UserSession.isLoggedIn()) {
-            val role = UserSession.getUserRole()
-            if (role.equals("business", ignoreCase = true)) {
-                RootRoute.BusinessGraph.route
-            } else {
-                RootRoute.CustomerGraph.route
-            }
-        } else {
-            RootRoute.Login.route
-        }
-    }
+    startDestination: String = RootRoute.Login.route
 ) {
     val context = LocalContext.current
 
@@ -71,8 +65,14 @@ fun AppNavHost(
         composable(RootRoute.Login.route) {
             LoginScreen(
                 onLoginSuccess = { isBusiness ->
-                    val destination = if (isBusiness) {
-                        RootRoute.BusinessGraph.route
+                    val userRole = UserSession.getUserRole()
+
+                    val destination = if (userRole.equals("business", ignoreCase = true)) {
+                        when (UserSession.getStoreStatus()) {
+                            "APPROVED" -> RootRoute.BusinessGraph.route
+                            "UNREGISTERED" -> RootRoute.RegisterRestaurant.route
+                            else -> RootRoute.PendingApproval.route // PENDING or default
+                        }
                     } else {
                         RootRoute.CustomerGraph.route
                     }
@@ -113,7 +113,49 @@ fun AppNavHost(
             )
         }
 
-        // 4. Customer Navigation Subgraph
+        // 4. Restaurant Registration Screen
+        composable(RootRoute.RegisterRestaurant.route) {
+            // 👇 ADD THIS: Scope the ViewModel to the NavBackStackEntry so it survives recompositions
+            val parentEntry = remember(it) { navController.getBackStackEntry(RootRoute.RegisterRestaurant.route) }
+            val viewModel: RegisterRestaurantViewModel = viewModel(parentEntry)
+
+            RegisterRestaurantScreen(
+                viewModel = viewModel, // 👈 PASS IT EXPLICITLY HERE
+                onNavigateBack = {
+                    navController.navigate(RootRoute.Login.route) {
+                        popUpTo(RootRoute.RegisterRestaurant.route) { inclusive = true }
+                    }
+                },
+                onRestaurantRegistered = {
+                    navController.navigate(RootRoute.PendingApproval.route) {
+                        popUpTo(RootRoute.RegisterRestaurant.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // 5. Pending Approval Screen
+        composable(RootRoute.PendingApproval.route) {
+            val viewModel: PendingScreenViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+
+            PendingApprovalScreen(
+                restaurantName = viewModel.restaurantName,
+                ssmNumber = viewModel.ssmNumber,
+                contactPhone = viewModel.contactPhone,
+                address = viewModel.address,
+                openingTime = viewModel.openingTime,
+                closingTime = viewModel.closingTime,
+                cleanupEndTime = viewModel.cleanupEndTime,
+                ssmDocUploaded = viewModel.ssmDocUploaded,
+                onNavigateBack = {
+                    navController.navigate(RootRoute.Login.route) {
+                        popUpTo(RootRoute.PendingApproval.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // 6. Customer Navigation Subgraph
         composable(RootRoute.CustomerGraph.route) {
             CustomerNavHost(
                 onLogout = {
@@ -124,7 +166,7 @@ fun AppNavHost(
             )
         }
 
-        // 5. Business Navigation Subgraph
+        // 7. Business Navigation Subgraph
         composable(RootRoute.BusinessGraph.route) {
             BusinessNavHost(
                 onLogout = {
@@ -136,3 +178,4 @@ fun AppNavHost(
         }
     }
 }
+

@@ -46,20 +46,19 @@ import coil.request.ImageRequest
 import com.example.bitesavers.R
 import com.example.bitesavers.data.model.DiscoveryCategory
 import com.example.bitesavers.data.model.OfferUiModel
-import com.example.bitesavers.data.model.UserRole
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @Composable
 fun OfferCard(
     offer: OfferUiModel,
     isSaved: Boolean = false,
-    userRole: UserRole = UserRole.CONSUMER, // Accepts current role
+    isNgoApproved: Boolean = false,
     onClick: (OfferUiModel) -> Unit,
     onToggleBookmark: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    // Condition: NGO user + eligible item + closing within 1 hour
-    val isNgoFree = userRole == UserRole.NGO && offer.isEligibleForNgoFree && offer.hoursToClose <= 1
+    // Condition: Approved NGO user + eligible item + closing within 1 hour
+    val isNgoFree = isNgoApproved && offer.isEligibleForNgoFree && offer.hoursToClose <= 1
 
     Card(
         modifier = modifier
@@ -107,7 +106,7 @@ fun OfferCard(
                 }
             )
 
-            // Badge Display: Shows FREE CLAIM for NGOs, or standard Discount % for Consumers
+            // Badge Display: Shows FREE CLAIM for Approved NGOs, or standard Discount % for Consumers
             Box(
                 modifier = Modifier
                     .padding(10.dp)
@@ -242,14 +241,13 @@ fun OfferCard(
 
             // Location, Quantity and Closing details
             Text(
-                text = stringResource(
-                    id = R.string.offer_details,
+                text = "• %.1f km  • %d left  • %s".format(
                     offer.distanceKm,
                     offer.quantityLeft,
-                    offer.hoursToClose
+                    offer.timeStatusText.ifBlank { "Closes in ${offer.hoursToClose}h" }
                 ),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (!offer.isCurrentlyOpen) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -259,11 +257,11 @@ fun OfferCard(
 @Composable
 fun CompactDiscoveryOfferCard(
     offer: OfferUiModel,
-    userRole: UserRole = UserRole.CONSUMER,
+    isNgoApproved: Boolean = false,
     onClick: (OfferUiModel) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isNgoFree = userRole == UserRole.NGO && offer.isEligibleForNgoFree && offer.hoursToClose <= 1
+    val isNgoFree = isNgoApproved && offer.isEligibleForNgoFree && offer.hoursToClose <= 1
 
     Card(
         modifier = modifier.clickable { onClick(offer) },
@@ -402,7 +400,7 @@ private fun OfferCardConsumerPreview() {
                     description = "Extra portions of our signature Bolognese Spaghetti."
                 ),
                 isSaved = false,
-                userRole = UserRole.CONSUMER,
+                isNgoApproved = false,
                 onClick = {},
                 onToggleBookmark = {}
             )
@@ -410,7 +408,7 @@ private fun OfferCardConsumerPreview() {
     }
 }
 
-@Preview(showBackground = true, name = "NGO View - Free Claim")
+@Preview(showBackground = true, name = "Approved NGO View - Free Claim")
 @Composable
 private fun OfferCardNgoPreview() {
     BiteSaversTheme {
@@ -436,7 +434,7 @@ private fun OfferCardNgoPreview() {
                     description = "Freshly baked croissants nearing store closing."
                 ),
                 isSaved = true,
-                userRole = UserRole.NGO,
+                isNgoApproved = true,
                 onClick = {},
                 onToggleBookmark = {}
             )

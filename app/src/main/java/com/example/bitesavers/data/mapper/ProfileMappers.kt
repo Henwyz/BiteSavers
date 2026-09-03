@@ -20,10 +20,12 @@ fun UserDto.toUiModel(): UserProfileUiModel = UserProfileUiModel(
     email = email,
     avatarInitials = computeInitials(name),
     memberSinceLabel = formatMemberSince(createdAt),
-    walletBalance = walletBalance ?: 0.0,
+    walletBalance = walletBalance,
     ngoStatus = ngoStatus.toEnumOrNull<NgoStatus>() ?: NgoStatus.NONE,
     ngoOrgName = ngoOrgName,
-    mealsRescued = mealsRescued ?: 0
+    mealsRescued = 0,
+    moneySaved = 0.0,
+    co2ReducedKg = 0.0
 )
 
 // ---------- ngo_applications table <-> NgoApplicationUiModel ----------

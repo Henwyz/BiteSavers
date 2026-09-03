@@ -52,7 +52,7 @@ data class DiscoveryUiState(
     val user: UserUiModel = UserUiModel(),
     val searchQuery: String = "",
     val notifications: List<NotificationUiModel> = emptyList(),
-    val selectedCategory: DiscoveryCategory = DiscoveryCategory.ALL, // <-- Change here: removed '?' and set default to ALL
+    val selectedCategory: DiscoveryCategory = DiscoveryCategory.ALL,
     val availableCategories: List<DiscoveryCategory> = listOf(
         DiscoveryCategory.ALL,
         DiscoveryCategory.HOT_MEALS,
@@ -61,6 +61,7 @@ data class DiscoveryUiState(
         DiscoveryCategory.BEVERAGES
     ),
     val userRole: UserRole = UserRole.CONSUMER,
+    val isNgoApproved: Boolean = false, // Governs NGO privileges independent of userRole
     val viewMode: DiscoveryViewMode = DiscoveryViewMode.OFFERS,
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
@@ -72,4 +73,3 @@ data class DiscoveryUiState(
     val userLatitude: Double? = null,
     val userLongitude: Double? = null
 )
-

@@ -1,5 +1,7 @@
 package com.example.bitesavers.customer.profile.ui
 
+import android.content.res.Configuration
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
@@ -34,13 +37,17 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -51,7 +58,6 @@ import com.example.bitesavers.R
 import com.example.bitesavers.customer.profile.data.NgoStatus
 import com.example.bitesavers.customer.profile.data.UserProfileUiModel
 import com.example.bitesavers.customer.profile.logic.ProfileViewModel
-import com.example.bitesavers.customer.profile.logic.SustainabilityCalculator
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @Composable
@@ -65,6 +71,7 @@ fun ProfileScreen(
     onAboutClick: () -> Unit,
     viewModel: ProfileViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val profile by viewModel.profile.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val loadError by viewModel.loadError.collectAsStateWithLifecycle()
@@ -74,11 +81,27 @@ fun ProfileScreen(
     val editError by viewModel.editProfileError.collectAsStateWithLifecycle()
     val isUpdating by viewModel.isUpdatingProfile.collectAsStateWithLifecycle()
 
+    val showPasswordDialog by viewModel.showChangePasswordDialog.collectAsStateWithLifecycle()
+    val newPassword by viewModel.newPassword.collectAsStateWithLifecycle()
+    val confirmPassword by viewModel.confirmPassword.collectAsStateWithLifecycle()
+    val passwordError by viewModel.passwordError.collectAsStateWithLifecycle()
+    val isChangingPassword by viewModel.isChangingPassword.collectAsStateWithLifecycle()
+
+    val lengthErrorMsg = stringResource(R.string.profile_password_length_error)
+    val mismatchErrorMsg = stringResource(R.string.profile_password_mismatch_error)
+    val successMsg = stringResource(R.string.profile_password_success)
+
+    // Synchronizes the latest wallet balance and rescue counts whenever entering the profile screen
+    LaunchedEffect(Unit) {
+        viewModel.refresh()
+    }
+
     ProfileContent(
         profile = profile,
         isLoading = isLoading,
         loadError = loadError,
         onEditProfileClick = { viewModel.openEditProfileDialog() },
+        onChangePasswordClick = { viewModel.openChangePasswordDialog() },
         onRegisterAsNgoClick = onRegisterAsNgoClick,
         onViewNgoDetailsClick = onViewNgoDetailsClick,
         onPaymentMethodsClick = onPaymentMethodsClick,
@@ -103,6 +126,27 @@ fun ProfileScreen(
             onConfirm = viewModel::saveProfileChanges
         )
     }
+
+    if (showPasswordDialog) {
+        ChangePasswordDialog(
+            newPassword = newPassword,
+            confirmPassword = confirmPassword,
+            error = passwordError,
+            isUpdating = isChangingPassword,
+            onNewPasswordChange = viewModel::onNewPasswordChange,
+            onConfirmPasswordChange = viewModel::onConfirmPasswordChange,
+            onDismiss = viewModel::dismissChangePasswordDialog,
+            onConfirm = {
+                viewModel.savePasswordChanges(
+                    lengthErrorMessage = lengthErrorMsg,
+                    mismatchErrorMessage = mismatchErrorMsg,
+                    onSuccess = {
+                        Toast.makeText(context, successMsg, Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
+        )
+    }
 }
 
 @Composable
@@ -111,6 +155,7 @@ private fun ProfileContent(
     isLoading: Boolean,
     loadError: String?,
     onEditProfileClick: () -> Unit,
+    onChangePasswordClick: () -> Unit,
     onRegisterAsNgoClick: () -> Unit,
     onViewNgoDetailsClick: () -> Unit,
     onPaymentMethodsClick: () -> Unit,
@@ -119,7 +164,6 @@ private fun ProfileContent(
     onHelpSupportClick: () -> Unit,
     onAboutClick: () -> Unit
 ) {
-    val impact = SustainabilityCalculator.calculateImpact(profile.mealsRescued)
     val menuIconTint = MaterialTheme.colorScheme.primary
 
     Column(
@@ -328,6 +372,19 @@ private fun ProfileContent(
                 labelResId = R.string.profile_payment_methods,
                 onClick = onPaymentMethodsClick // Trigger payment methods navigation
             )
+            // Triggers dialog to securely modify account password
+            ProfileMenuRow(
+                icon = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_lock),
+                        contentDescription = null,
+                        tint = menuIconTint,
+                        modifier = Modifier.size(16.dp)
+                    )
+                },
+                labelResId = R.string.profile_change_password,
+                onClick = onChangePasswordClick
+            )
             ProfileMenuRow(
                 icon = {
                     Icon(
@@ -375,17 +432,17 @@ private fun ProfileContent(
         ) {
             StatCard(
                 modifier = Modifier.weight(1f),
-                value = stringResource(R.string.currency_rm, profile.mealsRescued * 1.58),
+                value = stringResource(R.string.currency_rm, profile.moneySaved),
                 label = stringResource(R.string.profile_stat_money_saved)
             )
             StatCard(
                 modifier = Modifier.weight(1f),
-                value = "${"%.1f".format(impact.kgFoodSaved)}kg",
+                value = "${"%.1f".format(profile.co2ReducedKg)}kg",
                 label = stringResource(R.string.profile_stat_co2_reduced)
             )
             StatCard(
                 modifier = Modifier.weight(1f),
-                value = "${impact.mealsRescued}",
+                value = "${profile.mealsRescued}",
                 label = stringResource(R.string.profile_stat_meals_rescued)
             )
         }
@@ -408,7 +465,8 @@ private fun EditProfileDialog(
             Text(
                 text = stringResource(R.string.profile_edit_title),
                 fontWeight = FontWeight.Bold,
-                fontSize = 18.sp
+                fontSize = 18.sp,
+                color = MaterialTheme.colorScheme.onSurface
             )
         },
         text = {
@@ -437,6 +495,90 @@ private fun EditProfileDialog(
             Button(
                 onClick = onConfirm,
                 enabled = !isUpdating && name.isNotBlank()
+            ) {
+                if (isUpdating) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Spacer(Modifier.width(8.dp))
+                }
+                Text(stringResource(R.string.profile_edit_save))
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isUpdating
+            ) {
+                Text(stringResource(R.string.profile_edit_cancel))
+            }
+        }
+    )
+}
+
+// Dialog allowing user to update their authentication password
+@Composable
+private fun ChangePasswordDialog(
+    newPassword: String,
+    confirmPassword: String,
+    error: String?,
+    isUpdating: Boolean,
+    onNewPasswordChange: (String) -> Unit,
+    onConfirmPasswordChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = stringResource(R.string.profile_change_password_title),
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = newPassword,
+                    onValueChange = onNewPasswordChange,
+                    label = { Text(stringResource(R.string.profile_new_password_label)) },
+                    placeholder = { Text(stringResource(R.string.profile_new_password_hint)) },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = confirmPassword,
+                    onValueChange = onConfirmPasswordChange,
+                    label = { Text(stringResource(R.string.profile_confirm_password_label)) },
+                    placeholder = { Text(stringResource(R.string.profile_confirm_password_hint)) },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    isError = error != null,
+                    supportingText = {
+                        if (error != null) {
+                            Text(
+                                text = error,
+                                color = MaterialTheme.colorScheme.error,
+                                fontSize = 12.sp
+                            )
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                enabled = !isUpdating && newPassword.isNotBlank() && confirmPassword.isNotBlank()
             ) {
                 if (isUpdating) {
                     CircularProgressIndicator(
@@ -540,7 +682,8 @@ private fun StatCard(modifier: Modifier = Modifier, value: String, label: String
 
 // ---------- Previews ----------
 
-@Preview(showBackground = true)
+@Preview(name = "Profile Screen - Light", showBackground = true)
+@Preview(name = "Profile Screen - Dark", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
 private fun ProfileScreenPreview() {
     BiteSaversTheme {
@@ -552,12 +695,15 @@ private fun ProfileScreenPreview() {
                 avatarInitials = "AJ",
                 memberSinceLabel = "Member since Aug 2024",
                 walletBalance = 42.50,
-                mealsRescued = 12,
+                mealsRescued = 3,
+                moneySaved = 22.80,
+                co2ReducedKg = 2.25,
                 ngoStatus = NgoStatus.NONE
             ),
             isLoading = false,
             loadError = null,
             onEditProfileClick = {},
+            onChangePasswordClick = {},
             onRegisterAsNgoClick = {},
             onViewNgoDetailsClick = {},
             onPaymentMethodsClick = {},
@@ -569,7 +715,8 @@ private fun ProfileScreenPreview() {
     }
 }
 
-@Preview(showBackground = true)
+@Preview(name = "Edit Profile Dialog - Light", showBackground = true)
+@Preview(name = "Edit Profile Dialog - Dark", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
 private fun EditProfileDialogPreview() {
     BiteSaversTheme {
@@ -578,6 +725,24 @@ private fun EditProfileDialogPreview() {
             error = null,
             isUpdating = false,
             onNameChange = {},
+            onDismiss = {},
+            onConfirm = {}
+        )
+    }
+}
+
+@Preview(name = "Change Password Dialog - Light", showBackground = true)
+@Preview(name = "Change Password Dialog - Dark", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Composable
+private fun ChangePasswordDialogPreview() {
+    BiteSaversTheme {
+        ChangePasswordDialog(
+            newPassword = "",
+            confirmPassword = "",
+            error = null,
+            isUpdating = false,
+            onNewPasswordChange = {},
+            onConfirmPasswordChange = {},
             onDismiss = {},
             onConfirm = {}
         )

@@ -25,28 +25,33 @@ private data class StoreOwnerInfo(
 class OrderRepository {
     private val client = SupabaseClient.client
 
-    // Generates clean, human-readable IDs matching Supabase seed format (e.g. ord_1725301234)
     private fun generateOrderId(): String = "ord_${System.currentTimeMillis().toString().takeLast(6)}"
 
     suspend fun placeOrder(
         offerId: String,
-        userRole: String,
+        userRole: String = "CONSUMER",
         quantity: Int,
         totalPrice: Double,
         paymentMethod: String = "BITESAVER_PAY"
     ): String? = withContext(Dispatchers.IO) {
         val uid = UserSession.getUserId()
         try {
-            val isBiteSaverPay = paymentMethod.contains("BITESAVER", ignoreCase = true) ||
-                    paymentMethod.contains("PAY", ignoreCase = true)
+            // 1. Fetch user to verify approved NGO status and balance
+            val user = client.from("users")
+                .select { filter { eq("id", uid) } }
+                .decodeSingle<UserDto>()
 
-            // 1. Guard check: Verify balance first before inserting order or updating inventory
-            if (isBiteSaverPay) {
-                val user = client.from("users")
-                    .select { filter { eq("id", uid) } }
-                    .decodeSingle<UserDto>()
+            val isNgoApproved = user.ngoStatus.equals("APPROVED", ignoreCase = true)
+            val isFreeClaim = totalPrice <= 0.0 || (isNgoApproved && totalPrice == 0.0)
 
-                val currentBalance = user.walletBalance ?: 0.0
+            val isPaidViaWallet = !isFreeClaim && (
+                    paymentMethod.contains("BITESAVER", ignoreCase = true) ||
+                            paymentMethod.contains("PAY", ignoreCase = true)
+                    )
+
+            // Guard check: Only verify wallet balance if money must be deducted
+            if (isPaidViaWallet) {
+                val currentBalance = user.walletBalance
                 if (currentBalance < totalPrice) {
                     Log.e("OrderRepository", "Insufficient balance: $currentBalance < $totalPrice")
                     return@withContext null
@@ -61,43 +66,39 @@ class OrderRepository {
             val weight = offer.weightKg ?: 0.3
             val available = offer.quantityAvailable ?: 0
 
-            // Generates a 4-digit numeric pickup verification PIN
             val pickupPin = Random.nextInt(1000, 10000).toString()
             val cleanOrderId = generateOrderId()
 
+            // 3. Construct Order record with safe payment method string
             val order = OrderDto(
                 id = cleanOrderId,
                 userId = uid,
                 storeId = offer.storeId ?: "store_01",
                 offerId = offerId,
                 quantity = quantity,
-                totalPrice = totalPrice,
+                totalPrice = if (isFreeClaim) 0.0 else totalPrice,
                 totalWeightKg = weight * quantity,
-                isNgoFreeClaim = userRole == "NGO" || totalPrice == 0.0,
-                paymentMethod = paymentMethod,
+                isNgoFreeClaim = isFreeClaim,
+                paymentMethod = if (isFreeClaim) "CASH_ON_PICKUP" else if (paymentMethod.isBlank()) "BITESAVER_PAY" else paymentMethod,
                 status = "READY_FOR_PICKUP",
                 pickupPin = pickupPin
             )
 
-            // 3. Create the order with readable ID
+            // 4. Create the order
             val insertedOrder = client.from("orders")
                 .insert(order) { select() }
                 .decodeSingle<OrderDto>()
 
-            // 4. Decrement offer inventory
+            // 5. Decrement offer inventory
             val newQuantity = (available - quantity).coerceAtLeast(0)
             client.from("offers")
                 .update({ set("quantity_available", newQuantity) }) {
                     filter { eq("id", offerId) }
                 }
 
-            // 5. Deduct wallet balance if paid via BiteSaver Pay
-            if (isBiteSaverPay) {
-                val user = client.from("users")
-                    .select { filter { eq("id", uid) } }
-                    .decodeSingle<UserDto>()
-
-                val updatedBalance = (user.walletBalance ?: 0.0) - totalPrice
+            // 6. Deduct wallet balance ONLY for non-free orders paid via wallet
+            if (isPaidViaWallet) {
+                val updatedBalance = user.walletBalance - totalPrice
                 client.from("users")
                     .update({ set("wallet_balance", updatedBalance) }) {
                         filter { eq("id", uid) }
@@ -165,7 +166,6 @@ class OrderRepository {
         }
     }
 
-    // Fetches orders strictly for the current active user session
     suspend fun fetchCustomerOrders(): List<OrderDto> = withContext(Dispatchers.IO) {
         val currentUserId = UserSession.getUserId()
         try {
@@ -182,7 +182,6 @@ class OrderRepository {
         }
     }
 
-    // Fetches orders for a specific user ID to populate notifications and order history
     suspend fun fetchOrdersByUserId(userId: String): List<OrderDto> = withContext(Dispatchers.IO) {
         try {
             client.from("orders")

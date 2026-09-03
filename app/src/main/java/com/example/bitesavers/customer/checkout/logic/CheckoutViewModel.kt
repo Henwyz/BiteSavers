@@ -38,13 +38,27 @@ class CheckoutViewModel(
             _uiState.update { it.copy(isLoading = true, errorResId = null) }
 
             val realBalance = paymentRepository.fetchWalletBalance()
+            val savedMethods = paymentRepository.fetchPaymentMethods()
+            val tngMethod = savedMethods.firstOrNull { it.type == "TNG_EWALLET" }
+            val defaultCard = savedMethods.firstOrNull { it.type == "BANK_CARD" && it.isDefault }
+                ?: savedMethods.firstOrNull { it.type == "BANK_CARD" }
+
+            val isTngLinked = tngMethod != null
+            val hasSavedCard = defaultCard != null
+
             val offer = offerRepository.fetchOfferById(offerId)
 
             if (offer != null) {
                 _uiState.update { current ->
                     val totalPrice = offer.currentPrice * quantity
-                    val defaultMethod = if (realBalance >= totalPrice) {
+                    val isFreeClaim = totalPrice <= 0.0
+
+                    val defaultMethod = if (isFreeClaim || realBalance >= totalPrice) {
                         PaymentMethod.BITESAVER_PAY
+                    } else if (isTngLinked) {
+                        PaymentMethod.TNG_EWALLET
+                    } else if (hasSavedCard) {
+                        PaymentMethod.BANK_CARD
                     } else {
                         PaymentMethod.CASH_ON_PICKUP
                     }
@@ -57,6 +71,9 @@ class CheckoutViewModel(
                         unitPrice = offer.currentPrice,
                         quantity = quantity,
                         selectedPaymentMethod = defaultMethod,
+                        isTngLinked = isTngLinked,
+                        tngPhone = tngMethod?.linkedPhone.orEmpty(),
+                        savedCardDigits = defaultCard?.lastFourDigits,
                         errorResId = null
                     )
                 }
@@ -76,7 +93,23 @@ class CheckoutViewModel(
         when (event) {
             is CheckoutUiEvent.OnNavigateBack -> {}
             is CheckoutUiEvent.OnChangePaymentClicked -> {
-                _uiState.update { it.copy(isPaymentSheetVisible = true) }
+                viewModelScope.launch {
+                    val savedMethods = paymentRepository.fetchPaymentMethods()
+                    val tngMethod = savedMethods.firstOrNull { it.type == "TNG_EWALLET" }
+                    val defaultCard = savedMethods.firstOrNull { it.type == "BANK_CARD" && it.isDefault }
+                        ?: savedMethods.firstOrNull { it.type == "BANK_CARD" }
+                    val realBalance = paymentRepository.fetchWalletBalance()
+
+                    _uiState.update {
+                        it.copy(
+                            walletBalance = realBalance,
+                            isTngLinked = tngMethod != null,
+                            tngPhone = tngMethod?.linkedPhone.orEmpty(),
+                            savedCardDigits = defaultCard?.lastFourDigits,
+                            isPaymentSheetVisible = true
+                        )
+                    }
+                }
             }
             is CheckoutUiEvent.OnDismissPaymentSheet -> {
                 _uiState.update { it.copy(isPaymentSheetVisible = false) }
@@ -97,25 +130,30 @@ class CheckoutViewModel(
 
     private fun processPayment() {
         val state = _uiState.value
+        val isFreeClaim = state.totalPrice <= 0.0
 
-        // Validate payment methods before placing order
-        when (state.selectedPaymentMethod) {
-            PaymentMethod.BITESAVER_PAY -> {
-                if (state.walletBalance < state.totalPrice) {
-                    _uiState.update { it.copy(errorResId = R.string.error_insufficient_bitesaver_balance) }
-                    return
+        // Skip wallet checks completely if this is an NGO free claim or RM0 item
+        if (!isFreeClaim) {
+            when (state.selectedPaymentMethod) {
+                PaymentMethod.BITESAVER_PAY -> {
+                    if (state.walletBalance < state.totalPrice) {
+                        _uiState.update { it.copy(errorResId = R.string.error_insufficient_bitesaver_balance) }
+                        return
+                    }
                 }
-            }
-            PaymentMethod.TNG_EWALLET -> {
-                _uiState.update { it.copy(errorResId = R.string.error_tng_not_linked) }
-                return
-            }
-            PaymentMethod.BANK_CARD -> {
-                _uiState.update { it.copy(errorResId = R.string.error_bank_card_not_registered) }
-                return
-            }
-            PaymentMethod.CASH_ON_PICKUP -> {
-                // Direct checkout allowed
+                PaymentMethod.TNG_EWALLET -> {
+                    if (!state.isTngLinked) {
+                        _uiState.update { it.copy(errorResId = R.string.error_tng_not_linked) }
+                        return
+                    }
+                }
+                PaymentMethod.BANK_CARD -> {
+                    if (state.savedCardDigits.isNullOrBlank()) {
+                        _uiState.update { it.copy(errorResId = R.string.error_bank_card_not_registered) }
+                        return
+                    }
+                }
+                PaymentMethod.CASH_ON_PICKUP -> Unit
             }
         }
 

@@ -256,9 +256,22 @@ fun CustomerNavHost(
                 )
             ) { backStackEntry ->
                 val storeId = backStackEntry.arguments?.getString("storeId").orEmpty()
+
+                // Observes whether the current user's NGO status is approved
+                val userId = com.example.bitesavers.data.remote.UserSession.getUserId()
+                val userRepository = remember { com.example.bitesavers.data.repository.UserRepository() }
+                val isNgoApprovedState = remember { androidx.compose.runtime.mutableStateOf(false) }
+
+                LaunchedEffect(userId) {
+                    if (userId.isNotBlank()) {
+                        val status = userRepository.fetchUserNgoStatus(userId)
+                        isNgoApprovedState.value = status.equals("APPROVED", ignoreCase = true)
+                    }
+                }
+
                 StoreDetailScreen(
                     storeId = storeId,
-                    userRole = UserRole.CONSUMER,
+                    isNgoApproved = isNgoApprovedState.value,
                     onBackClick = { navController.popBackStack() },
                     onOfferClick = { offer ->
                         navController.navigate(CustomerScreen.FoodDetail.createRoute(offer.id))

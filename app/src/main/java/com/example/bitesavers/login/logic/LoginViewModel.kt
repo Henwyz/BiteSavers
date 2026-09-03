@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bitesavers.data.remote.SupabaseClient
 import com.example.bitesavers.data.remote.UserSession
+import com.example.bitesavers.data.remote.dto.StoreDto
 import com.example.bitesavers.data.remote.dto.UserDto
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
@@ -105,6 +106,31 @@ class LoginViewModel : ViewModel() {
                     } else {
                         // Persists the authenticated user credentials and role permanently to device storage
                         UserSession.saveSession(userId = authId, role = userProfile?.role ?: "CONSUMER")
+
+                        // Fetch and save store status if user is a business
+                        if (dbRole == "business") {
+                            try {
+                                val stores = SupabaseClient.client
+                                    .from("stores")
+                                    .select {
+                                        filter {
+                                            eq("owner_id", authId)
+                                        }
+                                    }
+                                    .decodeList<StoreDto>()
+
+                                // 💡 FIXED: If no store exists yet, mark as UNREGISTERED so it opens the registration screen first
+                                val storeStatus = if (stores.isEmpty()) {
+                                    "UNREGISTERED"
+                                } else {
+                                    stores.first().status ?: "PENDING"
+                                }
+                                UserSession.setStoreStatus(storeStatus)
+                            } catch (e: Exception) {
+                                UserSession.setStoreStatus("UNREGISTERED")
+                            }
+                        }
+
                         val isBusiness = dbRole == "business"
                         onSuccess(isBusiness)
                     }

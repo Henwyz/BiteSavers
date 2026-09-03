@@ -52,24 +52,18 @@ class DiscoveryViewModel : ViewModel() {
         observeRealtimeNotificationEvents()
     }
 
-    // Listens to UserSession changes dynamically
-    // Listens to UserSession changes dynamically
-    // Listens to UserSession changes dynamically
-    // Listens to UserSession changes dynamically
+    // Listens to UserSession changes dynamically and validates approved NGO status directly against Supabase
     private fun observeUserSessionChanges() {
         viewModelScope.launch {
             UserSession.currentUserId.collectLatest { userId ->
                 if (userId.isNotBlank()) {
                     val profile = userRepository.fetchUserProfile(userId)
 
-                    // Safely parses the saved session role into the UserRole enum
-                    val parsedRole = try {
-                        UserRole.valueOf(UserSession.getUserRole().uppercase())
-                    } catch (e: Exception) {
-                        UserRole.CONSUMER
-                    }
+                    // Verifies ngo_status directly from the users table in Supabase
+                    val ngoStatus = userRepository.fetchUserNgoStatus(userId)
+                    val isApprovedNgo = ngoStatus.equals("APPROVED", ignoreCase = true)
 
-                    val updatedCategories = if (parsedRole == UserRole.NGO) {
+                    val updatedCategories = if (isApprovedNgo) {
                         (_uiState.value.availableCategories + DiscoveryCategory.FREE).distinct()
                     } else {
                         _uiState.value.availableCategories.filterNot { it == DiscoveryCategory.FREE }
@@ -78,8 +72,12 @@ class DiscoveryViewModel : ViewModel() {
                     _uiState.update { current ->
                         current.copy(
                             user = profile ?: current.user,
-                            userRole = parsedRole,
-                            availableCategories = updatedCategories
+                            userRole = UserRole.CONSUMER, // Kept as CONSUMER
+                            isNgoApproved = isApprovedNgo,
+                            availableCategories = updatedCategories,
+                            selectedCategory = if (!isApprovedNgo && current.selectedCategory == DiscoveryCategory.FREE) {
+                                DiscoveryCategory.ALL
+                            } else current.selectedCategory
                         )
                     }
 
@@ -296,29 +294,43 @@ class DiscoveryViewModel : ViewModel() {
         }
     }
 
-    fun onUserRoleChanged(role: UserRole) {
-        _uiState.update { current ->
-            val updatedCategories = if (role == UserRole.NGO) {
-                (current.availableCategories + DiscoveryCategory.FREE).distinct()
-            } else {
-                current.availableCategories.filterNot { it == DiscoveryCategory.FREE }
+    // Queries the users table in Supabase to verify if ngo_status is APPROVED before unlocking free claims
+    fun onUserRoleChanged(role: UserRole? = null) {
+        viewModelScope.launch {
+            val userId = UserSession.getUserId()
+            var isApprovedNgo = false
+
+            if (userId.isNotBlank()) {
+                val ngoStatus = userRepository.fetchUserNgoStatus(userId)
+                isApprovedNgo = ngoStatus.equals("APPROVED", ignoreCase = true)
             }
 
-            val updated = current.copy(
-                userRole = role,
-                availableCategories = updatedCategories,
-                selectedCategory = if (
-                    role == UserRole.CONSUMER && current.selectedCategory == DiscoveryCategory.FREE
-                ) DiscoveryCategory.ALL else current.selectedCategory
-            )
-            val filtered = applyFilters(updated, allOffers)
-            val baseLat = userLatitude ?: defaultLatitude
-            val baseLng = userLongitude ?: defaultLongitude
-            updated.copy(
-                offers = filtered,
-                stores = deriveStoresFromOffers(filtered, baseLat, baseLng),
-                nearbyMarkers = groupOffersByStore(filtered, baseLat, baseLng)
-            )
+            _uiState.update { current ->
+                val updatedCategories = if (isApprovedNgo) {
+                    (current.availableCategories + DiscoveryCategory.FREE).distinct()
+                } else {
+                    current.availableCategories.filterNot { it == DiscoveryCategory.FREE }
+                }
+
+                val updated = current.copy(
+                    userRole = UserRole.CONSUMER,
+                    isNgoApproved = isApprovedNgo,
+                    availableCategories = updatedCategories,
+                    selectedCategory = if (
+                        !isApprovedNgo && current.selectedCategory == DiscoveryCategory.FREE
+                    ) DiscoveryCategory.ALL else current.selectedCategory
+                )
+
+                val filtered = applyFilters(updated, allOffers)
+                val baseLat = userLatitude ?: defaultLatitude
+                val baseLng = userLongitude ?: defaultLongitude
+
+                updated.copy(
+                    offers = filtered,
+                    stores = deriveStoresFromOffers(filtered, baseLat, baseLng),
+                    nearbyMarkers = groupOffersByStore(filtered, baseLat, baseLng)
+                )
+            }
         }
     }
 
@@ -330,11 +342,8 @@ class DiscoveryViewModel : ViewModel() {
 
         val filteredSequence = sourceList.asSequence()
             .filter { offer ->
-                if (state.userRole == UserRole.CONSUMER) {
-                    offer.hoursToClose > 0
-                } else {
-                    true
-                }
+                // Offers must be unexpired or valid for viewing
+                offer.hoursToClose > 0 || state.isNgoApproved
             }
             .filter { offer ->
                 when (state.selectedCategory) {
@@ -344,10 +353,8 @@ class DiscoveryViewModel : ViewModel() {
                     DiscoveryCategory.DESSERTS -> offer.category == DiscoveryCategory.DESSERTS
                     DiscoveryCategory.BEVERAGES -> offer.category == DiscoveryCategory.BEVERAGES
                     DiscoveryCategory.FREE -> {
-                        // Unpurchased rescue items become free to NGOs during final hour before pickup ends
-                        state.userRole == UserRole.NGO &&
-                                offer.hoursToClose <= 1 &&
-                                offer.isEligibleForNgoFree
+                        // Unpurchased rescue items become free exclusively to approved NGOs
+                        state.isNgoApproved && offer.isEligibleForNgoFree
                     }
                 }
             }

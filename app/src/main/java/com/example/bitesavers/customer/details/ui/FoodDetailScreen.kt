@@ -1,5 +1,6 @@
 package com.example.bitesavers.customer.details.ui
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -86,6 +87,7 @@ fun FoodDetailScreen(
 ) {
     val isSoldOut = (state.offer?.quantityLeft ?: 0) <= 0
     val isExpired = (state.offer?.hoursToClose ?: 1) <= 0
+    val isStoreOpen = state.offer?.isCurrentlyOpen ?: true
 
     Scaffold(
         topBar = {
@@ -101,6 +103,8 @@ fun FoodDetailScreen(
                     totalPrice = state.totalPrice,
                     isSoldOut = isSoldOut,
                     isExpired = isExpired,
+                    isOpen = isStoreOpen,
+                    timeStatusText = state.offer.timeStatusText,
                     onReserveClick = { onEvent(FoodDetailUiEvent.OnReserveClicked) }
                 )
             }
@@ -154,9 +158,12 @@ fun FoodDetailScreen(
                                 }
                             )
 
+                            // Forwards current open condition and timing text to prevent false expired tags
                             FoodDetailStatusRow(
                                 hoursToClose = offer.hoursToClose,
-                                stockLeft = offer.quantityLeft
+                                stockLeft = offer.quantityLeft,
+                                isOpen = isStoreOpen,
+                                timeStatusText = offer.timeStatusText
                             )
 
                             FoodDetailSafetyBanner(
@@ -174,8 +181,8 @@ fun FoodDetailScreen(
                                 description = offer.description
                             )
 
-                            // Only display quantity selector if stock is available and offer is active
-                            if (!isSoldOut && !isExpired) {
+                            // Only display quantity selector if stock is available, offer is active, and store is open
+                            if (!isSoldOut && !isExpired && isStoreOpen) {
                                 FoodDetailQuantitySelector(
                                     quantity = state.quantity,
                                     onIncrease = { onEvent(FoodDetailUiEvent.OnIncreaseQuantity) },
@@ -193,7 +200,8 @@ fun FoodDetailScreen(
 }
 
 // Renders the full details screen with mock offer data in Android Studio preview
-@Preview(showBackground = true, name = "Food Detail Screen - Populated")
+@Preview(name = "Food Detail Screen - Populated - Light", showBackground = true)
+@Preview(name = "Food Detail Screen - Populated - Dark", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
 private fun FoodDetailScreenPreview() {
     BiteSaversTheme {
@@ -217,12 +225,54 @@ private fun FoodDetailScreenPreview() {
                     originalPrice = 18.00,
                     distanceKm = 0.3,
                     quantityLeft = 6,
-                    hoursToClose = 16,
+                    hoursToClose = 2,
                     category = DiscoveryCategory.HOT_MEALS,
                     isEligibleForNgoFree = true,
                     liveTemperature = 25.0,
                     storageType = "ROOM_TEMP",
-                    description = "Hearty minced chicken pasta in slow-simmered tomato sauce."
+                    description = "Hearty minced chicken pasta in slow-simmered tomato sauce.",
+                    timeStatusText = "Closes in 2h",
+                    isCurrentlyOpen = true
+                )
+            ),
+            onEvent = {}
+        )
+    }
+}
+
+// Renders the details screen in a Store Closed state
+@Preview(name = "Food Detail Screen - Store Closed", showBackground = true)
+@Composable
+private fun FoodDetailScreenClosedPreview() {
+    BiteSaversTheme {
+        FoodDetailScreen(
+            state = FoodDetailUiState(
+                isLoading = false,
+                isSaved = false,
+                quantity = 1,
+                totalPrice = 9.90,
+                temperatureText = "25.0°C – within safe room_temp storage zone",
+                isTemperatureSafe = true,
+                offer = OfferUiModel(
+                    id = "e3333333-3333-3333-3333-333333333333",
+                    storeId = "store_apollo",
+                    title = "Chicken Bolognese Pasta",
+                    storeName = "Apollo Western & Pasta",
+                    storeRating = 4.9,
+                    imageResId = R.drawable.food_spaghetti,
+                    discountPercent = 45,
+                    currentPrice = 9.90,
+                    originalPrice = 18.00,
+                    distanceKm = 0.3,
+                    quantityLeft = 6,
+                    hoursToClose = 0,
+                    category = DiscoveryCategory.HOT_MEALS,
+                    isEligibleForNgoFree = true,
+                    liveTemperature = 25.0,
+                    storageType = "ROOM_TEMP",
+                    description = "Hearty minced chicken pasta in slow-simmered tomato sauce.",
+                    timeStatusText = "Opens in 5h",
+                    isCurrentlyOpen = false
                 )
             ),
             onEvent = {}
@@ -231,7 +281,7 @@ private fun FoodDetailScreenPreview() {
 }
 
 // Renders the details screen in a Sold Out state
-@Preview(showBackground = true, name = "Food Detail Screen - Sold Out")
+@Preview(name = "Food Detail Screen - Sold Out", showBackground = true)
 @Composable
 private fun FoodDetailScreenSoldOutPreview() {
     BiteSaversTheme {
@@ -260,7 +310,9 @@ private fun FoodDetailScreenSoldOutPreview() {
                     isEligibleForNgoFree = false,
                     liveTemperature = 4.0,
                     storageType = "COLD",
-                    description = "Delicate layers of crepe with matcha cream."
+                    description = "Delicate layers of crepe with matcha cream.",
+                    timeStatusText = "Closes in 2h",
+                    isCurrentlyOpen = true
                 )
             ),
             onEvent = {}
@@ -269,7 +321,7 @@ private fun FoodDetailScreenSoldOutPreview() {
 }
 
 // Shows the loading progress indicator state
-@Preview(showBackground = true, name = "Food Detail Screen - Loading")
+@Preview(name = "Food Detail Screen - Loading", showBackground = true)
 @Composable
 private fun FoodDetailScreenLoadingPreview() {
     BiteSaversTheme {

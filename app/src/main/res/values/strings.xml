@@ -33,6 +33,17 @@
     <string name="order_status_cancelled">Cancelled</string>
     <string name="order_status_failed">Order Failed</string>
 
+    <!-- Profile & Edit Profile Strings -->
+    <string name="profile_change_password">Change Password</string>
+    <string name="profile_new_password_label">New Password</string>
+    <string name="profile_new_password_hint">Enter at least 6 characters</string>
+    <string name="profile_confirm_password_label">Confirm Password</string>
+    <string name="profile_confirm_password_hint">Re-enter your password</string>
+    <string name="profile_password_length_error">Password must be at least 6 characters</string>
+    <string name="profile_password_mismatch_error">Passwords do not match</string>
+    <string name="profile_password_success">Password updated successfully</string>
+    <string name="profile_change_password_title">Change Password</string>
+
     <!-- ================================================================= -->
     <!-- 2. AUTHENTICATION (LOGIN & SIGN UP)                               -->
     <!-- ================================================================= -->
@@ -212,6 +223,8 @@
     <string name="action_change_payment">Change</string>
     <string name="checkout_payment_balance_format">Balance: RM %1$.2f</string>
     <string name="checkout_balance_format">Available: RM %1$.2f</string>
+    <string name="checkout_payment_method_label">Payment Method</string>
+    <string name="checkout_action_change">Change</string>
 
     <!-- Payment Methods Bottom Sheet -->
     <string name="payment_sheet_title">Select Payment Method</string>
@@ -224,6 +237,7 @@
     <string name="payment_method_cash">Cash on Pickup</string>
     <string name="payment_method_cash_on_pickup">Cash on Pickup</string>
     <string name="payment_method_cash_subtitle">Pay directly at store counter</string>
+    <string name="payment_card_format">Card ending in •••• %1$s</string>
     <string name="payment_not_linked">Not linked</string>
     <string name="payment_no_cards">No cards saved yet.</string>
     <string name="badge_default">Default</string>
@@ -557,7 +571,23 @@
     <string name="closing_time_label">Closing Time</string>
     <string name="cleanup_end_time_label">Cleanup End Time</string>
     <string name="cleanup_end_time_hint">e.g. 22:30</string>
-    <string name="restaurant_verification_note">Note: New registrations require review and verification (is_verified = false) before approval.</string>
+    <string name="restaurant_verification_note">Note: New registrations require review and verification before approval.</string>
+
+    <!-- Waiting approval for the restaurant registration -->
+    <string name="update_submitted_title">Update Submitted</string>
+    <string name="update_submitted_message">Your business details will be updated once approved.\nIn the meantime, your current business details remain active.</string>
+    <string name="understood_button">Understood</string>
+    <string name="restaurant_status_title">Restaurant Status</string>
+    <string name="pending_review_banner">Your change request is currently pending review. Current details will remain active until approved.</string>
+    <string name="certificate_verified">Certificate Verified</string>
+    <string name="pending_doc_verification">Pending Document Verification</string>
+    <string name="certificate_of_registration">Certificate of Registration</string>
+    <string name="label_restaurant_name">Restaurant Name</string>
+    <string name="label_ssm_number">Registration Number (SSM)</string>
+    <string name="label_contact_phone">Contact Phone</string>
+    <string name="label_address">Restaurant Address</string>
+    <string name="not_provided">Not provided</string>
+    <string name="edit_button_desc">Edit</string>
 
     <!-- Listings & Surplus Food Form -->
     <string name="my_listings_title">My Listing</string>
@@ -748,4 +778,34 @@
 
     <string name="action_back">Back</string>
     <string name="store_whatsapp_not_installed">WhatsApp is not installed on this device</string>
+
+    <!-- Dynamic Pricing Dialog & Labels -->
+    <string name="hint_original_price">10.00</string>
+    <string name="hint_discount_price">5.00</string>
+    <string name="label_est_weight">Est. Weight (kg)</string>
+    <string name="hint_est_weight">0.35</string>
+    <string name="hint_quantity">1</string>
+    <string name="label_discount_price_info_title">Dynamic Rescue Pricing</string>
+    <string name="label_discount_price_info_desc">Prices drop dynamically to ensure zero food waste:\n\n• Initial window: 35% – 50% OFF\n• Final 45 mins: 70% OFF clearance\n• Window Closed: 100% OFF (Available for free NGO food rescue claim)\n\nDiscounts are calculated automatically by BiteSaver based on the pickup window.</string>
+    <string name="hint_dynamic_pricing_sub">Price decays dynamically until NGO window</string>
+    <string name="action_got_it">Got it</string>
+    <string name="cd_pricing_info">Pricing Info</string>
+    <string name="title_choose_photo">Choose Photo Source</string>
+    <string name="action_choose_gallery">Choose from gallery</string>
+    <string name="action_retake_change">Retake / Change</string>
+    <string name="action_close">Close</string>
+    <string name="cd_full_image_preview">Full Image Preview</string>
+    <string name="cd_food_preview">Food Preview</string>
+
+    <string name="hint_auto_calculated_pricing">Auto-calculated by Bitesaver dynamic pricing</string>
+
+    <string name="time_status_opens_in">Opens in %dh</string>
+    <string name="time_status_closes_in">Closes in %dh</string>
+    <string name="time_status_closed">Closed</string>
+
+    <string name="btn_store_closed">Store Closed</string>
+    <string name="btn_store_opens_in">Ordering Opens in %dh</string>
+
+    <string name="badge_store_closed">Store Closed</string>
+    <string name="badge_expired">Expired</string>
 </resources>

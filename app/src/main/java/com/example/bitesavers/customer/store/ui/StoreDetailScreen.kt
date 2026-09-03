@@ -45,13 +45,12 @@ import com.example.bitesavers.customer.store.logic.StoreDetailViewModel
 import com.example.bitesavers.customer.store.ui.components.StoreHeaderCard
 import com.example.bitesavers.data.model.DiscoveryCategory
 import com.example.bitesavers.data.model.OfferUiModel
-import com.example.bitesavers.data.model.UserRole
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @Composable
 fun StoreDetailScreen(
     storeId: String,
-    userRole: UserRole = UserRole.CONSUMER,
+    isNgoApproved: Boolean = false,
     onBackClick: () -> Unit,
     onOfferClick: (OfferUiModel) -> Unit,
     viewModel: StoreDetailViewModel = viewModel()
@@ -65,7 +64,7 @@ fun StoreDetailScreen(
 
     StoreDetailScreenContent(
         uiState = uiState,
-        userRole = userRole,
+        isNgoApproved = isNgoApproved,
         onEvent = { event ->
             when (event) {
                 is StoreDetailUiEvent.OnBackClicked -> onBackClick()
@@ -82,7 +81,7 @@ fun StoreDetailScreen(
 @Composable
 fun StoreDetailScreenContent(
     uiState: StoreDetailUiState,
-    userRole: UserRole,
+    isNgoApproved: Boolean,
     onEvent: (StoreDetailUiEvent) -> Unit
 ) {
     Scaffold(
@@ -171,7 +170,7 @@ fun StoreDetailScreenContent(
                                 Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
                                     OfferCard(
                                         offer = offer,
-                                        userRole = userRole,
+                                        isNgoApproved = isNgoApproved,
                                         onClick = { onEvent(StoreDetailUiEvent.OnOfferClicked(offer)) },
                                         onToggleBookmark = { id -> onEvent(StoreDetailUiEvent.OnToggleBookmark(id)) }
                                     )
@@ -257,7 +256,7 @@ private fun StoreDetailScreenPreview() {
                     )
                 )
             ),
-            userRole = UserRole.CONSUMER,
+            isNgoApproved = false,
             onEvent = {}
         )
     }

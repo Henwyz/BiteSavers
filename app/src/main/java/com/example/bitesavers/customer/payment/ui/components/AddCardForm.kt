@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -49,7 +50,7 @@ fun AddCardForm(
     val isCvvValid = PaymentValidationUtils.isValidCvv(cvv)
     val isCvvError = cvv.isNotEmpty() && !isCvvValid
 
-    val isNameValid = cardHolder.trim().isNotBlank()
+    val isNameValid = cardHolder.trim().isNotBlank() && cardHolder.none { it.isDigit() }
     val canSubmit = isFormValid || (isCardNumberValid && isNameValid && isExpiryValid && isCvvValid)
 
     Surface(
@@ -82,9 +83,17 @@ fun AddCardForm(
 
             OutlinedTextField(
                 value = cardHolder,
-                onValueChange = onCardHolderChange,
+                onValueChange = { input ->
+                    // Restricts digits so cardholder names only accept letters, spaces, hyphens, or apostrophes
+                    val filtered = input.filter { it.isLetter() || it.isWhitespace() || it == '-' || it == '\'' }
+                    onCardHolderChange(filtered)
+                },
                 label = { Text(stringResource(R.string.field_card_holder)) },
                 placeholder = { Text(stringResource(R.string.hint_card_holder)) },
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Words,
+                    keyboardType = KeyboardType.Text
+                ),
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )

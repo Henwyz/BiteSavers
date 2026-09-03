@@ -101,7 +101,6 @@ class SignUpViewModel : ViewModel() {
                             walletBalance = 0.0,
                             ngoStatus = "NONE",
                             ngoOrgName = null,
-                            mealsRescued = 0
                         )
 
                         // Inserts into Supabase users table

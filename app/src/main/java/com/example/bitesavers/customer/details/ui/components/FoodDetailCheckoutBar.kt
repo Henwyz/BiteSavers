@@ -1,5 +1,6 @@
 package com.example.bitesavers.customer.details.ui.components
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -29,10 +30,12 @@ fun FoodDetailCheckoutBar(
     totalPrice: Double,
     isSoldOut: Boolean,
     isExpired: Boolean,
+    isOpen: Boolean = true,
+    timeStatusText: String = "",
     onReserveClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isActionEnabled = !isSoldOut && !isExpired
+    val isActionEnabled = !isSoldOut && !isExpired && isOpen
 
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -63,6 +66,7 @@ fun FoodDetailCheckoutBar(
                     Text(
                         text = when {
                             isSoldOut -> stringResource(id = R.string.btn_sold_out)
+                            !isOpen -> if (timeStatusText.isNotBlank()) timeStatusText else stringResource(id = R.string.btn_store_closed)
                             isExpired -> stringResource(id = R.string.btn_offer_expired)
                             else -> stringResource(id = R.string.action_reserve_now)
                         },
@@ -89,7 +93,8 @@ fun FoodDetailCheckoutBar(
     }
 }
 
-@Preview(showBackground = true, name = "Checkout Bar - Available")
+@Preview(name = "Checkout Bar - Available - Light", showBackground = true)
+@Preview(name = "Checkout Bar - Available - Dark", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
 private fun FoodDetailCheckoutBarPreview() {
     BiteSaversTheme {
@@ -97,12 +102,29 @@ private fun FoodDetailCheckoutBarPreview() {
             totalPrice = 10.50,
             isSoldOut = false,
             isExpired = false,
+            isOpen = true,
+            timeStatusText = "Closes in 2h",
             onReserveClick = {}
         )
     }
 }
 
-@Preview(showBackground = true, name = "Checkout Bar - Sold Out")
+@Preview(name = "Checkout Bar - Store Closed", showBackground = true)
+@Composable
+private fun FoodDetailCheckoutBarClosedPreview() {
+    BiteSaversTheme {
+        FoodDetailCheckoutBar(
+            totalPrice = 10.50,
+            isSoldOut = false,
+            isExpired = false,
+            isOpen = false,
+            timeStatusText = "Opens in 4h",
+            onReserveClick = {}
+        )
+    }
+}
+
+@Preview(name = "Checkout Bar - Sold Out", showBackground = true)
 @Composable
 private fun FoodDetailCheckoutBarSoldOutPreview() {
     BiteSaversTheme {
@@ -110,6 +132,7 @@ private fun FoodDetailCheckoutBarSoldOutPreview() {
             totalPrice = 10.50,
             isSoldOut = true,
             isExpired = false,
+            isOpen = true,
             onReserveClick = {}
         )
     }

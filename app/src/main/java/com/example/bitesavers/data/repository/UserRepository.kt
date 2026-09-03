@@ -5,6 +5,7 @@ import com.example.bitesavers.customer.discovery.data.UserUiModel
 import com.example.bitesavers.data.remote.SupabaseClient
 import com.example.bitesavers.data.remote.UserSession
 import com.example.bitesavers.data.remote.dto.UserDto
+import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -25,6 +26,19 @@ class UserRepository {
         }
     }
 
+    // Evaluates whether the user's NGO status is explicitly APPROVED in Supabase
+    suspend fun fetchUserNgoStatus(userId: String): String = withContext(Dispatchers.IO) {
+        try {
+            val user = client.from("users")
+                .select { filter { eq("id", userId) } }
+                .decodeSingle<UserDto>()
+            user.ngoStatus
+        } catch (e: Exception) {
+            Log.e("UserRepository", "fetchUserNgoStatus error: ${e.message}", e)
+            "NONE"
+        }
+    }
+
     // Fetch user record and convert to UserUiModel with generated initials
     suspend fun fetchUserProfile(userId: String): UserUiModel? = withContext(Dispatchers.IO) {
         try {
@@ -33,17 +47,17 @@ class UserRepository {
                 .decodeSingle<UserDto>()
 
             val initials = user.name
-                ?.trim()
-                ?.split("\\s+".toRegex())
-                ?.filter { it.isNotEmpty() }
-                ?.take(2)
-                ?.map { it.first().uppercase() }
-                ?.joinToString("")
-                ?.ifBlank { "ME" } ?: "ME"
+                .trim()
+                .split("\\s+".toRegex())
+                .filter { it.isNotEmpty() }
+                .take(2)
+                .map { it.first().uppercase() }
+                .joinToString("")
+                .ifBlank { "ME" }
 
             UserUiModel(
                 greeting = "👋 Good Evening",
-                displayName = user.name ?: "Food Rescuer",
+                displayName = user.name.ifBlank { "Food Rescuer" },
                 avatarInitials = initials
             )
         } catch (e: Exception) {
@@ -66,21 +80,14 @@ class UserRepository {
         }
     }
 
-    // Update user stats (e.g. after rescuing food)
-    suspend fun incrementMealsRescued(count: Int = 1): Boolean = withContext(Dispatchers.IO) {
-        val uid = UserSession.getUserId()
+    // Signs out user, wipes persistent session from disk, and invalidates Supabase auth
+    suspend fun signOut() {
         try {
-            val user = getCurrentUser() ?: return@withContext false
-            val currentMeals = user.mealsRescued ?: 0
-            val newCount = currentMeals + count
-            client.from("users")
-                .update({ set("meals_rescued", newCount) }) {
-                    filter { eq("id", uid) }
-                }
-            true
+            SupabaseClient.client.auth.signOut()
         } catch (e: Exception) {
-            Log.e("UserRepository", "incrementMealsRescued error: ${e.message}", e)
-            false
+            Log.e("UserRepository", "signOut error: ${e.message}", e)
+        } finally {
+            UserSession.clear()
         }
     }
 }

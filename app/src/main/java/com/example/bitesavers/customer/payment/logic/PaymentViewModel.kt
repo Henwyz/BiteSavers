@@ -79,8 +79,9 @@ class PaymentMethodsViewModel : ViewModel() {
                 }
             }
             is PaymentMethodsUiEvent.OnCardHolderChange -> {
+                val filtered = event.name.filter { it.isLetter() || it.isWhitespace() || it == '-' || it == '\'' }
                 _uiState.update {
-                    val updated = it.copy(cardHolder = event.name)
+                    val updated = it.copy(cardHolder = filtered)
                     updated.copy(isFormValid = validateCardForm(updated))
                 }
             }
@@ -148,7 +149,7 @@ class PaymentMethodsViewModel : ViewModel() {
 
     private fun validateCardForm(state: PaymentMethodsUiState): Boolean {
         val isCardValid = PaymentValidationUtils.isValidCardNumber(state.cardNumber)
-        val isNameValid = state.cardHolder.trim().isNotBlank()
+        val isNameValid = state.cardHolder.trim().isNotBlank() && state.cardHolder.none { it.isDigit() }
         val isExpiryValid = PaymentValidationUtils.isValidExpiryDate(state.expiryDate)
         val isCvvValid = PaymentValidationUtils.isValidCvv(state.cvv)
         return isCardValid && isNameValid && isExpiryValid && isCvvValid
