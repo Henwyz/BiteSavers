@@ -629,6 +629,12 @@
     <string name="type_refrigerator">Refrigerator</string>
     <string name="type_hot_box">Hot Box</string>
 
+    <!-- Error messages for adding a storage box -->
+    <string name="error_box_not_found">Box code not found in system.</string>
+    <string name="error_box_claimed">This box is already claimed by another store.</string>
+    <string name="error_box_mismatch">Storage type mismatch detected.</string>
+    <string name="error_general">An error occurred.</string>
+
     <string name="save_and_connect_unit">Save &amp; Connect Unit</string>
     <string name="add_storage_unit_cd">Add Storage Unit</string>
 

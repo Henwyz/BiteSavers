@@ -34,6 +34,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,6 +65,12 @@ fun TemperatureScreen(
 
     val warningText = stringResource(R.string.status_warning)
     val normalText = stringResource(R.string.status_normal)
+
+
+    // Inside your TemperatureScreen:
+    LaunchedEffect(storeId) {
+        viewModel.fetchUnitsForStore(storeId)
+    }
 
     Column(
         modifier = Modifier

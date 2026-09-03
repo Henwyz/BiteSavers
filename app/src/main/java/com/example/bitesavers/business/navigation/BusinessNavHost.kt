@@ -9,6 +9,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -19,6 +22,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.bitesavers.R
 import com.example.bitesavers.business.analytics.ui.AnalyticsScreen
 import com.example.bitesavers.business.dashboard.logic.DashboardViewModel
 import com.example.bitesavers.business.dashboard.ui.BusinessCancelScreen
@@ -113,7 +117,6 @@ fun BusinessNavHost(
                     onNavigateToOrders = {
                         navController.navigate(BusinessScreen.BusinessOrders.route)
                     },
-
                     onNavigateToVerification = { orderId ->
                         navController.navigate(BusinessScreen.Verification.createRoute(orderId))
                     }
@@ -142,7 +145,7 @@ fun BusinessNavHost(
             // 4. PROFILE TAB
             composable(BusinessScreen.Profile.route) {
                 BusinessProfileScreen(
-                    viewModel = businessProfileViewModel, // 👈 Uses shared instance
+                    viewModel = businessProfileViewModel,
                     onSignOutClick = onLogout,
                     onEditClick = {
                         businessProfileViewModel.initEditScreen()
@@ -154,7 +157,7 @@ fun BusinessNavHost(
             // 5. EDIT PROFILE SCREEN
             composable(BusinessScreen.EditProfile.route) {
                 BusinessProfileEditScreen(
-                    viewModel = businessProfileViewModel, // 👈 Uses shared instance with pre-filled data
+                    viewModel = businessProfileViewModel,
                     onBackClick = { navController.popBackStack() },
                     onSubmitted = { isBusinessDetails ->
                         if (isBusinessDetails) {
@@ -196,7 +199,7 @@ fun BusinessNavHost(
                 )
             }
 
-            // 7. TEMPERATURE MONITOR SCREEN
+            // 9. TEMPERATURE MONITOR SCREEN
             composable(BusinessScreen.Temperature.route) {
                 val currentStoreId = dashboardViewModel.currentStoreId ?: ""
 
@@ -216,28 +219,35 @@ fun BusinessNavHost(
                 )
             }
 
-            // 8. ADD BOX SCREEN
+            // 10. ADD BOX SCREEN
             composable(BusinessScreen.AddBox.route) {
+                var errorMessage by remember { mutableStateOf("") }
+                val context = androidx.compose.ui.platform.LocalContext.current
+
                 AddBoxScreen(
+                    errorMessage = errorMessage,
                     onNavigateBack = { navController.popBackStack() },
                     onUnitAdded = { unitName, unitType ->
                         val currentStoreId = dashboardViewModel.currentStoreId ?: ""
+                        errorMessage = "" // Clear previous error
 
                         temperatureViewModel.addNewBox(
                             storeId = currentStoreId,
                             boxCode = unitName,
-                            storageType = unitType,
+                            selectedStorageType = unitType,
+                            onError = { errorResId ->
+                                errorMessage = context.resources.getString(errorResId)
+                            },
                             onSuccess = {
-                                // Automatically saved, list updated
+                                navController.popBackStack()
                             }
                         )
                     }
                 )
             }
 
-            // 9. CHECK CUSTOMER ORDER SCREEN
+            // 11. CHECK CUSTOMER ORDER SCREEN
             composable(BusinessScreen.BusinessOrders.route) {
-                // Collect the existing recentOrders flow from your DashboardViewModel
                 val orders by dashboardViewModel.recentOrders.collectAsState()
 
                 BusinessOrdersScreen(
@@ -251,16 +261,7 @@ fun BusinessNavHost(
                 )
             }
 
-            composable(BusinessScreen.AddBox.route) {
-                AddBoxScreen(
-                    onNavigateBack = { navController.popBackStack() },
-                    onUnitAdded = { unitName, unitType ->
-                        navController.popBackStack()
-                    }
-                )
-            }
-
-            // 9. Business Verification Check
+            // 12. Business Verification Check
             composable(
                 route = BusinessScreen.Verification.route,
                 arguments = listOf(
@@ -280,14 +281,13 @@ fun BusinessNavHost(
                         navController.navigate(BusinessScreen.CancelOrder.createRoute(targetOrderId))
                     },
                     onVerificationCompleted = {
-                        // Pop back to refresh and display order status
                         dashboardViewModel.fetchOrdersFromSupabase()
                         navController.popBackStack()
                     }
                 )
             }
 
-            // 10. Business Cancel Order
+            // 13. Business Cancel Order
             composable(
                 route = BusinessScreen.CancelOrder.route,
                 arguments = listOf(navArgument("orderId") { type = NavType.StringType })
@@ -298,19 +298,11 @@ fun BusinessNavHost(
                     orderId = orderId,
                     onNavigateBack = { navController.popBackStack() },
                     onCancelCompleted = {
-                        // Refresh orders and pop back to order lists
                         dashboardViewModel.fetchOrdersFromSupabase()
                         navController.popBackStack(BusinessScreen.BusinessOrders.route, inclusive = false)
                     }
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun BusinessPlaceholderScreen(title: String) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = title)
     }
 }
