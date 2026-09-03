@@ -1,6 +1,7 @@
 package com.example.bitesavers.business.inventory.ui
 
 import android.app.TimePickerDialog
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.net.Uri
@@ -28,12 +29,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -56,6 +59,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -64,11 +68,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.FileProvider
-import com.example.bitesavers.business.inventory.logic.InventoryViewModel
 import com.example.bitesavers.R
 import com.example.bitesavers.business.inventory.data.ListingItem
+import com.example.bitesavers.business.inventory.logic.InventoryViewModel
 import com.example.bitesavers.data.model.DiscoveryCategory
+import com.example.bitesavers.ui.theme.BiteSaversTheme
+import com.example.bitesavers.util.DynamicPricingEngine
 import java.io.File
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,10 +92,14 @@ fun AddFoodScreen(
     var isCategoryExpanded by remember { mutableStateOf(false) }
     var originalPrice by remember { mutableStateOf("") }
     var discountPrice by remember { mutableStateOf("") }
-    var quantity by remember { mutableStateOf("") }
-    var weightKg by remember { mutableStateOf("") }
+    var discountBadge by remember { mutableStateOf("") }
+    var quantity by remember { mutableStateOf("1") }
+    var weightKg by remember { mutableStateOf("0.35") }
     var pickupStartTime by remember { mutableStateOf("05:00 PM") }
     var pickupEndTime by remember { mutableStateOf("07:00 PM") }
+
+    // Toggle for dynamic pricing info dialog
+    var showPricingInfoDialog by remember { mutableStateOf(false) }
 
     // selects photo and takes photo
     var myFoodImage by remember { mutableStateOf<Bitmap?>(null) }
@@ -100,15 +111,22 @@ fun AddFoodScreen(
         description = editingItem?.description ?: ""
         category = editingItem?.category ?: "Bakery"
         originalPrice = editingItem?.originalPrice?.let { if (it > 0) it.toString() else "" } ?: ""
-        discountPrice = editingItem?.discountPrice?.let { if (it > 0) it.toString() else "" } ?: ""
-        quantity = editingItem?.quantity?.let { if (it > 0) it.toString() else "" } ?: ""
-        weightKg = editingItem?.weightKg?.toString() ?: ""
+        discountPrice = editingItem?.discountPrice?.let { if (it > 0) "%.2f".format(it) else "" } ?: ""
+        quantity = editingItem?.quantity?.let { if (it > 0) it.toString() else "1" } ?: "1"
+        weightKg = editingItem?.weightKg?.toString() ?: "0.35"
 
-        // Use editing item's time, or fall back to store's actual closing/cleanup hours
+        // Use editing item's time, or fall back to store's automated suggestion
         pickupStartTime = editingItem?.pickupStart ?: viewModel.defaultPickupStart
         pickupEndTime = editingItem?.pickupEnd ?: viewModel.defaultPickupEnd
 
         myFoodImage = editingItem?.imageBitmap
+
+        val orig = originalPrice.toDoubleOrNull() ?: 0.0
+        val disc = discountPrice.toDoubleOrNull() ?: 0.0
+        if (orig > 0.0 && disc > 0.0) {
+            val pct = (((orig - disc) / orig) * 100).toInt()
+            discountBadge = "-$pct%"
+        }
     }
 
     // Validate mandatory form fields before enabling publish
@@ -128,7 +146,7 @@ fun AddFoodScreen(
         uri?.let {
             myFoodImage = if (Build.VERSION.SDK_INT < 28) {
                 @Suppress("DEPRECATION")
-                MediaStore.Images.Media.getBitmap(context.contentResolver,it)
+                MediaStore.Images.Media.getBitmap(context.contentResolver, it)
             } else {
                 val source = ImageDecoder.createSource(context.contentResolver, it)
                 ImageDecoder.decodeBitmap(source)
@@ -153,6 +171,38 @@ fun AddFoodScreen(
         }
     }
 
+    // Explains dynamic time-decay pricing tiers to the merchant
+    if (showPricingInfoDialog) {
+        AlertDialog(
+            onDismissRequest = { showPricingInfoDialog = false },
+            title = {
+                Text(
+                    text = stringResource(R.string.label_discount_price_info_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(R.string.label_discount_price_info_desc),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showPricingInfoDialog = false }) {
+                    Text(
+                        text = stringResource(R.string.action_got_it),
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            },
+            shape = RoundedCornerShape(16.dp),
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    }
+
     // show select picture from gallery or take photo at bottom
     if (showImagePick) {
         ModalBottomSheet(
@@ -167,7 +217,7 @@ fun AddFoodScreen(
                     .padding(bottom = 32.dp, top = 8.dp)
             ) {
                 Text(
-                    text = "Choose Photo Source",
+                    text = stringResource(R.string.title_choose_photo),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground,
@@ -186,10 +236,15 @@ fun AddFoodScreen(
                         .padding(vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "\uD83D\uDCF7", fontSize = 20.sp)
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_camera),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
                     Spacer(modifier = Modifier.width(16.dp))
                     Text(
-                        text = "Take Photo",
+                        text = stringResource(R.string.action_take_photo),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onBackground
@@ -206,10 +261,15 @@ fun AddFoodScreen(
                         .padding(vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "\uD83D\uDDBC\uFE0F", fontSize = 20.sp)
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_image),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
                     Spacer(modifier = Modifier.width(16.dp))
                     Text(
-                        text = "Choose from gallery",
+                        text = stringResource(R.string.action_choose_gallery),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onBackground
@@ -226,15 +286,16 @@ fun AddFoodScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                           MaterialTheme.colorScheme.surface,
-                           RoundedCornerShape(16.dp))
+                        MaterialTheme.colorScheme.surface,
+                        RoundedCornerShape(16.dp)
+                    )
                     .padding(16.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Image(
                         bitmap = myFoodImage!!.asImageBitmap(),
-                        contentDescription = "Full Image Preview",
+                        contentDescription = stringResource(R.string.cd_full_image_preview),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(350.dp),
@@ -251,13 +312,17 @@ fun AddFoodScreen(
                                 showImagePick = true
                             }
                         ) {
-                            Text(text = "Retake / Change",
+                            Text(
+                                text = stringResource(R.string.action_retake_change),
                                 color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Bold)
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                         TextButton(onClick = { showFullImagePreview = false }) {
-                            Text(text = "Close",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(
+                                text = stringResource(R.string.action_close),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                 }
@@ -284,18 +349,26 @@ fun AddFoodScreen(
                         Box(
                             modifier = Modifier
                                 .size(32.dp)
-                                .background(MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.2f),
-                                    CircleShape),
+                                .background(
+                                    MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.2f),
+                                    CircleShape
+                                ),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = "<", color = MaterialTheme.colorScheme.onSecondary, fontSize = 14.sp)
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_arrow_back),
+                                contentDescription = stringResource(R.string.cd_navigate_back),
+                                tint = MaterialTheme.colorScheme.onSecondary,
+                                modifier = Modifier.size(16.dp)
+                            )
                         }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor =MaterialTheme.colorScheme.secondary,
+                    containerColor = MaterialTheme.colorScheme.secondary,
                     titleContentColor = MaterialTheme.colorScheme.onSecondary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSecondary)
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSecondary
+                )
             )
         }
     ) { paddingValues ->
@@ -320,7 +393,7 @@ fun AddFoodScreen(
                         color = MaterialTheme.colorScheme.outlineVariant,
                         shape = RoundedCornerShape(12.dp)
                     )
-                    .clickable{
+                    .clickable {
                         if (myFoodImage == null) {
                             showImagePick = true
                         } else {
@@ -332,7 +405,7 @@ fun AddFoodScreen(
                 if (myFoodImage != null) {
                     Image(
                         bitmap = myFoodImage!!.asImageBitmap(),
-                        contentDescription = "Food Preview",
+                        contentDescription = stringResource(R.string.cd_food_preview),
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
@@ -359,7 +432,12 @@ fun AddFoodScreen(
                                 .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = "\uD83D\uDCF7", fontSize = 20.sp)
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_camera),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(22.dp)
+                            )
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
@@ -391,6 +469,7 @@ fun AddFoodScreen(
                 onValueChange = { description = it }
             )
 
+            // Category selection restricted to actual physical food categories
             Column {
                 Text(
                     text = stringResource(R.string.label_category),
@@ -408,7 +487,7 @@ fun AddFoodScreen(
                         value = category,
                         onValueChange = {},
                         readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isCategoryExpanded)},
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isCategoryExpanded) },
                         shape = RoundedCornerShape(10.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -427,7 +506,7 @@ fun AddFoodScreen(
                         modifier = Modifier.background(MaterialTheme.colorScheme.surface)
                     ) {
                         DiscoveryCategory.entries
-                            .filter { it != DiscoveryCategory.ALL }
+                            .filter { it != DiscoveryCategory.ALL && !it.name.equals("FREE", ignoreCase = true) }
                             .forEach { item ->
                                 val displayName = item.name.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }
 
@@ -449,61 +528,10 @@ fun AddFoodScreen(
                 }
             }
 
-            //original price and discount price
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Box(modifier = Modifier.weight(1f)) {
-                    FormField(
-                        label = "Original Price (RM)",
-                        value = originalPrice,
-                        placeholder = "4.50",
-                        keyboardType = KeyboardType.Decimal,
-                        onValueChange = { originalPrice = it }
-                    )
-                }
-
-                Box(modifier = Modifier.weight(1f)) {
-                    FormField(
-                        label = "Discount Price (RM)",
-                        value = discountPrice,
-                        placeholder = "1.50",
-                        keyboardType = KeyboardType.Decimal,
-                        onValueChange = { discountPrice = it }
-                    )
-                }
-            }
-
-            // quantity and weight
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Box(modifier = Modifier.weight(1f)) {
-                    FormField(
-                        label = stringResource(R.string.label_quantity),
-                        value = quantity,
-                        placeholder = "8",
-                        keyboardType = KeyboardType.Number,
-                        onValueChange = { quantity = it }
-                    )
-                }
-                Box(modifier = Modifier.weight(1f)) {
-                    FormField(
-                        label = "Est. Weight (kg)",
-                        value = weightKg,
-                        placeholder = "0.35",
-                        keyboardType = KeyboardType.Decimal,
-                        onValueChange = { weightKg = it }
-                    )
-                }
-            }
-
-            // Pickup Window
-            Column{
+            // Pickup Window Selection
+            Column {
                 Text(
-                    text = "Pickup Window",
+                    text = stringResource(R.string.label_pickup_window),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onBackground
@@ -514,7 +542,6 @@ fun AddFoodScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -523,30 +550,33 @@ fun AddFoodScreen(
                                     context,
                                     { _, selectedHour, selectedMinute ->
                                         val amPm = if (selectedHour >= 12) "PM" else "AM"
-                                        val hourIn12Format = if (selectedHour % 12 == 0) 12 else selectedHour % 12
-                                        // Format time string explicitly using device system locale
-                                        pickupStartTime = String.format(java.util.Locale.getDefault(), "%02d:%02d %s", hourIn12Format, selectedMinute, amPm)
+                                        val hourIn12 = if (selectedHour % 12 == 0) 12 else selectedHour % 12
+                                        pickupStartTime = String.format(Locale.getDefault(), "%02d:%02d %s", hourIn12, selectedMinute, amPm)
+
+                                        // Re-evaluate discount recommendation on window duration adjustment
+                                        val orig = originalPrice.toDoubleOrNull() ?: 0.0
+                                        if (orig > 0.0) {
+                                            val (sugPrice, pct) = DynamicPricingEngine.calculateSuggestedPrice(
+                                                originalPrice = orig,
+                                                pickupEndTimeStr = pickupEndTime,
+                                                pickupStartTimeStr = pickupStartTime
+                                            )
+                                            discountPrice = "%.2f".format(sugPrice)
+                                            discountBadge = "-$pct%"
+                                        }
                                     },
-                                    17, // Default hour: 5 PM
-                                    0,  // Default minute: 00
-                                    false // 12-hour format with AM/PM toggle
+                                    17, 0, false
                                 ).show()
                             }
                     ) {
                         OutlinedTextField(
                             value = pickupStartTime,
                             onValueChange = {},
-                            placeholder = {
-                                Text(
-                                    text = "05:00 PM",
-                                    fontSize = 13.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            },
-                            readOnly = true, // disable keyboard edit, prevent somebody type wrong like (05:00pm) (05:00) or (5)
+                            placeholder = { Text(text = "05:00 PM", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                            readOnly = true,
                             enabled = false,
                             singleLine = true,
-                            shape = RoundedCornerShape(size = 10.dp),
+                            shape = RoundedCornerShape(10.dp),
                             colors = OutlinedTextFieldDefaults.colors(
                                 disabledTextColor = MaterialTheme.colorScheme.onSurface,
                                 disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -557,7 +587,7 @@ fun AddFoodScreen(
                     }
 
                     Text(
-                        text = "to",
+                        text = stringResource(R.string.text_to),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -567,35 +597,37 @@ fun AddFoodScreen(
                         modifier = Modifier
                             .weight(1f)
                             .clickable {
-                                // Launch native Android TimePickerDialog for End Time
-                                val calendar = java.util.Calendar.getInstance()
                                 TimePickerDialog(
                                     context,
                                     { _, selectedHour, selectedMinute ->
                                         val amPm = if (selectedHour >= 12) "PM" else "AM"
-                                        val hourIn12Format = if (selectedHour % 12 == 0) 12 else selectedHour % 12
-                                        pickupEndTime = String.format("%02d:%02d %s", hourIn12Format, selectedMinute, amPm)
+                                        val hourIn12 = if (selectedHour % 12 == 0) 12 else selectedHour % 12
+                                        pickupEndTime = String.format(Locale.getDefault(), "%02d:%02d %s", hourIn12, selectedMinute, amPm)
+
+                                        // Recalculates discount suggestion when pickup end time changes
+                                        val orig = originalPrice.toDoubleOrNull() ?: 0.0
+                                        if (orig > 0.0) {
+                                            val (sugPrice, pct) = DynamicPricingEngine.calculateSuggestedPrice(
+                                                originalPrice = orig,
+                                                pickupEndTimeStr = pickupEndTime,
+                                                pickupStartTimeStr = pickupStartTime
+                                            )
+                                            discountPrice = "%.2f".format(sugPrice)
+                                            discountBadge = "-$pct%"
+                                        }
                                     },
-                                    19, // Default hour: 7 PM
-                                    0,  // Default minute: 00
-                                    false // 12-hour format with AM/PM toggle
+                                    19, 0, false
                                 ).show()
                             }
                     ) {
                         OutlinedTextField(
                             value = pickupEndTime,
                             onValueChange = {},
-                            placeholder = {
-                                Text(
-                                    text = "07:00 PM",
-                                    fontSize = 13.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            },
-                            readOnly = true, // Disable keyboard editing
-                            enabled = false, // Route touch events strictly to the parent Box
+                            placeholder = { Text(text = "07:00 PM", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                            readOnly = true,
+                            enabled = false,
                             singleLine = true,
-                            shape = RoundedCornerShape(size = 10.dp),
+                            shape = RoundedCornerShape(10.dp),
                             colors = OutlinedTextFieldDefaults.colors(
                                 disabledTextColor = MaterialTheme.colorScheme.onSurface,
                                 disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -607,18 +639,142 @@ fun AddFoodScreen(
                 }
             }
 
+            // Original Price and Auto-Calculated Dynamic Discounted Price
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(modifier = Modifier.weight(1f)) {
+                    FormField(
+                        label = stringResource(R.string.label_original_price),
+                        value = originalPrice,
+                        placeholder = stringResource(R.string.hint_original_price),
+                        keyboardType = KeyboardType.Decimal,
+                        onValueChange = { input ->
+                            originalPrice = input
+                            val orig = input.toDoubleOrNull() ?: 0.0
+                            if (orig > 0.0) {
+                                // Automatically triggers algorithm recommendation based on the pickup window
+                                val (sugPrice, pct) = DynamicPricingEngine.calculateSuggestedPrice(
+                                    originalPrice = orig,
+                                    pickupEndTimeStr = pickupEndTime,
+                                    pickupStartTimeStr = pickupStartTime
+                                )
+                                discountPrice = "%.2f".format(sugPrice)
+                                discountBadge = "-$pct%"
+                            } else {
+                                discountPrice = ""
+                                discountBadge = ""
+                            }
+                        }
+                    )
+                }
+
+                Box(modifier = Modifier.weight(1f)) {
+                    Column {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = stringResource(R.string.label_discount_price),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                // Info icon opens the dynamic pricing policy popup
+                                IconButton(
+                                    onClick = { showPricingInfoDialog = true },
+                                    modifier = Modifier.size(16.dp)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_info),
+                                        contentDescription = stringResource(R.string.cd_pricing_info),
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                }
+                            }
+
+                            if (discountBadge.isNotBlank()) {
+                                Text(
+                                    text = discountBadge,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        OutlinedTextField(
+                            value = discountPrice,
+                            onValueChange = {},
+                            readOnly = true, // Read-only: price strictly follows the platform dynamic algorithm
+                            placeholder = { Text(text = stringResource(R.string.hint_discount_price), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                            singleLine = true,
+                            shape = RoundedCornerShape(10.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                                focusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                                focusedTextColor = MaterialTheme.colorScheme.primary,
+                                unfocusedTextColor = MaterialTheme.colorScheme.primary
+                            ),
+                            supportingText = {
+                                Text(
+                                    text = stringResource(R.string.hint_auto_calculated_pricing),
+                                    fontSize = 10.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+
+            // Quantity and Weight
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(modifier = Modifier.weight(1f)) {
+                    FormField(
+                        label = stringResource(R.string.label_quantity),
+                        value = quantity,
+                        placeholder = stringResource(R.string.hint_quantity),
+                        keyboardType = KeyboardType.Number,
+                        onValueChange = { quantity = it }
+                    )
+                }
+                Box(modifier = Modifier.weight(1f)) {
+                    FormField(
+                        label = stringResource(R.string.label_est_weight),
+                        value = weightKg,
+                        placeholder = stringResource(R.string.hint_est_weight),
+                        keyboardType = KeyboardType.Decimal,
+                        onValueChange = { weightKg = it }
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(10.dp))
 
             Button(
                 onClick = {
+                    val finalDiscountPrice = discountPrice.toDoubleOrNull() ?: 0.0
+
                     if (editingItem != null) {
-                        // update existing item (edit mode)
                         val updated = editingItem.copy(
                             name = foodName.trim(),
                             description = description.trim(),
                             category = category.trim(),
                             originalPrice = originalPrice.toDoubleOrNull() ?: editingItem.originalPrice,
-                            discountPrice = discountPrice.toDoubleOrNull() ?: editingItem.discountPrice,
+                            discountPrice = finalDiscountPrice,
                             quantity = quantity.toIntOrNull() ?: editingItem.quantity,
                             weightKg = weightKg.toDoubleOrNull() ?: editingItem.weightKg,
                             pickupStart = pickupStartTime.trim(),
@@ -633,9 +789,9 @@ fun AddFoodScreen(
                             description = description.trim().ifBlank { "" },
                             category = category.trim(),
                             originalPrice = originalPrice.toDoubleOrNull() ?: 0.0,
-                            discountPrice = discountPrice.toDoubleOrNull() ?: 0.0,
+                            discountPrice = finalDiscountPrice,
                             quantity = quantity.toIntOrNull() ?: 1,
-                            weightKg = weightKg.toDoubleOrNull() ?: 0.3,
+                            weightKg = weightKg.toDoubleOrNull() ?: 0.35,
                             pickupStart = pickupStartTime.trim(),
                             pickupEnd = pickupEndTime.trim(),
                             status = "ACTIVE",
@@ -677,6 +833,7 @@ fun getTmpFileUri(context: android.content.Context): Uri {
         tmpFile
     )
 }
+
 @Composable
 fun FormField(
     label: String,
@@ -711,3 +868,14 @@ fun FormField(
     }
 }
 
+@Preview(name = "Add Food Screen - Light", showBackground = true)
+@Preview(name = "Add Food Screen - Dark", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Composable
+private fun AddFoodScreenPreview() {
+    BiteSaversTheme {
+        AddFoodScreen(
+            viewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+            onNavigateBack = {}
+        )
+    }
+}

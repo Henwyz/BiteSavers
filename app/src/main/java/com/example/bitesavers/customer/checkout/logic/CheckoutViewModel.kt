@@ -50,7 +50,9 @@ class CheckoutViewModel(
             if (offer != null) {
                 _uiState.update { current ->
                     val totalPrice = offer.currentPrice * quantity
-                    val defaultMethod = if (realBalance >= totalPrice) {
+                    val isFreeClaim = totalPrice <= 0.0
+
+                    val defaultMethod = if (isFreeClaim || realBalance >= totalPrice) {
                         PaymentMethod.BITESAVER_PAY
                     } else if (isTngLinked) {
                         PaymentMethod.TNG_EWALLET
@@ -90,7 +92,6 @@ class CheckoutViewModel(
         when (event) {
             is CheckoutUiEvent.OnNavigateBack -> {}
             is CheckoutUiEvent.OnChangePaymentClicked -> {
-                // Refresh saved payment methods when opening the sheet to ensure up-to-date options
                 viewModelScope.launch {
                     val savedMethods = paymentRepository.fetchPaymentMethods()
                     val tngMethod = savedMethods.firstOrNull { it.type == "TNG_EWALLET" }
@@ -128,31 +129,30 @@ class CheckoutViewModel(
 
     private fun processPayment() {
         val state = _uiState.value
+        val isFreeClaim = state.totalPrice <= 0.0
 
-        // Validate payment methods before placing order
-        when (state.selectedPaymentMethod) {
-            PaymentMethod.BITESAVER_PAY -> {
-                if (state.walletBalance < state.totalPrice) {
-                    _uiState.update { it.copy(errorResId = R.string.error_insufficient_bitesaver_balance) }
-                    return
+        // Skip wallet checks completely if this is an NGO free claim or RM0 item
+        if (!isFreeClaim) {
+            when (state.selectedPaymentMethod) {
+                PaymentMethod.BITESAVER_PAY -> {
+                    if (state.walletBalance < state.totalPrice) {
+                        _uiState.update { it.copy(errorResId = R.string.error_insufficient_bitesaver_balance) }
+                        return
+                    }
                 }
-            }
-            PaymentMethod.TNG_EWALLET -> {
-                // Verifies if Touch 'n Go is linked in user payment methods
-                if (!state.isTngLinked) {
-                    _uiState.update { it.copy(errorResId = R.string.error_tng_not_linked) }
-                    return
+                PaymentMethod.TNG_EWALLET -> {
+                    if (!state.isTngLinked) {
+                        _uiState.update { it.copy(errorResId = R.string.error_tng_not_linked) }
+                        return
+                    }
                 }
-            }
-            PaymentMethod.BANK_CARD -> {
-                // Verifies if a valid bank card exists in user payment methods
-                if (state.savedCardDigits.isNullOrBlank()) {
-                    _uiState.update { it.copy(errorResId = R.string.error_bank_card_not_registered) }
-                    return
+                PaymentMethod.BANK_CARD -> {
+                    if (state.savedCardDigits.isNullOrBlank()) {
+                        _uiState.update { it.copy(errorResId = R.string.error_bank_card_not_registered) }
+                        return
+                    }
                 }
-            }
-            PaymentMethod.CASH_ON_PICKUP -> {
-                // Direct checkout allowed
+                PaymentMethod.CASH_ON_PICKUP -> Unit
             }
         }
 

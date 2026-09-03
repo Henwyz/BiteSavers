@@ -18,6 +18,14 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+
+    packaging {
+        resources {
+            excludes += "META-INF/NOTICE.md"
+            excludes += "META-INF/LICENSE.md"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -85,5 +93,9 @@ dependencies {
 
     // Coil for Jetpack Compose image loading
     implementation("io.coil-kt:coil-compose:2.6.0")
+
+    // JavaMail for sending automated emails via Gmail SMTP
+    implementation("com.sun.mail:android-mail:1.6.7")
+    implementation("com.sun.mail:android-activation:1.6.7")
 
 }

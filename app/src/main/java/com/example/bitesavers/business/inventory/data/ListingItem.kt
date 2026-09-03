@@ -12,7 +12,7 @@ data class ListingItem(
     val category: String = "Bakery",
     val originalPrice: Double = 0.0,
     val discountPrice: Double = 0.0,
-    val weightKg: Double = 0.3,
+    val weightKg: Double = 0.35,
     val quantity: Int = 1,
     val pickupStart: String = "09:00 PM",
     val pickupEnd: String = "09:30 PM",
@@ -43,11 +43,16 @@ fun OfferDto.toListingItem(defaultStart: String, defaultEnd: String): ListingIte
         pickupEnd = this.pickupEnd ?: defaultEnd,
         status = this.status,
         imageUrl = this.imageUrl,
-        isEligibleForNgoFree = this.isEligibleForNgoFree
+        isEligibleForNgoFree = this.isEligibleForNgoFree || this.discountedPrice == 0.0
     )
 }
 
 fun ListingItem.toDto(resolvedStoreId: String): OfferDto {
+    // Flag as true if explicitly marked, category is Free, or discountPrice is 0.0
+    val eligibleForNgo = this.isEligibleForNgoFree ||
+            this.discountPrice == 0.0 ||
+            this.category.equals("Free", ignoreCase = true)
+
     return OfferDto(
         id = this.id,
         storeId = resolvedStoreId,
@@ -63,6 +68,6 @@ fun ListingItem.toDto(resolvedStoreId: String): OfferDto {
         pickupEnd = this.pickupEnd,
         status = this.status,
         imageUrl = this.imageUrl,
-        isEligibleForNgoFree = this.isEligibleForNgoFree
+        isEligibleForNgoFree = eligibleForNgo
     )
 }

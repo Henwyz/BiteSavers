@@ -10,7 +10,7 @@ data class OrderDto(
     @SerialName("store_id") val storeId: String? = null,
     @SerialName("offer_id") val offerId: String? = null,
     @SerialName("quantity") val quantity: Int = 1,
-    @SerialName("total_price") val totalPrice: Double = 0.0,
+    @SerialName("total_price") val totalPrice: Double,
     @SerialName("total_weight_kg") val totalWeightKg: Double? = null,
     @SerialName("is_ngo_free_claim") val isNgoFreeClaim: Boolean = false,
     @SerialName("payment_method") val paymentMethod: String? = null,

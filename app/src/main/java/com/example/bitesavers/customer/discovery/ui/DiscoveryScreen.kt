@@ -74,14 +74,14 @@ fun DiscoveryRoute(
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // 🔄 Automatically reload live inventory every time the user comes back to this screen
+    // Automatically reload live inventory every time the user comes back to this screen
     LifecycleResumeEffect(Unit) {
         viewModel.loadOffers()
         viewModel.refreshNotifications()
         onPauseOrDispose { }
     }
 
-    // 🌐 GPS Location Launcher: Requests Fine and Coarse location permissions at runtime
+    // GPS Location Launcher: Requests Fine and Coarse location permissions at runtime
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -94,7 +94,7 @@ fun DiscoveryRoute(
         }
     }
 
-    // 🚀 Check or trigger GPS permission request as soon as DiscoveryRoute is entered
+    // Check or trigger GPS permission request as soon as DiscoveryRoute is entered
     LaunchedEffect(Unit) {
         val hasFine = ContextCompat.checkSelfPermission(
             context, Manifest.permission.ACCESS_FINE_LOCATION
@@ -232,7 +232,7 @@ fun DiscoveryScreen(
                         DiscoveryMapSection(
                             markers = state.nearbyMarkers,
                             offers = state.offers.take(3),
-                            userRole = state.userRole,
+                            isNgoApproved = state.isNgoApproved,
                             userLatitude = state.userLatitude,
                             userLongitude = state.userLongitude,
                             selectedOfferId = state.selectedMapOfferId,
@@ -317,7 +317,7 @@ fun DiscoveryScreen(
                             OfferCard(
                                 offer = offer,
                                 isSaved = savedOfferIds.contains(offer.id),
-                                userRole = state.userRole,
+                                isNgoApproved = state.isNgoApproved,
                                 modifier = Modifier.padding(start = startPadding, end = endPadding),
                                 onClick = { clicked ->
                                     onEvent(DiscoveryUiEvent.OnOfferClicked(clicked))
