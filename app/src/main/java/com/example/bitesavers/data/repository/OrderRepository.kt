@@ -115,7 +115,7 @@ class OrderRepository {
 
                 merchantOwnerId = storeList.firstOrNull()?.ownerId
 
-                if (!merchantOwnerId.isNullOrBlank() && isBiteSaverPay) {
+                if (!merchantOwnerId.isNullOrBlank() && isPaidViaWallet) {
                     val merchant = client.from("users")
                         .select { filter { eq("id", merchantOwnerId) } }
                         .decodeSingle<UserDto>()
