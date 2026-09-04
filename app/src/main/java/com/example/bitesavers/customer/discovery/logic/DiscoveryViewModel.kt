@@ -336,7 +336,6 @@ class DiscoveryViewModel : ViewModel() {
     }
 
     // Applies search queries, role-based visibility, and rescue claim window criteria
-    // Applies search queries, role-based visibility, and rescue claim window criteria
     private fun applyFilters(state: DiscoveryUiState, sourceList: List<OfferUiModel>): List<OfferUiModel> {
         val query = state.searchQuery.trim().lowercase()
         val currentLat = userLatitude

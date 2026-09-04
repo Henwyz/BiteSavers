@@ -1,29 +1,26 @@
 package com.example.bitesavers.customer.checkout.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.bitesavers.R
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 
@@ -35,91 +32,98 @@ fun CheckoutSummaryCard(
     unitPrice: Double,
     modifier: Modifier = Modifier
 ) {
-    val subtotal = quantity * unitPrice
+    val total = unitPrice * quantity
+    // Visual tax breakdown (6% SST)
+    val visualSst = if (total > 0.0) Math.round(total * 0.06 * 100.0) / 100.0 else 0.0
 
-    Surface(
+    Card(
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 2.dp,
-        modifier = modifier.fillMaxWidth()
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
         ) {
-            // Title
             Text(
-                text = stringResource(id = R.string.checkout_summary_title),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary // Dark Green
+                text = storeName.ifBlank { stringResource(R.string.app_name) },
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
-            // Store Name Row
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_store),
-                    contentDescription = null, // decorative icon
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp)
-                )
-                Text(
-                    text = storeName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
+            Text(
+                text = itemName.ifBlank { "Surplus Item" },
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // Item Name, Quantity, and Price Row
+            // Subtotal row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = stringResource(id = R.string.checkout_item_quantity, itemName, quantity),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(end = 12.dp),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    text = "Subtotal (${quantity}x)",
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = stringResource(id = R.string.currency_rm, unitPrice),
-                    style = MaterialTheme.typography.bodyLarge,
+                    text = stringResource(R.string.currency_rm, total),
+                    fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
-            // Subtotal Row
+            // Visual-only SST (6% Incl.) line
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = stringResource(id = R.string.checkout_subtotal),
-                    style = MaterialTheme.typography.titleSmall,
+                    text = "SST (6% incl.)",
+                    fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = stringResource(id = R.string.currency_rm, subtotal),
-                    style = MaterialTheme.typography.titleMedium,
+                    text = stringResource(R.string.currency_rm, visualSst),
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Total Payment row matching the exact database value
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.total_title),
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = stringResource(R.string.currency_rm, total),
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -128,17 +132,15 @@ fun CheckoutSummaryCard(
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, name = "Checkout Summary Card Preview")
 @Composable
 private fun CheckoutSummaryCardPreview() {
     BiteSaversTheme {
-        Box(modifier = Modifier.padding(16.dp)) {
-            CheckoutSummaryCard(
-                storeName = "Artisan Bakery & Cafe Specialist",
-                itemName = "Artisanal Multigrain Sourdough Bread with Sun-dried Tomatoes",
-                quantity = 2,
-                unitPrice = 12.50
-            )
-        }
+        CheckoutSummaryCard(
+            storeName = "Uncle Lim Kopitiam",
+            itemName = "Butter Kaya Toast Set",
+            quantity = 2,
+            unitPrice = 5.00
+        )
     }
 }

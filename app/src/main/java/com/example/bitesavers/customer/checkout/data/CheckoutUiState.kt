@@ -20,4 +20,7 @@ data class CheckoutUiState(
 ) {
     val totalPrice: Double
         get() = unitPrice * quantity
+
+    val visualTaxAmount: Double
+        get() = if (totalPrice > 0.0) Math.round(totalPrice * 0.06 * 100.0) / 100.0 else 0.0
 }

@@ -38,13 +38,13 @@ fun FoodDetailStatusRow(
 ) {
     val isSoldOut = stockLeft <= 0
     // Item is only truly expired if the store was open and current time passed the window
-    val isExpired = isOpen && hoursToClose <= 0
+    val isExpired = isOpen && hoursToClose <= 0 && timeStatusText.equals("Closed", ignoreCase = true)
 
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // 1. TIME STATUS CARD (Opens In / Closes In / Expired)
+        // 1. TIME STATUS CARD (Opens In / Closes In / Free NGO Claim / Expired)
         Card(
             modifier = Modifier
                 .weight(1f)
@@ -91,12 +91,12 @@ fun FoodDetailStatusRow(
                     )
                 }
 
+                // Prioritizes the dynamic live minute string over static hours
                 Text(
                     text = when {
-                        !isOpen && timeStatusText.isNotBlank() -> timeStatusText
+                        timeStatusText.isNotBlank() -> timeStatusText.removePrefix("Closes in ")
                         isExpired -> stringResource(id = R.string.detail_status_expired)
                         hoursToClose > 0 -> stringResource(id = R.string.detail_expires_in_time, hoursToClose)
-                        timeStatusText.isNotBlank() -> timeStatusText
                         else -> stringResource(id = R.string.detail_status_expired)
                     },
                     style = MaterialTheme.typography.titleLarge,
@@ -154,10 +154,10 @@ private fun FoodDetailStatusRowAvailablePreview() {
     BiteSaversTheme {
         Box(modifier = Modifier.padding(16.dp)) {
             FoodDetailStatusRow(
-                hoursToClose = 2,
+                hoursToClose = 1,
                 stockLeft = 6,
                 isOpen = true,
-                timeStatusText = "Closes in 2h"
+                timeStatusText = "36m"
             )
         }
     }

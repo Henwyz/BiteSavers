@@ -53,55 +53,41 @@ class AnalyticsViewModel : ViewModel() {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                // 1. Get userId matching Dashboard & Inventory logic
+                // 1. Get current logged-in business owner userId
                 val userId = UserSession.getUserId().ifBlank { UserSession.currentUserId.value }
                 Log.d("AnalyticsViewModel", "Loading analytics for userId: '$userId'")
 
-                // 2. Fetch all stores for this owner
-                var storeIds = mutableListOf<String>()
+                // 2. Fetch the active APPROVED store for this owner
+                var targetStoreId: String? = null
                 if (userId.isNotBlank()) {
                     try {
                         val stores = SupabaseClient.client.from("stores")
                             .select { filter { eq("owner_id", userId) } }
                             .decodeList<StoreDto>()
-                        storeIds.addAll(stores.mapNotNull { it.id })
+
+                        // Strictly select the approved active store row to match Profile & Inventory
+                        val activeStore = stores.firstOrNull { it.status?.equals("APPROVED", ignoreCase = true) == true }
+                            ?: stores.lastOrNull { it.status?.equals("PENDING", ignoreCase = true) != true }
+                            ?: stores.firstOrNull()
+
+                        targetStoreId = activeStore?.id
                     } catch (e: Exception) {
-                        Log.w("AnalyticsViewModel", "Error fetching stores for owner: ${e.message}")
+                        Log.w("AnalyticsViewModel", "Error fetching store for owner: ${e.message}")
                     }
                 }
 
-                // Fallback store lookup if no store matches owner_id
-                if (storeIds.isEmpty()) {
-                    try {
-                        val allStores = SupabaseClient.client.from("stores")
-                            .select { limit(5) }
-                            .decodeList<StoreDto>()
-                        storeIds.addAll(allStores.mapNotNull { it.id })
-                    } catch (_: Exception) {}
-                }
+                Log.d("AnalyticsViewModel", "Target storeId strictly for analytics: $targetStoreId")
 
-                Log.d("AnalyticsViewModel", "Target storeIds for analytics: $storeIds")
-
-                // 3. Fetch all orders belonging to this store
+                // 3. Fetch orders strictly filtered by this store's store_id
                 val allOrders = mutableListOf<OrderDto>()
-                for (storeId in storeIds) {
-                    val orders = repository.getOrdersByStoreId(storeId)
+                if (!targetStoreId.isNullOrBlank()) {
+                    val orders = repository.getOrdersByStoreId(targetStoreId)
                     allOrders.addAll(orders)
                 }
 
-                // If specific store query yielded 0, fetch recent completed orders to populate preview
-                if (allOrders.isEmpty()) {
-                    try {
-                        val fallbackOrders = SupabaseClient.client.from("orders")
-                            .select { limit(50) }
-                            .decodeList<OrderDto>()
-                        allOrders.addAll(fallbackOrders)
-                    } catch (_: Exception) {}
-                }
+                Log.d("AnalyticsViewModel", "Total store orders retrieved: ${allOrders.size}")
 
-                Log.d("AnalyticsViewModel", "Total orders retrieved: ${allOrders.size}")
-
-                // 4. Compute analytics
+                // 4. Compute analytics strictly for this store's dataset
                 val computed = calculateAnalytics(allOrders)
                 _analytics.value = computed
                 Log.d("AnalyticsViewModel", "Analytics computed: Revenue=RM${computed.revenueRecoveredRM}, Meals=${computed.mealsRescued}")
@@ -131,7 +117,7 @@ class AnalyticsViewModel : ViewModel() {
             time in startOfLastWeek until endOfLastWeek
         }
 
-        // Use this week's orders if present, otherwise aggregate all available completed orders
+        // Use this week's orders if present, otherwise aggregate all available completed orders for this store
         val activeWorkingOrders = if (thisWeekOrders.isNotEmpty()) thisWeekOrders else completedOrders
 
         // 1. Metric: Revenue Recovered (RM)

@@ -4,13 +4,19 @@ import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -20,8 +26,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.bitesavers.R
 import com.example.bitesavers.customer.details.data.FoodDetailUiState
@@ -33,7 +41,6 @@ import com.example.bitesavers.customer.details.ui.components.FoodDetailHero
 import com.example.bitesavers.customer.details.ui.components.FoodDetailQuantitySelector
 import com.example.bitesavers.customer.details.ui.components.FoodDetailSafetyBanner
 import com.example.bitesavers.customer.details.ui.components.FoodDetailStatusRow
-import com.example.bitesavers.customer.details.ui.components.FoodDetailTagsRow
 import com.example.bitesavers.customer.details.ui.components.FoodDetailTopBar
 import com.example.bitesavers.data.model.DiscoveryCategory
 import com.example.bitesavers.data.model.OfferUiModel
@@ -51,7 +58,6 @@ fun FoodDetailRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // Manages background telemetry polling tied strictly to screen lifecycle
     val currentOfferId = uiState.offer?.id
     DisposableEffect(currentOfferId) {
         if (!currentOfferId.isNullOrBlank()) {
@@ -65,10 +71,8 @@ fun FoodDetailRoute(
     FoodDetailScreen(
         state = uiState,
         onEvent = { event ->
-            // 1. Send every event to the ViewModel
             viewModel.onEvent(event)
 
-            // 2. Handle Navigation triggers
             when (event) {
                 is FoodDetailUiEvent.OnNavigateBack -> onBackClick()
                 is FoodDetailUiEvent.OnReserveClicked -> {
@@ -83,8 +87,7 @@ fun FoodDetailRoute(
                         onStoreClick(storeId)
                     }
                 }
-
-                else -> Unit // Quantity changes don't require navigation
+                else -> Unit
             }
         }
     )
@@ -98,11 +101,29 @@ fun FoodDetailScreen(
     state: FoodDetailUiState,
     onEvent: (FoodDetailUiEvent) -> Unit
 ) {
-    val isSoldOut = (state.offer?.quantityLeft ?: 0) <= 0
-    val isNgoClaimActive = state.offer?.isEligibleForNgoFree == true
-    // If it is inside the NGO free window, the claim window is active even if regular hours closed
-    val isStoreOpen = state.offer?.isCurrentlyOpen ?: true || isNgoClaimActive
-    val isExpired = if (isNgoClaimActive) false else (state.offer?.hoursToClose ?: 1) <= 0
+    val offer = state.offer
+    val isSoldOut = (offer?.quantityLeft ?: 0) <= 0
+    val isStoreOpen = offer?.isCurrentlyOpen ?: true
+    val isPickupExpired = state.minutesToClose <= 0
+    val isNgoClaimEligible = state.isNgoApproved && (offer?.isEligibleForNgoFree == true)
+
+    val canUserReserve = when {
+        isSoldOut -> false
+        isNgoClaimEligible -> true
+        !isStoreOpen -> false
+        isPickupExpired -> false
+        else -> true
+    }
+
+    // Resolves proper button text with dynamic minute status
+    val dynamicTimingText = state.liveTimeStatus.ifBlank { offer?.timeStatusText ?: "" }
+    val actionButtonText = when {
+        isSoldOut -> stringResource(R.string.btn_sold_out)
+        isNgoClaimEligible -> stringResource(R.string.btn_claim_free_ngo)
+        !isStoreOpen -> stringResource(R.string.btn_store_closed)
+        isPickupExpired && !state.isNgoApproved -> stringResource(R.string.btn_pickup_closed_consumer)
+        else -> dynamicTimingText
+    }
 
     Scaffold(
         topBar = {
@@ -113,13 +134,13 @@ fun FoodDetailScreen(
             )
         },
         bottomBar = {
-            if (state.offer != null) {
+            if (offer != null) {
                 FoodDetailCheckoutBar(
                     totalPrice = state.totalPrice,
                     isSoldOut = isSoldOut,
-                    isExpired = isExpired,
-                    isOpen = isStoreOpen,
-                    timeStatusText = if (isNgoClaimActive) stringResource(R.string.status_ngo_free_claim) else state.offer.timeStatusText,
+                    isExpired = !canUserReserve,
+                    isOpen = isStoreOpen || isNgoClaimEligible,
+                    timeStatusText = actionButtonText,
                     onReserveClick = { onEvent(FoodDetailUiEvent.OnReserveClicked) }
                 )
             }
@@ -146,11 +167,9 @@ fun FoodDetailScreen(
                             .padding(16.dp)
                     )
                 }
-                state.offer != null -> {
-                    val offer = state.offer
+                offer != null -> {
                     val scrollState = rememberScrollState()
 
-                    // Localizes safe holding zone descriptor and temperature banner text
                     val isHot = offer.storageType.contains("Hot", ignoreCase = true)
                     val zoneDescriptor = if (isHot) {
                         stringResource(id = R.string.storage_zone_hot)
@@ -187,12 +206,12 @@ fun FoodDetailScreen(
                                 }
                             )
 
-                            // Forwards current open condition and timing text to prevent false expired tags
+                            // Forwards current open condition and minute-level timing text
                             FoodDetailStatusRow(
-                                hoursToClose = if (isNgoClaimActive) 1 else offer.hoursToClose,
+                                hoursToClose = if (isNgoClaimEligible) 1 else if (state.minutesToClose > 0) 1 else 0,
                                 stockLeft = offer.quantityLeft,
-                                isOpen = isStoreOpen,
-                                timeStatusText = if (isNgoClaimActive) stringResource(R.string.status_ngo_free_claim) else offer.timeStatusText
+                                isOpen = isStoreOpen || isNgoClaimEligible,
+                                timeStatusText = if (isNgoClaimEligible) stringResource(R.string.status_ngo_free_claim) else dynamicTimingText
                             )
 
                             FoodDetailSafetyBanner(
@@ -200,23 +219,82 @@ fun FoodDetailScreen(
                                 isSafe = state.isTemperatureSafe
                             )
 
-                            // Dynamic tags: distance, store rating from Supabase, and CO2 savings
-                            FoodDetailTagsRow(
-                                distanceKm = offer.distanceKm,
-                                rating = offer.storeRating
-                            )
-
                             FoodDetailDescription(
                                 description = offer.description
                             )
 
-                            // Display quantity selector if stock is available and either store is open or NGO free claim is active
-                            if (!isSoldOut && (!isExpired || isNgoClaimActive)) {
+                            // Display quantity selector only if stock is available and user is eligible to reserve
+                            if (canUserReserve) {
                                 FoodDetailQuantitySelector(
                                     quantity = state.quantity,
                                     onIncrease = { onEvent(FoodDetailUiEvent.OnIncreaseQuantity) },
                                     onDecrease = { onEvent(FoodDetailUiEvent.OnDecreaseQuantity) }
                                 )
+
+                                // Visual tax breakdown card
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                ) {
+                                    Column(modifier = Modifier.padding(12.dp)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                text = "Subtotal (${state.quantity}x)",
+                                                fontSize = 12.sp,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                            Text(
+                                                text = stringResource(R.string.currency_rm, state.subtotal),
+                                                fontSize = 12.sp,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                        }
+
+                                        Spacer(modifier = Modifier.height(4.dp))
+
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                text = "SST (6% incl.)",
+                                                fontSize = 12.sp,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                            Text(
+                                                text = stringResource(R.string.currency_rm, state.visualTaxAmount),
+                                                fontSize = 12.sp,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                                        Spacer(modifier = Modifier.height(6.dp))
+
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                text = stringResource(R.string.total_title),
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = stringResource(R.string.currency_rm, state.totalPrice),
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                    }
+                                }
                             }
 
                             Spacer(modifier = Modifier.padding(bottom = 16.dp))
@@ -228,7 +306,6 @@ fun FoodDetailScreen(
     }
 }
 
-// Renders the full details screen with mock offer data in Android Studio preview
 @Preview(name = "Food Detail Screen - Populated - Light", showBackground = true)
 @Preview(name = "Food Detail Screen - Populated - Dark", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
@@ -241,6 +318,9 @@ private fun FoodDetailScreenPreview() {
                 quantity = 1,
                 totalPrice = 9.90,
                 isTemperatureSafe = true,
+                isNgoApproved = false,
+                minutesToClose = 45,
+                liveTimeStatus = "Closes in 45m",
                 offer = OfferUiModel(
                     id = "e3333333-3333-3333-3333-333333333333",
                     storeId = "store_apollo",
@@ -253,106 +333,16 @@ private fun FoodDetailScreenPreview() {
                     originalPrice = 18.00,
                     distanceKm = 0.3,
                     quantityLeft = 6,
-                    hoursToClose = 2,
+                    hoursToClose = 1,
                     category = DiscoveryCategory.HOT_MEALS,
                     isEligibleForNgoFree = true,
                     liveTemperature = 62.0,
                     storageType = "HOT",
                     description = "Hearty minced chicken pasta in slow-simmered tomato sauce.",
-                    timeStatusText = "Closes in 2h",
+                    timeStatusText = "Closes in 45m",
                     isCurrentlyOpen = true
                 )
             ),
-            onEvent = {}
-        )
-    }
-}
-
-// Renders the details screen in a Store Closed state
-@Preview(name = "Food Detail Screen - Store Closed", showBackground = true)
-@Composable
-private fun FoodDetailScreenClosedPreview() {
-    BiteSaversTheme {
-        FoodDetailScreen(
-            state = FoodDetailUiState(
-                isLoading = false,
-                isSaved = false,
-                quantity = 1,
-                totalPrice = 9.90,
-                isTemperatureSafe = true,
-                offer = OfferUiModel(
-                    id = "e3333333-3333-3333-3333-333333333333",
-                    storeId = "store_apollo",
-                    title = "Chicken Bolognese Pasta",
-                    storeName = "Apollo Western & Pasta",
-                    storeRating = 4.9,
-                    imageResId = R.drawable.food_spaghetti,
-                    discountPercent = 45,
-                    currentPrice = 9.90,
-                    originalPrice = 18.00,
-                    distanceKm = 0.3,
-                    quantityLeft = 6,
-                    hoursToClose = 0,
-                    category = DiscoveryCategory.HOT_MEALS,
-                    isEligibleForNgoFree = true,
-                    liveTemperature = 60.0,
-                    storageType = "HOT",
-                    description = "Hearty minced chicken pasta in slow-simmered tomato sauce.",
-                    timeStatusText = "Opens in 5h",
-                    isCurrentlyOpen = false
-                )
-            ),
-            onEvent = {}
-        )
-    }
-}
-
-// Renders the details screen in a Sold Out state
-@Preview(name = "Food Detail Screen - Sold Out", showBackground = true)
-@Composable
-private fun FoodDetailScreenSoldOutPreview() {
-    BiteSaversTheme {
-        FoodDetailScreen(
-            state = FoodDetailUiState(
-                isLoading = false,
-                isSaved = true,
-                quantity = 0,
-                totalPrice = 8.00,
-                isTemperatureSafe = true,
-                offer = OfferUiModel(
-                    id = "e2222222-2222-2222-2222-222222222222",
-                    storeId = "store_sweet_treats",
-                    title = "Japanese Matcha Mille Crepe",
-                    storeName = "Sweet Treats Cafe",
-                    storeRating = 4.9,
-                    imageResId = R.drawable.food_spaghetti,
-                    discountPercent = 50,
-                    currentPrice = 8.00,
-                    originalPrice = 16.00,
-                    distanceKm = 0.0,
-                    quantityLeft = 0,
-                    hoursToClose = 2,
-                    category = DiscoveryCategory.DESSERTS,
-                    isEligibleForNgoFree = false,
-                    liveTemperature = 4.0,
-                    storageType = "COLD",
-                    description = "Delicate layers of crepe with matcha cream.",
-                    timeStatusText = "Closes in 2h",
-                    isCurrentlyOpen = true
-                )
-            ),
-            onEvent = {}
-        )
-    }
-}
-
-// Shows the loading progress indicator state
-@Preview(name = "Food Detail Screen - Loading", showBackground = true)
-@Composable
-private fun FoodDetailScreenLoadingPreview() {
-    BiteSaversTheme {
-        FoodDetailScreen(
-            state = FoodDetailUiState(isLoading = true),
             onEvent = {}
         )
     }

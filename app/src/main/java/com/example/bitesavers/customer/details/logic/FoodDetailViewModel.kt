@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bitesavers.customer.details.data.FoodDetailUiState
 import com.example.bitesavers.customer.details.ui.FoodDetailUiEvent
+import com.example.bitesavers.data.model.OfferUiModel
 import com.example.bitesavers.data.remote.UserSession
 import com.example.bitesavers.data.repository.OfferRepository
 import com.example.bitesavers.data.repository.SavedRepository
@@ -18,6 +19,10 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class FoodDetailViewModel(
     savedStateHandle: SavedStateHandle,
@@ -30,8 +35,9 @@ class FoodDetailViewModel(
     private val _uiState = MutableStateFlow(FoodDetailUiState())
     val uiState: StateFlow<FoodDetailUiState> = _uiState.asStateFlow()
 
-    // Holds background polling coroutine job
+    // Holds background polling and countdown coroutine jobs
     private var pollingJob: Job? = null
+    private var countdownJob: Job? = null
     private var isNgoApprovedUser: Boolean = false
 
     init {
@@ -39,21 +45,34 @@ class FoodDetailViewModel(
         if (!offerId.isNullOrBlank()) {
             startPolling(offerId)
             observeBookmarkStatus(offerId)
+            startMinuteTicker()
         } else {
             _uiState.update { it.copy(isLoading = false, errorMessage = "Offer not found") }
         }
     }
 
+    // Ticks every 30 seconds to keep remaining minutes accurate without full network refetches
+    private fun startMinuteTicker() {
+        countdownJob?.cancel()
+        countdownJob = viewModelScope.launch {
+            while (isActive) {
+                delay(30_000L) // 30-second interval
+                _uiState.value.offer?.let { offer ->
+                    val (mins, statusText) = calculateRemainingMinutesAndStatus(offer)
+                    _uiState.update { it.copy(minutesToClose = mins, liveTimeStatus = statusText) }
+                }
+            }
+        }
+    }
+
     // Periodically polls Supabase so customer UI reflects live IoT temperature updates and latest NGO status
-    fun startPolling(offerId: String, intervalMillis: Long = 2000L) {
+    fun startPolling(offerId: String, intervalMillis: Long = 3000L) {
         pollingJob?.cancel()
         pollingJob = viewModelScope.launch {
-            // Initial load displays loading indicator
             fetchOfferDetails(offerId, isInitialLoad = true)
 
             while (isActive) {
                 delay(intervalMillis)
-                // Subsequent polls update live telemetry quietly without re-triggering full page loader
                 fetchOfferDetails(offerId, isInitialLoad = false)
             }
         }
@@ -61,7 +80,9 @@ class FoodDetailViewModel(
 
     fun stopPolling() {
         pollingJob?.cancel()
+        countdownJob?.cancel()
         pollingJob = null
+        countdownJob = null
     }
 
     private fun observeBookmarkStatus(offerId: String) {
@@ -72,21 +93,14 @@ class FoodDetailViewModel(
         }
     }
 
-    // Handles incoming UI events from FoodDetailScreen
     fun onEvent(event: FoodDetailUiEvent) {
         when (event) {
             is FoodDetailUiEvent.OnIncreaseQuantity -> increaseQuantity()
             is FoodDetailUiEvent.OnDecreaseQuantity -> decreaseQuantity()
             is FoodDetailUiEvent.OnToggleBookmark -> toggleBookmark()
-            is FoodDetailUiEvent.OnNavigateBack -> {
-                stopPolling()
-            }
-            is FoodDetailUiEvent.OnReserveClicked -> {
-                // Handled in the UI/Route layer for navigation
-            }
-            is FoodDetailUiEvent.OnStoreClicked -> {
-                // Handled in the UI/Route layer for navigation
-            }
+            is FoodDetailUiEvent.OnNavigateBack -> stopPolling()
+            is FoodDetailUiEvent.OnReserveClicked -> Unit
+            is FoodDetailUiEvent.OnStoreClicked -> Unit
         }
     }
 
@@ -126,16 +140,12 @@ class FoodDetailViewModel(
                 val isHot = offer.storageType.equals("HOT", ignoreCase = true) ||
                         offer.storageType.contains("Hot", ignoreCase = true)
 
-                // Evaluates directional safe thresholds: Hot Box >= 55°C, Cold Chiller <= 8°C
-                val isSafe = if (isHot) {
-                    temp >= 55.0
-                } else {
-                    temp <= 8.0
-                }
+                val isSafe = if (isHot) temp >= 55.0 else temp <= 8.0
 
-                // If active user is an approved NGO and item is in free claim window, price becomes RM 0.00
                 val isFreeForNgo = isNgoApprovedUser && offer.isEligibleForNgoFree
                 val unitPrice = if (isFreeForNgo) 0.0 else offer.currentPrice
+
+                val (minsLeft, statusText) = calculateRemainingMinutesAndStatus(offer)
 
                 _uiState.update { current ->
                     val selectedQty = if (isInitialLoad) 1 else current.quantity.coerceAtMost(offer.quantityLeft.coerceAtLeast(1))
@@ -145,6 +155,9 @@ class FoodDetailViewModel(
                         quantity = selectedQty,
                         totalPrice = unitPrice * selectedQty,
                         isTemperatureSafe = isSafe,
+                        isNgoApproved = isNgoApprovedUser,
+                        minutesToClose = minsLeft,
+                        liveTimeStatus = statusText,
                         errorMessage = null
                     )
                 }
@@ -161,6 +174,60 @@ class FoodDetailViewModel(
                     current.copy(isLoading = false, errorMessage = e.message ?: "Failed to load offer details")
                 }
             }
+        }
+    }
+
+    // Accurately calculates remaining hours and minutes against device clock
+    private fun calculateRemainingMinutesAndStatus(offer: OfferUiModel): Pair<Long, String> {
+        val windowStr = offer.pickupWindow // e.g., "Today, 8:00 PM - 9:30 PM" or "21:30:00"
+        val now = Calendar.getInstance()
+
+        // Extract end time string (e.g. "9:30 PM" or "21:30")
+        val endTimeStr = if (windowStr.contains("-")) {
+            windowStr.substringAfter("-").trim()
+        } else {
+            windowStr.trim()
+        }
+
+        val targetCal = Calendar.getInstance()
+        var parsed = false
+
+        val formats = listOf("h:mm a", "hh:mm a", "H:mm", "HH:mm:ss", "HH:mm")
+        for (pattern in formats) {
+            try {
+                val sdf = SimpleDateFormat(pattern, Locale.US)
+                val date = sdf.parse(endTimeStr)
+                if (date != null) {
+                    val parsedCal = Calendar.getInstance().apply { time = date }
+                    targetCal.set(Calendar.HOUR_OF_DAY, parsedCal.get(Calendar.HOUR_OF_DAY))
+                    targetCal.set(Calendar.MINUTE, parsedCal.get(Calendar.MINUTE))
+                    targetCal.set(Calendar.SECOND, 0)
+                    parsed = true
+                    break
+                }
+            } catch (_: Exception) {}
+        }
+
+        if (!parsed) {
+            // Fallback to hoursToClose calculation if string cannot be parsed
+            val mins = (offer.hoursToClose * 60).toLong()
+            return if (mins > 0) mins to "Closes in ${offer.hoursToClose}h" else 0L to "Closed"
+        }
+
+        val diffMillis = targetCal.timeInMillis - now.timeInMillis
+        val diffMinutes = diffMillis / (1000 * 60)
+
+        return if (diffMinutes <= 0) {
+            0L to "Closed"
+        } else {
+            val hours = diffMinutes / 60
+            val minutes = diffMinutes % 60
+            val label = when {
+                hours > 0 && minutes > 0 -> "Closes in ${hours}h ${minutes}m"
+                hours > 0 -> "Closes in ${hours}h"
+                else -> "Closes in ${minutes}m"
+            }
+            diffMinutes to label
         }
     }
 
