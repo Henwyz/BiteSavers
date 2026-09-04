@@ -178,7 +178,7 @@ fun BusinessHomeScreen(
                         MetricCard(
                             icon = "\uD83D\uDCB0",
                             label = "Revenue Recovered",
-                            value = "RM %.0f".format(metrics.revenueRecovered),
+                            value = "RM %.2f".format(metrics.revenueRecovered),
                             subText = "Today's total",
                             modifier = Modifier.weight(1f)
                         )
