@@ -80,20 +80,7 @@ class VerificationViewModel : ViewModel() {
                     }
                 }
 
-                // Credit order earnings to store owner's wallet balance for non-free orders
-                if (!currentOrder.isNgoFreeClaim && currentOrder.totalPrice > 0.0) {
-                    val isCredited = walletRepository.creditOrderEarnings(
-                        storeId = currentOrder.storeId,
-                        orderAmount = currentOrder.totalPrice
-                    )
-                    if (isCredited) {
-                        Log.d("VerificationViewModel", "Successfully credited RM ${currentOrder.totalPrice} to store ${currentOrder.storeId}")
-                    } else {
-                        Log.w("VerificationViewModel", "Failed to credit earnings to store ${currentOrder.storeId}")
-                    }
-                }
-
-                // 3. Insert in-app notification for customer
+                // 2. Insert in-app notification for customer
                 val notifId = "notif_${UUID.randomUUID().toString().take(8)}"
                 val notification = NotificationDto(
                     id = notifId,
@@ -109,7 +96,7 @@ class VerificationViewModel : ViewModel() {
                     Log.w("VerificationViewModel", "Could not insert notification: ${e.message}")
                 }
 
-                // 4. NGO AUTOMATED EMAIL TRIGGER
+                // 3. NGO AUTOMATED EMAIL TRIGGER
                 // If this is a free NGO claim, fetch the NGO contact email and send confirmation
                 if (currentOrder.isNgoFreeClaim) {
                     sendAutomatedNgoEmail(currentOrder)

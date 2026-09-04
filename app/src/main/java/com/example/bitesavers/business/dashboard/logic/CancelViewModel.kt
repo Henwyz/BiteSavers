@@ -106,7 +106,7 @@ class CancelViewModel : ViewModel() {
                 }
 
                 if (isBiteSaverPay) {
-                    // Check merchant balance first before modifying any funds
+                    // 1. Resolve store owner ID
                     var storeOwnerId: String? = null
                     if (currentOrder.storeId.isNotBlank()) {
                         val storeResult = SupabaseClient.client.from("stores").select {
@@ -124,6 +124,7 @@ class CancelViewModel : ViewModel() {
                         return@launch
                     }
 
+                    // 2. Fetch merchant wallet
                     val merchantList = SupabaseClient.client.from("users").select {
                         filter { eq("id", storeOwnerId) }
                     }.decodeList<UserWalletDto>()
@@ -138,15 +139,15 @@ class CancelViewModel : ViewModel() {
                         return@launch
                     }
 
-                    //Deduct from merchant balance
-                    val newMerchantBalance = merchant.walletBalance - currentOrder.totalPrice
+                    // 3. Deduct order amount from merchant balance ONCE
+                    val newMerchantBalance = (merchant.walletBalance - currentOrder.totalPrice).coerceAtLeast(0.0)
                     SupabaseClient.client.from("users").update({
                         set("wallet_balance", newMerchantBalance)
                     }) {
                         filter { eq("id", merchant.id) }
                     }
 
-                    // Fetch and update customer wallet balance
+                    // 4. Refund exact order amount to customer wallet ONCE
                     val customerList = SupabaseClient.client.from("users").select {
                         filter { eq("id", currentOrder.userId) }
                     }.decodeList<UserWalletDto>()
@@ -160,31 +161,6 @@ class CancelViewModel : ViewModel() {
                             filter { eq("id", customer.id) }
                         }
                     }
-
-                    if (currentOrder.storeId.isNotBlank()) {
-                        // Find the owner of this store
-                        val storeResult = SupabaseClient.client.from("stores").select {
-                            filter { eq("id", currentOrder.storeId) }
-                        }.decodeList<StoreOwnerDto>()
-
-                        val storeOwnerId = storeResult.firstOrNull()?.ownerId
-                        if (!storeOwnerId.isNullOrBlank()) {
-                            // Find merchant user record and deduct balance
-                            val merchantList = SupabaseClient.client.from("users").select {
-                                filter { eq("id", storeOwnerId) }
-                            }.decodeList<UserWalletDto>()
-
-                            val merchant = merchantList.firstOrNull()
-                            if (merchant != null) {
-                                val newMerchantBalance = (merchant.walletBalance - currentOrder.totalPrice).coerceAtLeast(0.0)
-                                SupabaseClient.client.from("users").update({
-                                    set("wallet_balance", newMerchantBalance)
-                                }) {
-                                    filter { eq("id", merchant.id) }
-                                }
-                            }
-                        }
-                    }
                 }
 
                 // 2. Update orders table status & cancel reason
@@ -194,7 +170,7 @@ class CancelViewModel : ViewModel() {
                     filter { eq("id", currentOrder.id) }
                 }
 
-                // 3. Insert notification for target customer
+                // 3. Insert or update notification for target customer
                 val notifId = "notif_${UUID.randomUUID().toString().take(8)}"
                 val notification = NotificationDto(
                     id = notifId,
@@ -204,7 +180,12 @@ class CancelViewModel : ViewModel() {
                     message = "Your order ${currentOrder.shortOrderId} was cancelled. Reason: $finalReason. $refundMessageSuffix",
                     isRead = false
                 )
-                SupabaseClient.client.from("user_notifications").insert(notification)
+                try {
+                    SupabaseClient.client.from("user_notifications").upsert(notification)
+                } catch (e: Exception) {
+                    // Fallback to avoid blocking cancellation flow
+                    e.printStackTrace()
+                }
 
                 // 4. Trigger success pop-out on Main thread
                 withContext(Dispatchers.Main) {

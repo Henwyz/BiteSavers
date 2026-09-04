@@ -11,6 +11,7 @@ import com.example.bitesavers.data.repository.OfferRepository
 import com.example.bitesavers.data.repository.OrderRepository
 import com.example.bitesavers.data.repository.PaymentRepository
 import com.example.bitesavers.data.repository.UserRepository
+import com.example.bitesavers.data.repository.MerchantWalletRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,7 +22,8 @@ class CheckoutViewModel(
     private val offerRepository: OfferRepository = OfferRepository(),
     private val orderRepository: OrderRepository = OrderRepository(),
     private val paymentRepository: PaymentRepository = PaymentRepository(),
-    private val userRepository: UserRepository = UserRepository()
+    private val userRepository: UserRepository = UserRepository(),
+    private val merchantWalletRepository: MerchantWalletRepository = MerchantWalletRepository()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -184,6 +186,18 @@ class CheckoutViewModel(
             )
 
             if (orderId != null) {
+
+                if (!isFreeClaim && state.totalPrice > 0.0) {
+                    val offer = offerRepository.fetchOfferById(currentOfferId)
+                    val storeId = offer?.storeId ?: ""
+                    if (storeId.isNotBlank()) {
+                        merchantWalletRepository.creditOrderEarnings(
+                            storeId = storeId,
+                            orderAmount = state.totalPrice
+                        )
+                    }
+                }
+
                 val updatedBalance = paymentRepository.fetchWalletBalance()
                 _uiState.update {
                     it.copy(
