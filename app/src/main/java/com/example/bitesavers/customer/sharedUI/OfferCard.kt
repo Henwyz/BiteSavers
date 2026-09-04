@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -145,16 +144,16 @@ fun OfferCard(
         }
 
         Column(modifier = Modifier.padding(12.dp)) {
+            // Removed forced minimum height constraint to eliminate excess gap whitespace
             Text(
                 text = offer.title,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.heightIn(min = 44.dp)
+                overflow = TextOverflow.Ellipsis
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             // Store Name row
             Text(
@@ -166,7 +165,7 @@ fun OfferCard(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             // Price Row using the mapper's unified visual price directly without double calculation
             Row(
@@ -219,7 +218,7 @@ fun OfferCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             // Retains distance, quantity left, and closing text for discovery screen
             Row(
