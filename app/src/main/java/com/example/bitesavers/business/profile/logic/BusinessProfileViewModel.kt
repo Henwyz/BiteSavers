@@ -1,15 +1,16 @@
 package com.example.bitesavers.business.profile.logic
 
+import android.app.Application
 import android.util.Log
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bitesavers.business.profile.data.*
-import com.example.bitesavers.business.payment.data.MerchantWalletData
 import com.example.bitesavers.customer.profile.logic.SubmissionState
 import com.example.bitesavers.data.mapper.toUiModel
 import com.example.bitesavers.data.remote.UserSession
 import com.example.bitesavers.data.remote.dto.StoreDto
 import com.example.bitesavers.data.remote.repository.ProfileRepository
+import com.example.bitesavers.util.LocationUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,13 +18,13 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class BusinessProfileViewModel : ViewModel() {
+class BusinessProfileViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = ProfileRepository()
     private var currentStoreId: String? = null
     private var currentStoreOwnerId: String? = null
-    private var currentLatitude: Double = 3.1390
-    private var currentLongitude: Double = 101.6869
+    private var currentLatitude: Double = 5.4674
+    private var currentLongitude: Double = 100.2790
 
     private val _profile = MutableStateFlow(BusinessProfileUiModel())
     val profile: StateFlow<BusinessProfileUiModel> = _profile.asStateFlow()
@@ -90,16 +91,16 @@ class BusinessProfileViewModel : ViewModel() {
                         val owner = BusinessOwnerAccountUiModel(name = userDto.name, email = userDto.email)
                         _ownerAccount.value = owner
                         _accountDraft.update { it.copy(name = owner.name, email = owner.email) }
+                        Log.d("BusinessProfile", "Loaded account: ${owner.name} (${owner.email})")
                     } catch (e: Exception) {
                         Log.w("BusinessProfile", "Could not fetch user: ${e.message}")
                     }
                 }
 
-                // 2. Fetch all store rows
+                // 2. Fetch all store rows for this owner (sorted newest-first)
                 val storeRows: List<StoreDto> = if (userId.isNotBlank()) repository.getStoreRowsByOwnerId(userId) else emptyList()
 
-                // Display APPROVED row
-                // Display APPROVED row
+                // 3. Find the APPROVED row to display (strictly ignore PENDING rows)
                 val activeApprovedStore: StoreDto? = storeRows.firstOrNull { it.status?.equals("APPROVED", ignoreCase = true) == true }
                     ?: storeRows.lastOrNull { it.status?.equals("PENDING", ignoreCase = true) != true }
                     ?: storeRows.lastOrNull()
@@ -110,15 +111,13 @@ class BusinessProfileViewModel : ViewModel() {
                 if (activeApprovedStore != null) {
                     currentStoreId = activeApprovedStore.id
                     currentStoreOwnerId = activeApprovedStore.ownerId ?: userId
-                    currentLatitude = activeApprovedStore.latitude ?: 3.1390
-                    currentLongitude = activeApprovedStore.longitude ?: 101.6869
+                    currentLatitude = activeApprovedStore.latitude ?: 5.4674
+                    currentLongitude = activeApprovedStore.longitude ?: 100.2790
 
                     val storeUi = activeApprovedStore.toUiModel()
-
-
-                    // Bind your live wallet balance here so Photo 1 and Photo 2 sync up:
                     _profile.value = storeUi
 
+                    // Pre-fill business draft with the APPROVED details
                     _businessDraft.update {
                         it.copy(
                             businessName = storeUi.businessName,
@@ -137,15 +136,23 @@ class BusinessProfileViewModel : ViewModel() {
         }
     }
 
+    // Reloads store and owner data from Supabase for the active session
+    fun refresh() {
+        val userId = UserSession.getUserId().ifBlank { UserSession.currentUserId.value }
+        loadAllData(userId)
+    }
+
     fun initEditScreen() {
         _selectedTab.value = BusinessEditTab.ACCOUNT
 
+        // Pre-fill account draft from real logged-in user account
         _accountDraft.value = BusinessAccountEditUiModel(
             name = _ownerAccount.value.name,
             email = _ownerAccount.value.email,
             password = ""
         )
 
+        // Pre-fill business draft from active APPROVED profile
         _businessDraft.value = BusinessDetailsEditUiModel(
             businessName = _profile.value.businessName,
             address = _profile.value.address,
@@ -328,21 +335,26 @@ class BusinessProfileViewModel : ViewModel() {
         proceedWithBusinessSubmission()
     }
 
-    fun refresh() {
-        val userId = UserSession.currentUserId.value
-        if (userId.isNotBlank()) {
-            loadAllData(userId)
-        }
-    }
-
     private fun proceedWithBusinessSubmission() {
         val draft = _businessDraft.value.trimmed()
         val userId = UserSession.currentUserId.value
         val ownerIdToUse = if (userId.isNotBlank()) userId else (currentStoreOwnerId ?: "")
 
+        if (ownerIdToUse.isBlank()) {
+            _submissionState.value = SubmissionState.Error("No valid owner ID found to link store.")
+            return
+        }
+
         viewModelScope.launch {
             _submissionState.value = SubmissionState.Submitting
             try {
+                // Converts the newly entered address into real latitude and longitude coordinates
+                val context = getApplication<Application>().applicationContext
+                val (geocodedLat, geocodedLng) = LocationUtils.getCoordinatesFromAddress(context, draft.address)
+
+                Log.d("BusinessProfile", "Geocoded address '${draft.address}' to ($geocodedLat, $geocodedLng)")
+
+                // Inserts new PENDING row with geocoded coordinates
                 repository.insertStoreEditRequest(
                     ownerId = ownerIdToUse,
                     name = draft.businessName,
@@ -350,8 +362,8 @@ class BusinessProfileViewModel : ViewModel() {
                     phone = draft.phone,
                     operatingHours = draft.operatingHours,
                     cleanupHours = draft.cleanupHours,
-                    latitude = currentLatitude,
-                    longitude = currentLongitude,
+                    latitude = geocodedLat,
+                    longitude = geocodedLng,
                     reasonForChange = draft.reasonForChange
                 )
 

@@ -7,31 +7,42 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitesavers.R
+import com.example.bitesavers.business.profile.data.BusinessOwnerAccountUiModel
+import com.example.bitesavers.business.profile.data.BusinessProfileUiModel
 import com.example.bitesavers.business.profile.logic.BusinessProfileViewModel
-import com.example.bitesavers.data.remote.UserSession
+import com.example.bitesavers.ui.theme.BiteSaversTheme
+import org.maplibre.android.MapLibre
+import org.maplibre.android.annotations.MarkerOptions
+import org.maplibre.android.camera.CameraPosition
+import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.maps.MapView
 
 @Composable
 fun BusinessProfileScreen(
     onSignOutClick: () -> Unit,
     onEditClick: () -> Unit,
-    onViewWalletClick: (String) -> Unit,
+    onViewWalletClick: (String) -> Unit = {},
     viewModel: BusinessProfileViewModel = viewModel()
 ) {
     val profile by viewModel.profile.collectAsStateWithLifecycle()
@@ -39,11 +50,31 @@ fun BusinessProfileScreen(
     val hasPendingBusinessEdit by viewModel.hasPendingBusinessEdit.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
 
-
     LaunchedEffect(Unit) {
         viewModel.refresh()
     }
 
+    BusinessProfileContent(
+        profile = profile,
+        ownerAccount = ownerAccount,
+        hasPendingBusinessEdit = hasPendingBusinessEdit,
+        isLoading = isLoading,
+        onSignOutClick = onSignOutClick,
+        onEditClick = onEditClick,
+        onViewWalletClick = onViewWalletClick
+    )
+}
+
+@Composable
+private fun BusinessProfileContent(
+    profile: BusinessProfileUiModel,
+    ownerAccount: BusinessOwnerAccountUiModel,
+    hasPendingBusinessEdit: Boolean,
+    isLoading: Boolean,
+    onSignOutClick: () -> Unit,
+    onEditClick: () -> Unit,
+    onViewWalletClick: (String) -> Unit = {}
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -100,21 +131,23 @@ fun BusinessProfileScreen(
                             .background(MaterialTheme.colorScheme.secondaryContainer)
                     ) {
                         Icon(
-                            Icons.Filled.Edit,
+                            painter = painterResource(R.drawable.ic_edit),
                             contentDescription = stringResource(R.string.business_edit_details_title),
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                     IconButton(
-                        onClick = { /* TODO notifications */ },
+                        onClick = { /* Notification center */ },
                         modifier = Modifier
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.primary)
                     ) {
                         Icon(
-                            Icons.Filled.Notifications,
+                            painter = painterResource(R.drawable.ic_notification),
                             contentDescription = stringResource(R.string.cd_notifications),
-                            tint = MaterialTheme.colorScheme.onPrimary
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
@@ -134,7 +167,7 @@ fun BusinessProfileScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        Icons.Filled.BakeryDining,
+                        painter = painterResource(R.drawable.ic_store),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onTertiary,
                         modifier = Modifier.size(36.dp)
@@ -165,7 +198,7 @@ fun BusinessProfileScreen(
                 Spacer(Modifier.height(6.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        Icons.Filled.Star,
+                        painter = painterResource(R.drawable.ic_star_filled),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.tertiary,
                         modifier = Modifier.size(14.dp)
@@ -196,7 +229,7 @@ fun BusinessProfileScreen(
                     verticalAlignment = Alignment.Top
                 ) {
                     Icon(
-                        Icons.Filled.WarningAmber,
+                        imageVector = Icons.Filled.WarningAmber,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onTertiaryContainer,
                         modifier = Modifier.size(18.dp)
@@ -225,18 +258,17 @@ fun BusinessProfileScreen(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     BusinessInfoRow(
-                        icon = Icons.Filled.LocationOn,
+                        iconRes = R.drawable.ic_my_location,
                         label = stringResource(R.string.business_address_label),
                         value = profile.address
                     )
                     BusinessInfoRow(
-                        icon = Icons.Filled.Phone,
+                        iconRes = R.drawable.ic_image,
                         label = stringResource(R.string.business_phone_label),
                         value = profile.phone
                     )
-                    // Category row removed here
                     BusinessInfoRow(
-                        icon = Icons.Filled.AccessTime,
+                        iconRes = R.drawable.ic_clock,
                         label = stringResource(R.string.business_operating_hours_title),
                         value = profile.operatingHours,
                         showDivider = false
@@ -246,38 +278,118 @@ fun BusinessProfileScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // ---------- Wallet Summary Card  ----------
-            WalletSummaryCard(
-                balance = profile.balance,
-                onViewWalletClick = {
-                    onViewWalletClick(profile.id)
-                }
+            // ---------- MapLibre Map Section ----------
+            BusinessStoreMapCard(
+                latitude = profile.latitude,
+                longitude = profile.longitude,
+                storeName = profile.businessName
+            )
+        }
+    }
+}
+
+/**
+ * Interactive MapLibre vector map displaying the store's pinned location
+ */
+@Composable
+private fun BusinessStoreMapCard(
+    latitude: Double,
+    longitude: Double,
+    storeName: String,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // 1. Initialize MapLibre SYNCHRONOUSLY before MapView is constructed
+    remember {
+        try {
+            MapLibre.getInstance(context)
+        } catch (_: Exception) {}
+    }
+
+    // 2. Construct MapView with explicit onCreate(null)
+    val mapView = remember {
+        MapView(context).apply {
+            onCreate(null) // 👈 Required by MapLibre
+            getMapAsync { map ->
+                try {
+                    map.setStyle("https://demotiles.maplibre.org/style.json") { _ ->
+                        val storePosition = LatLng(latitude, longitude)
+
+                        map.cameraPosition = CameraPosition.Builder()
+                            .target(storePosition)
+                            .zoom(15.0)
+                            .build()
+
+                        try {
+                            map.addMarker(
+                                MarkerOptions()
+                                    .position(storePosition)
+                                    .title(storeName)
+                            )
+                        } catch (_: Exception) {}
+                    }
+                } catch (_: Exception) {}
+            }
+        }
+    }
+
+    // 3. Connect lifecycle events
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> mapView.onStart()
+                Lifecycle.Event.ON_RESUME -> mapView.onResume()
+                Lifecycle.Event.ON_PAUSE -> mapView.onPause()
+                Lifecycle.Event.ON_STOP -> mapView.onStop()
+                Lifecycle.Event.ON_DESTROY -> mapView.onDestroy()
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = modifier
+            .fillMaxWidth()
+            .height(180.dp)
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            AndroidView(
+                factory = { mapView },
+                modifier = Modifier.fillMaxSize()
             )
 
-
-            Spacer(Modifier.height(16.dp))
-
-            // ---------- Map placeholder ----------
-            Box(
+            // Location Chip Overlay
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(140.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(MaterialTheme.colorScheme.secondaryContainer),
-                contentAlignment = Alignment.Center
+                    .align(Alignment.BottomStart)
+                    .padding(10.dp)
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Icon(
-                        Icons.Filled.Map,
+                        painter = painterResource(R.drawable.ic_my_location),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(14.dp)
                     )
-                    Spacer(Modifier.height(4.dp))
+                    Spacer(Modifier.width(4.dp))
                     Text(
-                        stringResource(R.string.map_preview_placeholder),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 11.sp
+                        text = "Store Location",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
@@ -287,7 +399,7 @@ fun BusinessProfileScreen(
 
 @Composable
 private fun BusinessInfoRow(
-    icon: ImageVector,
+    iconRes: Int,
     label: String,
     value: String,
     showDivider: Boolean = true
@@ -305,7 +417,12 @@ private fun BusinessInfoRow(
                 .background(MaterialTheme.colorScheme.secondaryContainer),
             contentAlignment = Alignment.Center
         ) {
-            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+            Icon(
+                painter = painterResource(iconRes),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(16.dp)
+            )
         }
         Spacer(Modifier.width(10.dp))
         Column {
@@ -318,52 +435,29 @@ private fun BusinessInfoRow(
     }
 }
 
-// ---------- Wallet Summary Card Composable Component ----------
+@Preview(showBackground = true, name = "Business Profile Screen Preview")
 @Composable
-fun WalletSummaryCard(
-    balance: Double,
-    onViewWalletClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Label & Amount Stacked
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    text = "Available to Withdraw",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = "RM %.2f".format(balance),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-
-            // Integrated Full-Width Withdraw Button
-            Button(
-                onClick = onViewWalletClick,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-            ) {
-                Text(
-                    text = "Withdraw",
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
+private fun BusinessProfileScreenPreview() {
+    BiteSaversTheme {
+        BusinessProfileContent(
+            profile = BusinessProfileUiModel(
+                businessName = "BiteSaver Kopitiam",
+                verificationId = "1426D2B8-2",
+                isVerified = true,
+                rating = 4.8,
+                reviewCount = 115,
+                address = "45 Lebuh Chulia, George Town, Penang",
+                phone = "+60124567890",
+                operatingHours = "08:00:00 - 21:30:00",
+                latitude = 5.4164,
+                longitude = 100.3327
+            ),
+            ownerAccount = BusinessOwnerAccountUiModel(name = "Uncle Ong", email = "ong@gmail.com"),
+            hasPendingBusinessEdit = false,
+            isLoading = false,
+            onSignOutClick = {},
+            onEditClick = {},
+            onViewWalletClick = {}
+        )
     }
 }

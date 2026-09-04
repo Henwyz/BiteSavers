@@ -59,7 +59,8 @@ fun BusinessHomeScreen(
     onNavigateToOrders: () -> Unit = {},
     onNavigateToVerification: (String) -> Unit = {},
     onNavigateToAnalytics: () -> Unit = {},
-    onNavigateToTemperature: () -> Unit = {}
+    onNavigateToTemperature: () -> Unit = {},
+    onViewWalletClick: (String) -> Unit = {}
 ) {
     LaunchedEffect(Unit) {
         viewModel.loadCurrentStoreAndOrders()

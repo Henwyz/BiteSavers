@@ -18,6 +18,8 @@ fun StoreDto.toUiModel(): BusinessProfileUiModel {
         phone = contactPhone?.ifBlank { "+60 12-345 6789" } ?: "+60 12-345 6789",
         category = "Food & Beverage",
         operatingHours = "$open - $close",
-        cleanupHours = cleanup
+        cleanupHours = cleanup,
+        latitude = latitude ?: 5.4674,
+        longitude = longitude ?: 100.2790
     )
 }
