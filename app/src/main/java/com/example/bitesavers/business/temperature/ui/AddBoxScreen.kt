@@ -1,5 +1,7 @@
 package com.example.bitesavers.business.temperature.ui
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -36,14 +39,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bitesavers.R
 import com.example.bitesavers.ui.theme.BiteSaversTheme
+import java.net.URLEncoder
 
 @Composable
 fun AddBoxScreen(
@@ -51,8 +58,12 @@ fun AddBoxScreen(
     onNavigateBack: () -> Unit,
     onUnitAdded: (sensorId: String, isHotBox: Boolean) -> Unit
 ) {
+    val context = LocalContext.current
     var sensorIdInput by remember { mutableStateOf("") }
     var isHotBoxSelected by remember { mutableStateOf(false) }
+
+    val rawPhone = stringResource(R.string.support_whatsapp_phone)
+    val whatsappMessage = stringResource(R.string.request_sensors_whatsapp_msg)
 
     Column(
         modifier = Modifier
@@ -223,29 +234,83 @@ fun AddBoxScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Save & Pair Action Button
-            Button(
-                onClick = {
-                    if (sensorIdInput.isNotBlank()) {
-                        onUnitAdded(sensorIdInput.trim(), isHotBoxSelected)
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                shape = RoundedCornerShape(50),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                ),
-                enabled = sensorIdInput.isNotBlank()
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = stringResource(R.string.save_and_connect_unit),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
+                // Save & Pair Action Button
+                Button(
+                    onClick = {
+                        if (sensorIdInput.isNotBlank()) {
+                            onUnitAdded(sensorIdInput.trim(), isHotBoxSelected)
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    shape = RoundedCornerShape(50),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                    ),
+                    enabled = sensorIdInput.isNotBlank()
+                ) {
+                    Text(
+                        text = stringResource(R.string.save_and_connect_unit),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Balanced, Centered 2-Line WhatsApp Inquiry Section
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = stringResource(R.string.request_more_sensors_header),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 12.sp,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = stringResource(R.string.request_more_sensors_action),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 12.sp
+                        )
+                        Text(
+                            text = rawPhone,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp,
+                            textDecoration = TextDecoration.Underline,
+                            modifier = Modifier.clickable {
+                                val cleanNumber = rawPhone.replace(Regex("[^0-9]"), "")
+                                val formattedNumber = if (cleanNumber.startsWith("0")) "6$cleanNumber" else cleanNumber
+                                val encodedMessage = URLEncoder.encode(whatsappMessage, "UTF-8")
+                                val url = "https://api.whatsapp.com/send?phone=$formattedNumber&text=$encodedMessage"
+
+                                val intent = Intent(Intent.ACTION_VIEW).apply {
+                                    data = Uri.parse(url)
+                                }
+                                try {
+                                    context.startActivity(intent)
+                                } catch (_: Exception) {
+                                    val fallbackIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/$formattedNumber?text=$encodedMessage"))
+                                    context.startActivity(fallbackIntent)
+                                }
+                            }
+                        )
+                    }
+                }
             }
         }
     }
@@ -292,7 +357,7 @@ private fun StorageModeOptionCard(
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, name = "Add Box Screen Preview")
 @Composable
 private fun AddBoxScreenPreview() {
     BiteSaversTheme {
