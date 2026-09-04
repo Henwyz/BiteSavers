@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -83,7 +84,7 @@ fun AnalyticsScreen(viewModel: AnalyticsViewModel = viewModel()) {
                     iconTint = MaterialTheme.colorScheme.primary,
                     iconBackground = MaterialTheme.colorScheme.primaryContainer,
                     label = stringResource(R.string.analytics_revenue_recovered),
-                    value = "RM ${analytics.revenueRecoveredRM.toInt()}",
+                    value = stringResource(R.string.currency_rm, analytics.revenueRecoveredRM), // 👈 Shows 2 decimal places (e.g. RM 27.00)
                     changeText = stringResource(R.string.analytics_change_this_week, analytics.revenueChangePercent),
                     showTrendArrow = analytics.revenueChangePercent >= 0
                 )

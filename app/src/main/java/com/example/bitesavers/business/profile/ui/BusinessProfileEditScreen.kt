@@ -22,14 +22,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitesavers.R
 import com.example.bitesavers.business.profile.data.BusinessEditTab
-import com.example.bitesavers.business.profile.logic.BusinessProfileViewModel // 👈 Imports from .logic
+import com.example.bitesavers.business.profile.logic.BusinessProfileViewModel
 import com.example.bitesavers.customer.profile.logic.SubmissionState
+import com.example.bitesavers.ui.theme.BiteSaversTheme
 
 @Composable
 fun BusinessProfileEditScreen(
@@ -101,7 +103,7 @@ fun BusinessProfileEditScreen(
         )
     }
 
-    // 3. Pending Edit Warning Dialog
+    // 3. Pending Edit Warning Dialog (Blocks second edit submission)
     if (showPendingWarningDialog) {
         AlertDialog(
             onDismissRequest = { viewModel.dismissPendingWarningDialog() },
@@ -227,7 +229,7 @@ fun BusinessProfileEditScreen(
                         verticalAlignment = Alignment.Top
                     ) {
                         Icon(
-                            Icons.Filled.WarningAmber,
+                            imageVector = Icons.Filled.WarningAmber,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onTertiaryContainer,
                             modifier = Modifier.size(18.dp)
@@ -415,4 +417,15 @@ private fun BusinessFormField(
         )
     }
     Spacer(Modifier.height(12.dp))
+}
+
+@Preview(showBackground = true, name = "Business Profile Edit Screen Preview")
+@Composable
+private fun BusinessProfileEditScreenPreview() {
+    BiteSaversTheme {
+        BusinessProfileEditScreen(
+            onBackClick = {},
+            onSubmitted = {}
+        )
+    }
 }

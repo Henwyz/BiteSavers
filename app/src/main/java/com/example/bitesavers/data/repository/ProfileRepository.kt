@@ -4,6 +4,7 @@ import android.util.Log
 import com.example.bitesavers.data.remote.SupabaseClient
 import com.example.bitesavers.data.remote.dto.*
 import io.github.jan.supabase.gotrue.auth
+import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
@@ -23,24 +24,14 @@ class ProfileRepository {
 
     suspend fun updateUserProfile(userId: String, name: String, email: String) {
         postgrest.from("users")
-            .update({
-                set("name", name)
-                set("email", email)
-            }) {
+            .update(UserProfileUpdateDto(name = name, email = email)) {
                 filter { eq("id", userId) }
             }
     }
 
-    // Updates active user password using Supabase Auth
-    suspend fun updateUserPassword(newPassword: String): Result<Unit> {
-        return try {
-            auth.updateUser {
-                password = newPassword
-            }
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Log.e("ProfileRepository", "updateUserPassword error: ${e.message}", e)
-            Result.failure(e)
+    suspend fun updateUserPassword(newPassword: String) {
+        auth.updateUser {
+            password = newPassword
         }
     }
 
@@ -80,8 +71,8 @@ class ProfileRepository {
         phone: String,
         operatingHours: String,
         cleanupHours: String,
-        latitude: Double = 3.1390,
-        longitude: Double = 101.6869,
+        latitude: Double = 5.4674,
+        longitude: Double = 100.2790,
         reasonForChange: String? = null
     ) {
         val times = operatingHours.split("-").map { it.trim() }
@@ -105,7 +96,7 @@ class ProfileRepository {
         )
 
         postgrest.from("stores").insert(insertDto)
-        Log.d("ProfileRepository", "Successfully inserted new PENDING store row into 'stores'")
+        Log.d("ProfileRepository", "✅ Successfully inserted new PENDING store row into 'stores'")
     }
 
     // =================================================================
@@ -125,16 +116,13 @@ class ProfileRepository {
 
     suspend fun updateUserNgoStatus(userId: String, status: String, orgName: String?) {
         postgrest.from("users")
-            .update({
-                set("ngo_status", status)
-                set("ngo_org_name", orgName)
-            }) {
+            .update(UserNgoStatusUpdateDto(ngoStatus = status, ngoOrgName = orgName)) {
                 filter { eq("id", userId) }
             }
     }
 
     // =================================================================
-    // 4. ORDER & ANALYTICS OPERATIONS (orders table)
+    // 4. ORDER & ANALYTICS OPERATIONS
     // =================================================================
     suspend fun getOrdersByStoreId(storeId: String): List<OrderDto> {
         return try {

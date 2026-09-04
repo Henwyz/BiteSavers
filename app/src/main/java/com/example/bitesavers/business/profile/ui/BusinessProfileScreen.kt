@@ -1,45 +1,19 @@
 package com.example.bitesavers.business.profile.ui
 
-import android.content.res.Configuration
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.WarningAmber
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -270,53 +244,6 @@ private fun BusinessProfileContent(
                 Spacer(Modifier.height(16.dp))
             }
 
-            // ---------- Store Wallet Balance Card ----------
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = stringResource(R.string.business_wallet_card_title),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "RM %.2f".format(profile.walletBalance),
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
-
-                    Button(
-                        onClick = { onViewWalletClick(profile.storeId) },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.business_wallet_action_payout),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
-                        )
-                    }
-                }
-            }
-
-            Spacer(Modifier.height(16.dp))
-
             // ---------- Business info card ----------
             Card(
                 shape = RoundedCornerShape(16.dp),
@@ -351,7 +278,7 @@ private fun BusinessProfileContent(
 
             Spacer(Modifier.height(16.dp))
 
-            // ---------- MapLibre Map Section (Locked Gestures) ----------
+            // ---------- MapLibre Map Section ----------
             BusinessStoreMapCard(
                 latitude = profile.latitude,
                 longitude = profile.longitude,
@@ -362,7 +289,7 @@ private fun BusinessProfileContent(
 }
 
 /**
- * Static MapLibre vector map displaying the store's pinned location with gestures disabled.
+ * Interactive MapLibre vector map displaying the store's pinned location
  */
 @Composable
 private fun BusinessStoreMapCard(
@@ -374,29 +301,17 @@ private fun BusinessStoreMapCard(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // Initialize MapLibre before constructing MapView
     remember {
         try {
             MapLibre.getInstance(context)
         } catch (_: Exception) {}
     }
 
-    // Construct MapView with gestures locked to prevent accidental panning
     val mapView = remember {
         MapView(context).apply {
             onCreate(null)
             getMapAsync { map ->
                 try {
-                    // Lock all gestures so the map stays centered on the store coordinates
-                    map.uiSettings.apply {
-                        isScrollGesturesEnabled = false
-                        isZoomGesturesEnabled = false
-                        isTiltGesturesEnabled = false
-                        isRotateGesturesEnabled = false
-                        isDoubleTapGesturesEnabled = false
-                        isQuickZoomGesturesEnabled = false
-                    }
-
                     map.setStyle("https://demotiles.maplibre.org/style.json") { _ ->
                         val storePosition = LatLng(latitude, longitude)
 
@@ -468,7 +383,7 @@ private fun BusinessStoreMapCard(
                     )
                     Spacer(Modifier.width(4.dp))
                     Text(
-                        text = stringResource(R.string.business_map_static_label),
+                        text = "Store Location",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -517,14 +432,12 @@ private fun BusinessInfoRow(
     }
 }
 
-@Preview(name = "Business Profile - Light", showBackground = true)
-@Preview(name = "Business Profile - Dark", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Preview(showBackground = true, name = "Business Profile Screen Preview")
 @Composable
 private fun BusinessProfileScreenPreview() {
     BiteSaversTheme {
         BusinessProfileContent(
             profile = BusinessProfileUiModel(
-                storeId = "store_preview_123",
                 businessName = "BiteSaver Kopitiam",
                 verificationId = "1426D2B8-2",
                 isVerified = true,
@@ -534,8 +447,7 @@ private fun BusinessProfileScreenPreview() {
                 phone = "+60124567890",
                 operatingHours = "08:00:00 - 21:30:00",
                 latitude = 5.4164,
-                longitude = 100.3327,
-                walletBalance = 585.50
+                longitude = 100.3327
             ),
             ownerAccount = BusinessOwnerAccountUiModel(name = "Uncle Ong", email = "ong@gmail.com"),
             hasPendingBusinessEdit = false,
