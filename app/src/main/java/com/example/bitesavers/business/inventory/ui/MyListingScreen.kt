@@ -28,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -193,6 +194,7 @@ fun ListingCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+                // 1. Food preview image
                 Box(
                     modifier = Modifier
                         .size(60.dp)
@@ -232,13 +234,52 @@ fun ListingCard(
 
                 Spacer(modifier = Modifier.width(12.dp))
 
+                // Determine effective listing status and corresponding theme colors
+                val isPausedState = item.status.equals("PAUSED", ignoreCase = true)
+                val isAfterPickup = isPickupEnd(item.pickupEnd)
+                val effectiveStatus = when {
+                    isPausedState -> "PAUSED"
+                    !isAfterPickup -> "ACTIVE"
+                    isAfterPickup && TimeUtils.isCurrentTimeWithin(item.pickupEnd, item.cleanupEndTime) -> "NGO RESCUE"
+                    else -> "PAUSED"
+                }
+
+                val (statusBg, statusText) = when (effectiveStatus) {
+                    "ACTIVE" -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
+                    "NGO RESCUE" -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
+                    else -> MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.onErrorContainer
+                }
+
+                // 2. Food details column
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = item.name,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+                    // Title and status badge placed side-by-side to save vertical space
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Text(
+                            text = item.name,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.weight(1f, fill = false),
+                            maxLines = 2
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Box(
+                            modifier = Modifier
+                                .background(statusBg, RoundedCornerShape(12.dp))
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                        ) {
+                            Text(
+                                text = effectiveStatus,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = statusText
+                            )
+                        }
+                    }
 
                     Text(
                         text = item.category,
@@ -246,42 +287,57 @@ fun ListingCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (isNgoRescueTier) {
+                    // Price and discount percentage row
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(vertical = 2.dp)
+                    ) {
+                        val isTrulyFree = isNgoRescueTier || item.discountPrice <= 0.0 || item.isEligibleForNgoFree
+
+                        if (isTrulyFree) {
                             Text(
-                                text = "FREE (NGO)",
+                                text = stringResource(R.string.badge_free_ngo),
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.tertiary,
-                                fontSize = 14.sp
+                                fontSize = 13.sp,
+                                maxLines = 1,
+                                softWrap = false
                             )
                         } else {
                             Text(
-                                text = "RM %.2f".format(item.discountPrice),
+                                text = stringResource(R.string.format_currency_price, item.discountPrice),
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary,
-                                fontSize = 14.sp
+                                fontSize = 13.sp,
+                                maxLines = 1,
+                                softWrap = false
                             )
                         }
 
-                        Spacer(modifier = Modifier.width(6.dp))
+                        if (item.originalPrice > 0.0) {
+                            Spacer(modifier = Modifier.width(5.dp))
+                            Text(
+                                text = stringResource(R.string.format_currency_price, item.originalPrice),
+                                fontSize = 11.sp,
+                                textDecoration = TextDecoration.LineThrough,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                softWrap = false
+                            )
+                        }
 
-                        Text(
-                            text = "RM %.2f".format(item.originalPrice),
-                            fontSize = 12.sp,
-                            textDecoration = TextDecoration.LineThrough,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Spacer(modifier = Modifier.width(5.dp))
 
-                        Spacer(modifier = Modifier.width(6.dp))
+                        val badgeText = if (isTrulyFree) {
+                            stringResource(R.string.badge_free_percent)
+                        } else {
+                            val pct = item.discountPercent.coerceAtLeast(0)
+                            stringResource(R.string.format_discount_percent, pct)
+                        }
 
-                        val badgeText = if (isNgoRescueTier) "-100%" else "-${item.discountPercent}%"
-                        Box(
-                            modifier = Modifier
-                                .background(
-                                    MaterialTheme.colorScheme.tertiaryContainer,
-                                    RoundedCornerShape(4.dp)
-                                )
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = MaterialTheme.colorScheme.tertiaryContainer
                         ) {
                             Text(
                                 text = badgeText,
@@ -289,7 +345,8 @@ fun ListingCard(
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer,
                                 maxLines = 1,
-                                softWrap = false
+                                softWrap = false,
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
                             )
                         }
                     }
@@ -315,6 +372,7 @@ fun ListingCard(
                         modifier = Modifier.padding(top = 2.dp)
                     )
                 }
+            }
 
                 // Determine active phase using pickup and store cleanup boundaries
                 val isPausedState = item.status.equals("PAUSED", ignoreCase = true)
@@ -337,19 +395,6 @@ fun ListingCard(
                     "ACTIVE" -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
                     "NGO RESCUE" -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
                     else -> MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.onErrorContainer
-                }
-
-                Box(
-                    modifier = Modifier
-                        .background(statusBg, RoundedCornerShape(12.dp))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = effectiveStatus,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = statusText
-                    )
                 }
             }
 
@@ -383,7 +428,6 @@ fun ListingCard(
             }
         }
     }
-}
 
 @Preview(name = "My Listing Screen - Light", showBackground = true)
 @Preview(name = "My Listing Screen - Dark", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)

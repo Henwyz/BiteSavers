@@ -9,6 +9,7 @@ import android.os.Build
 import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -798,7 +799,8 @@ fun AddFoodScreen(
 
             // Storage Box Selector with current temperature display
             Column(modifier = Modifier.fillMaxWidth()){
-                val availableBoxes = viewModel.storageBoxes
+                // Only allow normal, safe (unlocked) boxes to be assigned
+                val availableBoxes = viewModel.storageBoxes.filter { !it.isLocked }
                 val hasBoxes = availableBoxes.isNotEmpty()
                 val selectedBox = availableBoxes.firstOrNull { it.id == selectedBoxId }
 
@@ -922,6 +924,42 @@ fun AddFoodScreen(
                         }
                     }
                 }
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Safety Notice / Warning Banner (Yellow Container)
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f),
+                    border = BorderStroke(
+                        1.dp,
+                        MaterialTheme.colorScheme.tertiary.copy(alpha = 0.3f)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (!hasBoxes) "⚠️" else "🛡️",
+                            fontSize = 16.sp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (!hasBoxes) {
+                                stringResource(R.string.storage_box_none_available_warning)
+                            } else {
+                                stringResource(R.string.storage_box_safety_warning)
+                            },
+                            fontSize = 11.sp,
+                            lineHeight = 15.sp,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -978,7 +1016,11 @@ fun AddFoodScreen(
                 )
             ) {
                 Text(
-                    text = stringResource(R.string.btn_publish_listing),
+                    text = if (editingItem != null) {
+                        stringResource(R.string.btn_update_listing)
+                    } else {
+                        stringResource(R.string.btn_publish_listing)
+                    },
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp
                 )
