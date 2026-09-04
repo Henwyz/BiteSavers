@@ -126,8 +126,10 @@ private fun evaluateNgoFreeEligibility(
     val storeCleaningMinutes = parseTimeToMinutes(storeCleaningStr)
         ?: (storeClosingMinutes?.plus(60) ?: ((pickupEndMinutes ?: 0) + 60))
 
-    // Scenario 2: During the cleaning period after store close (e.g. 5:00 PM to 10:00 PM)
-    val isCleaningPeriod = storeClosingMinutes != null && currentMinutes in storeClosingMinutes..storeCleaningMinutes
+    // Scenario 2: Strictly active ONLY between store close and cleanup end time (e.g. 5:00 PM to 10:00 PM)
+    val isCleaningPeriod = storeClosingMinutes != null &&
+            currentMinutes >= storeClosingMinutes &&
+            currentMinutes <= storeCleaningMinutes
 
     // Scenario 1: Afternoon window — free for 1 hour immediately after regular pickup ends, before store closing
     val isPostPickupPeriod = if (pickupEndMinutes != null) {

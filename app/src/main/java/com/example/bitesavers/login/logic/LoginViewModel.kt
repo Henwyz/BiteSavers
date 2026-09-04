@@ -205,7 +205,7 @@ class LoginViewModel : ViewModel() {
                     if (dbRole != chosenRole) {
                         SupabaseClient.client.auth.signOut()
                         UserSession.clear()
-                        emailError = "This account is registered as a ${userProfile?.role ?: "consumer"}, not a $selectedRole."
+                        emailError = "This account is registered as a ${userProfile?.role ?: "CONSUMER"}, not a $selectedRole."
                     } else {
                         UserSession.saveSession(userId = authId, role = userProfile?.role ?: "CONSUMER")
 
