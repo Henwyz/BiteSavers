@@ -6,6 +6,7 @@ enum class BusinessEditTab(val displayLabel: String) {
 }
 
 data class BusinessProfileUiModel(
+    val storeId: String = "",
     val businessName: String = "Loading...",
     val verificationId: String = "",
     val isVerified: Boolean = false,
@@ -17,7 +18,8 @@ data class BusinessProfileUiModel(
     val operatingHours: String = "",
     val cleanupHours: String = "",
     val latitude: Double = 5.4674, // Default fallback coordinates
-    val longitude: Double = 100.2790
+    val longitude: Double = 100.2790,
+    val walletBalance: Double = 0.0
 )
 
 data class BusinessAccountEditUiModel(

@@ -11,6 +11,7 @@ import com.example.bitesavers.data.remote.SupabaseClient
 import com.example.bitesavers.data.remote.dto.NgoApplicationDto
 import com.example.bitesavers.data.remote.dto.NotificationDto
 import com.example.bitesavers.data.remote.dto.UserDto
+import com.example.bitesavers.data.repository.MerchantWalletRepository
 import com.example.bitesavers.util.GmailSender
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
@@ -21,6 +22,8 @@ import kotlinx.coroutines.withContext
 import java.util.UUID
 
 class VerificationViewModel : ViewModel() {
+    private val walletRepository = MerchantWalletRepository()
+
     var orderData by mutableStateOf<CheckOrderData?>(null)
         private set
 
@@ -74,6 +77,19 @@ class VerificationViewModel : ViewModel() {
                 ) {
                     filter {
                         eq("id", currentOrder.id)
+                    }
+                }
+
+                // Credit order earnings to store owner's wallet balance for non-free orders
+                if (!currentOrder.isNgoFreeClaim && currentOrder.totalPrice > 0.0) {
+                    val isCredited = walletRepository.creditOrderEarnings(
+                        storeId = currentOrder.storeId,
+                        orderAmount = currentOrder.totalPrice
+                    )
+                    if (isCredited) {
+                        Log.d("VerificationViewModel", "Successfully credited RM ${currentOrder.totalPrice} to store ${currentOrder.storeId}")
+                    } else {
+                        Log.w("VerificationViewModel", "Failed to credit earnings to store ${currentOrder.storeId}")
                     }
                 }
 

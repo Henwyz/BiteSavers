@@ -6,12 +6,13 @@ import com.example.bitesavers.data.model.DiscoveryCategory
 import com.example.bitesavers.data.model.OfferUiModel
 import com.example.bitesavers.data.remote.dto.OfferDto
 import com.example.bitesavers.data.remote.dto.StoreDto
+import com.example.bitesavers.util.TimeUtils
 import java.text.SimpleDateFormat
-import java.util.Calendar
 import java.util.Locale
+import java.util.TimeZone
 
-// Set to true to bypass opening hours during development so all stores/offers appear open
-const val DEBUG_BYPASS_OPERATING_HOURS = true
+// Set to true to bypass operating hours during development so all stores/offers appear open
+const val DEBUG_BYPASS_OPERATING_HOURS = false
 
 fun OfferDto.toUiModel(
     store: StoreDto?,
@@ -66,6 +67,15 @@ fun OfferDto.toUiModel(
     val resolvedStorageType = if (isHotHolding) "HOT" else "COLD"
     val resolvedTemperature = storageBox?.currentTemperature ?: if (isHotHolding) 60.0 else 4.0
 
+    // Evaluates dynamic NGO free claim windows across Afternoon (final 60m) and Closing/Cleaning windows
+    val dynamicNgoEligible = evaluateNgoFreeEligibility(
+        pickupStartStr = this.pickupStart,
+        pickupEndStr = this.pickupEnd,
+        storeClosingStr = store?.closingTime,
+        storeCleaningStr = store?.cleanupEndTime,
+        persistedFlag = this.isEligibleForNgoFree
+    )
+
     return OfferUiModel(
         id = this.id,
         storeId = this.storeId ?: store?.id ?: "store_01", // Maps foreign key store ID from Supabase
@@ -81,7 +91,7 @@ fun OfferDto.toUiModel(
         hoursToClose = remainingHours,
         pickupWindow = formattedPickupWindow,
         category = mappedCategory,
-        isEligibleForNgoFree = this.isEligibleForNgoFree,
+        isEligibleForNgoFree = dynamicNgoEligible,
         liveTemperature = resolvedTemperature,
         storageType = resolvedStorageType,
         description = this.description ?: "Fresh surplus food ready for rescue.",
@@ -92,35 +102,62 @@ fun OfferDto.toUiModel(
     )
 }
 
+/**
+ * Evaluates NGO Free Eligibility across two operational scenarios in Malaysia Standard Time:
+ * 1. Afternoon window: for 1 hour immediately following the merchant's custom pickup_end (e.g., 4:00 PM - 5:00 PM).
+ * 2. Closing window: pickup_end aligns with closing time, remaining free throughout the store's cleanup period.
+ */
+private fun evaluateNgoFreeEligibility(
+    pickupStartStr: String?,
+    pickupEndStr: String?,
+    storeClosingStr: String?,
+    storeCleaningStr: String?,
+    persistedFlag: Boolean
+): Boolean {
+    // If the merchant explicitly enabled it on backend, respect the preference
+    if (persistedFlag) return true
+
+    val currentMinutes = TimeUtils.getCurrentMinutesOfDay()
+    val pickupEndMinutes = parseTimeToMinutes(pickupEndStr) ?: return false
+    val storeClosingMinutes = parseTimeToMinutes(storeClosingStr)
+    val storeCleaningMinutes = parseTimeToMinutes(storeCleaningStr) ?: (pickupEndMinutes + 60)
+
+    // Check whether this is an evening closing window (pickup ends near or at closing time)
+    val isClosingWindow = storeClosingMinutes != null && Math.abs(pickupEndMinutes - storeClosingMinutes) <= 30
+
+    return if (isClosingWindow) {
+        // Scenario 2: End-of-day closing window — free from pickup end until store cleaning time ends
+        currentMinutes in pickupEndMinutes..storeCleaningMinutes
+    } else {
+        // Scenario 1: Afternoon window — free for 1 hour immediately after regular pickup ends (e.g., 4:00 PM to 5:00 PM)
+        val oneHourAfterPickupEnd = pickupEndMinutes + 60
+        currentMinutes in pickupEndMinutes..oneHourAfterPickupEnd
+    }
+}
+
 // Evaluates current system time against store opening and closing intervals to derive dynamic status text
 private fun calculateTimeStatus(
     openingTimeString: String?,
     closingTimeString: String?
 ): Triple<String, Boolean, Int> {
-    // If debug bypass is enabled, treat all stores as open and closing in 2 hours
     if (DEBUG_BYPASS_OPERATING_HOURS) {
         return Triple("Closes in 2h", true, 2)
     }
 
-    val now = Calendar.getInstance()
-    val currentMinutes = (now.get(Calendar.HOUR_OF_DAY) * 60) + now.get(Calendar.MINUTE)
-
+    val currentMinutes = TimeUtils.getCurrentMinutesOfDay()
     val openMinutes = parseTimeToMinutes(openingTimeString)
     val closeMinutes = parseTimeToMinutes(closingTimeString)
 
-    // Default fallback when time records are unspecified
     if (openMinutes == null && closeMinutes == null) {
         return Triple("Closes in 2h", true, 2)
     }
 
-    // Handles store opening anticipation if current time is prior to opening hours
     if (openMinutes != null && currentMinutes < openMinutes) {
         val diffMinutes = openMinutes - currentMinutes
         val hours = (diffMinutes / 60).coerceAtLeast(1)
         return Triple("Opens in ${hours}h", false, 0)
     }
 
-    // Handles active operating window
     if (closeMinutes != null) {
         if (currentMinutes <= closeMinutes) {
             val diffMinutes = closeMinutes - currentMinutes
@@ -151,9 +188,13 @@ private fun parseTimeToMinutes(timeString: String?): Int? {
 private fun formatTimeToAmPm(timeStr: String?): String? {
     if (timeStr.isNullOrBlank()) return null
     return try {
-        val parser = SimpleDateFormat("HH:mm", Locale.getDefault())
+        val parser = SimpleDateFormat("HH:mm", Locale.getDefault()).apply {
+            timeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+        }
         val date = parser.parse(timeStr.trim().take(5)) ?: return timeStr
-        val formatter = SimpleDateFormat("h:mm a", Locale.getDefault())
+        val formatter = SimpleDateFormat("h:mm a", Locale.getDefault()).apply {
+            timeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+        }
         formatter.format(date)
     } catch (_: Exception) {
         timeStr

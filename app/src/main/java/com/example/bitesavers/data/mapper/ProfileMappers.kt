@@ -1,5 +1,6 @@
 package com.example.bitesavers.data.mapper
 
+import com.example.bitesavers.business.profile.data.BusinessProfileUiModel
 import com.example.bitesavers.customer.profile.data.NgoApplicationUiModel
 import com.example.bitesavers.customer.profile.data.NgoCauseCategory
 import com.example.bitesavers.customer.profile.data.NgoRegistrationType
@@ -7,6 +8,7 @@ import com.example.bitesavers.customer.profile.data.NgoStatus
 import com.example.bitesavers.customer.profile.data.UserProfileUiModel
 import com.example.bitesavers.data.remote.dto.NgoApplicationDto
 import com.example.bitesavers.data.remote.dto.NgoApplicationInsertDto
+import com.example.bitesavers.data.remote.dto.StoreDto
 import com.example.bitesavers.data.remote.dto.UserDto
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -67,6 +69,13 @@ fun NgoApplicationUiModel.toInsertDto(userId: String, status: String): NgoApplic
     )
 
 // ---------- small helpers ----------
+
+private fun formatTimeRange(opening: String?, closing: String?): String {
+    if (opening.isNullOrBlank() && closing.isNullOrBlank()) return ""
+    val start = opening?.take(5) ?: "--:--"
+    val end = closing?.take(5) ?: "--:--"
+    return "$start - $end"
+}
 
 private inline fun <reified T : Enum<T>> String.toEnumOrNull(): T? =
     runCatching { enumValueOf<T>(this) }.getOrNull()

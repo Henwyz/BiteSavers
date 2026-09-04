@@ -187,7 +187,7 @@ fun BusinessHomeScreen(
                             label = "Waste Reduced",
                             value = "${metrics.wasteReducedKg} kg",
                             subText = "CO₂ saved: ${metrics.co2SavedKg}kg",
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
                         )
                     }
                 }
