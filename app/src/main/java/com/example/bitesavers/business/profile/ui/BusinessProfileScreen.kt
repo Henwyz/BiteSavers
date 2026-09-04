@@ -13,7 +13,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -244,7 +243,71 @@ private fun BusinessProfileContent(
                 Spacer(Modifier.height(16.dp))
             }
 
-            // ---------- Business info card ----------
+            // ---------- Store Balance / Wallet Card ----------
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primaryContainer),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_wallet),
+                                contentDescription = stringResource(R.string.cd_wallet_balance),
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = stringResource(R.string.business_wallet_card_title),
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = stringResource(R.string.currency_rm, profile.walletBalance),
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+
+                    Button(
+                        onClick = { onViewWalletClick(profile.storeId) },
+                        shape = RoundedCornerShape(50),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.business_wallet_action_payout),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // ---------- Business Info Card ----------
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -383,7 +446,7 @@ private fun BusinessStoreMapCard(
                     )
                     Spacer(Modifier.width(4.dp))
                     Text(
-                        text = "Store Location",
+                        text = stringResource(R.string.business_map_static_label),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -438,6 +501,7 @@ private fun BusinessProfileScreenPreview() {
     BiteSaversTheme {
         BusinessProfileContent(
             profile = BusinessProfileUiModel(
+                storeId = "store_01",
                 businessName = "BiteSaver Kopitiam",
                 verificationId = "1426D2B8-2",
                 isVerified = true,
@@ -447,7 +511,8 @@ private fun BusinessProfileScreenPreview() {
                 phone = "+60124567890",
                 operatingHours = "08:00:00 - 21:30:00",
                 latitude = 5.4164,
-                longitude = 100.3327
+                longitude = 100.3327,
+                walletBalance = 154.50
             ),
             ownerAccount = BusinessOwnerAccountUiModel(name = "Uncle Ong", email = "ong@gmail.com"),
             hasPendingBusinessEdit = false,

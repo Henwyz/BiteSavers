@@ -336,6 +336,7 @@ class DiscoveryViewModel : ViewModel() {
     }
 
     // Applies search queries, role-based visibility, and rescue claim window criteria
+    // Applies search queries, role-based visibility, and rescue claim window criteria
     private fun applyFilters(state: DiscoveryUiState, sourceList: List<OfferUiModel>): List<OfferUiModel> {
         val query = state.searchQuery.trim().lowercase()
         val currentLat = userLatitude
@@ -343,10 +344,15 @@ class DiscoveryViewModel : ViewModel() {
 
         val filteredSequence = sourceList.asSequence()
             // 1. Availability Filter:
-            // Consumers only see items while the pickup window is still open (hoursToClose > 0).
-            // Approved NGOs can also see items if they are currently inside the free claim window.
+            // Keep all active, closed, and expired offers visible so the UI can display badges
+            // and prevent purchase on the detail page as designed.
+            // When filtering by FREE, restrict strictly to approved NGO eligible items.
             .filter { offer ->
-                offer.hoursToClose > 0 || (state.isNgoApproved && offer.isEligibleForNgoFree)
+                if (state.selectedCategory == DiscoveryCategory.FREE) {
+                    state.isNgoApproved && offer.isEligibleForNgoFree
+                } else {
+                    true
+                }
             }
             // 2. Category Tab Filter:
             .filter { offer ->
