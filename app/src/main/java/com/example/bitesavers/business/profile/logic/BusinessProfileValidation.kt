@@ -37,8 +37,9 @@ object BusinessProfileValidation {
                 !EMAIL_REGEX.matches(trimmed.email) -> "Enter a valid email address"
                 else -> null
             },
-            password = if (trimmed.password.isNotEmpty() && trimmed.password.length < 6) {
-                "Password must be at least 6 characters"
+            // Validates that if a new password is provided, it must be at least 8 characters long
+            password = if (trimmed.password.isNotEmpty() && trimmed.password.length < 8) {
+                "Password must be at least 8 characters"
             } else null
         )
     }

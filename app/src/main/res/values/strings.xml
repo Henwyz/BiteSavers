@@ -920,4 +920,10 @@
     <string name="payout_error_invalid_card">Account or card number must be between 9 and 16 digits.</string>
 
     <string name="status_ngo_free_claim">Free NGO Claim</string>
+
+    <!-- Add Storage Box & Sensor Request Strings -->
+    <string name="request_more_sensors_header">To request for more sensors,</string>
+    <string name="request_more_sensors_action">Please message </string>
+    <string name="support_whatsapp_phone">+60 3-1234 5678</string>
+    <string name="request_sensors_whatsapp_msg">Hello BiteSavers support, I would like to request additional IoT temperature sensor units for my store.</string>
 </resources>

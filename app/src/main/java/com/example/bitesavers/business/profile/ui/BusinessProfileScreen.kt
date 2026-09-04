@@ -107,7 +107,7 @@ private fun BusinessProfileContent(
                     },
                     leadingIcon = {
                         Icon(
-                            painter = painterResource(R.drawable.ic_arrow_back),
+                            painter = painterResource(R.drawable.ic_signout),
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.onErrorContainer
@@ -258,12 +258,12 @@ private fun BusinessProfileContent(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     BusinessInfoRow(
-                        iconRes = R.drawable.ic_my_location,
+                        iconRes = R.drawable.ic_location,
                         label = stringResource(R.string.business_address_label),
                         value = profile.address
                     )
                     BusinessInfoRow(
-                        iconRes = R.drawable.ic_image,
+                        iconRes = R.drawable.ic_phone,
                         label = stringResource(R.string.business_phone_label),
                         value = profile.phone
                     )

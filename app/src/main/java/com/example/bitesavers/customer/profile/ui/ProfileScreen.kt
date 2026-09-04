@@ -205,7 +205,7 @@ private fun ProfileContent(
                     },
                     leadingIcon = {
                         Icon(
-                            painter = painterResource(R.drawable.ic_danger),
+                            painter = painterResource(R.drawable.ic_signout),
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.onErrorContainer
@@ -340,7 +340,7 @@ private fun ProfileContent(
             ProfileMenuRow(
                 icon = {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_saved),
+                        painter = painterResource(id = R.drawable.ic_check),
                         contentDescription = null,
                         tint = menuIconTint,
                         modifier = Modifier.size(16.dp)
@@ -376,7 +376,7 @@ private fun ProfileContent(
             ProfileMenuRow(
                 icon = {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_lock),
+                        painter = painterResource(id = R.drawable.ic_password2),
                         contentDescription = null,
                         tint = menuIconTint,
                         modifier = Modifier.size(16.dp)
@@ -400,7 +400,7 @@ private fun ProfileContent(
             ProfileMenuRow(
                 icon = {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                        painter = painterResource(id = R.drawable.ic_help),
                         contentDescription = null,
                         tint = menuIconTint,
                         modifier = Modifier.size(16.dp)
@@ -412,7 +412,7 @@ private fun ProfileContent(
             ProfileMenuRow(
                 icon = {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_notification),
+                        painter = painterResource(id = R.drawable.ic_info),
                         contentDescription = null,
                         tint = menuIconTint,
                         modifier = Modifier.size(16.dp)
@@ -643,7 +643,7 @@ private fun ProfileMenuRow(
                 )
             }
             Icon(
-                painter = painterResource(R.drawable.ic_arrow_back),
+                painter = painterResource(R.drawable.ic_arrow_forward),
                 contentDescription = null,
                 modifier = Modifier
                     .size(16.dp)
