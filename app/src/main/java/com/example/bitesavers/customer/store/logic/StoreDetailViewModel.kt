@@ -45,31 +45,52 @@ class StoreDetailViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             try {
+                // Pulls the latest approved store information
                 val storeDto = repository.getStoreById(storeId)
                 if (storeDto != null) {
                     val openTime = storeDto.openingTime ?: "8:30 AM"
                     val closeTime = storeDto.closingTime ?: "9:00 PM"
-                    val storeIdNonNull = storeDto.id ?: storeId
-                    val storeNameNonNull = storeDto.name ?: "Store"
+                    val storeIdNonNull = storeDto.id.ifBlank { storeId }
+                    val storeNameNonNull = storeDto.name.ifBlank { "Store" }
                     val storeRatingNonNull = storeDto.rating ?: 4.8
 
-                    val openFormatted = formatTimeDisplay(storeDto.openingTime) ?: "08:00 AM"
-                    val closeFormatted = formatTimeDisplay(storeDto.closingTime) ?: "09:30 PM"
-
                     val storeUi = StoreDetailUiModel(
-                        id = storeDto.id,
-                        name = storeDto.name,
-                        address = storeDto.address ?: "Location not specified",
-                        rating = storeDto.rating,
-                        contactPhone = storeDto.contactPhone,
-                        operatingHours = "Mon – Sun: $openFormatted - $closeFormatted",
+                        id = storeIdNonNull,
+                        name = storeNameNonNull,
+                        address = storeDto.address.ifBlank { "Location not specified" },
+                        rating = storeRatingNonNull,
+                        contactPhone = storeDto.contactPhone, // 👈 Now contains the latest approved phone number
+                        operatingHours = "Mon – Sun: $openTime - $closeTime",
                         imageUrl = storeDto.imageUrl
                     )
 
                     val offerDtos = repository.getOffersByStoreId(storeId)
-                    // Uses the standard mapper to keep model fields completely synchronized
                     val offerUiList = offerDtos.map { dto ->
-                        dto.toUiModel(storeDto)
+                        val discount = if (dto.originalPrice > 0) {
+                            (((dto.originalPrice - dto.discountedPrice) / dto.originalPrice) * 100).toInt()
+                        } else 0
+
+                        OfferUiModel(
+                            id = dto.id,
+                            title = dto.title,
+                            storeName = storeNameNonNull,
+                            storeRating = storeRatingNonNull,
+                            imageResId = R.drawable.ic_launcher_foreground,
+                            imageUrl = dto.imageUrl,
+                            discountPercent = discount,
+                            currentPrice = dto.discountedPrice,
+                            originalPrice = dto.originalPrice,
+                            distanceKm = 0.0,
+                            quantityLeft = dto.quantityAvailable,
+                            hoursToClose = 2,
+                            pickupWindow = "Today, $openTime - $closeTime",
+                            category = DiscoveryCategory.BAKERY,
+                            isEligibleForNgoFree = dto.isEligibleForNgoFree,
+                            storageType = "HOT",
+                            description = dto.description ?: "Fresh surplus food ready for rescue.",
+                            latitude = storeDto.latitude ?: 5.4674,
+                            longitude = storeDto.longitude ?: 100.2790
+                        )
                     }
 
                     _uiState.update {
@@ -81,18 +102,12 @@ class StoreDetailViewModel : ViewModel() {
                     }
                 } else {
                     _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = "Store not found"
-                        )
+                        it.copy(isLoading = false, errorMessage = "Store not found")
                     }
                 }
             } catch (e: Exception) {
                 _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        errorMessage = e.message ?: "An unexpected error occurred"
-                    )
+                    it.copy(isLoading = false, errorMessage = e.message ?: "An unexpected error occurred")
                 }
             }
         }

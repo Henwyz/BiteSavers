@@ -36,8 +36,7 @@ class FoodDetailViewModel(
 
     init {
         val offerId: String? = savedStateHandle.get<String>("offerId")
-        checkNgoStatus()
-        if (offerId != null) {
+        if (!offerId.isNullOrBlank()) {
             startPolling(offerId)
             observeBookmarkStatus(offerId)
         } else {
@@ -45,21 +44,11 @@ class FoodDetailViewModel(
         }
     }
 
-    private fun checkNgoStatus() {
-        val userId = UserSession.getUserId()
-        if (userId.isNotBlank()) {
-            viewModelScope.launch {
-                val status = userRepository.fetchUserNgoStatus(userId)
-                isNgoApprovedUser = status.equals("APPROVED", ignoreCase = true)
-            }
-        }
-    }
-
-    // Periodically polls Supabase so customer UI reflects live IoT temperature updates
+    // Periodically polls Supabase so customer UI reflects live IoT temperature updates and latest NGO status
     fun startPolling(offerId: String, intervalMillis: Long = 2000L) {
         pollingJob?.cancel()
         pollingJob = viewModelScope.launch {
-            // First load displays loading progress
+            // Initial load displays loading indicator
             fetchOfferDetails(offerId, isInitialLoad = true)
 
             while (isActive) {
@@ -83,7 +72,7 @@ class FoodDetailViewModel(
         }
     }
 
-    // THE SWITCHBOARD
+    // Handles incoming UI events from FoodDetailScreen
     fun onEvent(event: FoodDetailUiEvent) {
         when (event) {
             is FoodDetailUiEvent.OnIncreaseQuantity -> increaseQuantity()
@@ -114,13 +103,22 @@ class FoodDetailViewModel(
         }
     }
 
-    private fun fetchOfferDetails(offerId: String, isInitialLoad: Boolean = false) {
-        viewModelScope.launch {
-            if (isInitialLoad) {
-                _uiState.update { it.copy(isLoading = true) }
+    private suspend fun fetchOfferDetails(offerId: String, isInitialLoad: Boolean = false) {
+        if (isInitialLoad) {
+            _uiState.update { it.copy(isLoading = true) }
+        }
+
+        try {
+            // 1. Pull latest NGO approval status directly from Supabase users table
+            val userId = UserSession.getUserId().ifBlank { UserSession.currentUserId.value }
+            if (userId.isNotBlank()) {
+                try {
+                    val status = userRepository.fetchUserNgoStatus(userId)
+                    isNgoApprovedUser = status.equals("APPROVED", ignoreCase = true)
+                } catch (_: Exception) {}
             }
 
-            // Fetch the real item from Supabase
+            // 2. Fetch the latest live offer data from Supabase
             val offer = repository.fetchOfferById(offerId)
 
             if (offer != null) {
@@ -135,17 +133,19 @@ class FoodDetailViewModel(
                     temp <= 8.0
                 }
 
-                // If active user is an approved NGO and item is in free claim window, price becomes 0.0
+                // If active user is an approved NGO and item is in free claim window, price becomes RM 0.00
                 val isFreeForNgo = isNgoApprovedUser && offer.isEligibleForNgoFree
                 val unitPrice = if (isFreeForNgo) 0.0 else offer.currentPrice
 
                 _uiState.update { current ->
+                    val selectedQty = if (isInitialLoad) 1 else current.quantity.coerceAtMost(offer.quantityLeft.coerceAtLeast(1))
                     current.copy(
                         isLoading = false,
                         offer = offer,
-                        quantity = if (isInitialLoad) 1 else current.quantity,
-                        totalPrice = unitPrice * (if (isInitialLoad) 1 else current.quantity),
-                        isTemperatureSafe = isSafe
+                        quantity = selectedQty,
+                        totalPrice = unitPrice * selectedQty,
+                        isTemperatureSafe = isSafe,
+                        errorMessage = null
                     )
                 }
             } else {
@@ -153,6 +153,12 @@ class FoodDetailViewModel(
                     _uiState.update { current ->
                         current.copy(isLoading = false, errorMessage = "Offer not found")
                     }
+                }
+            }
+        } catch (e: Exception) {
+            if (isInitialLoad) {
+                _uiState.update { current ->
+                    current.copy(isLoading = false, errorMessage = e.message ?: "Failed to load offer details")
                 }
             }
         }
