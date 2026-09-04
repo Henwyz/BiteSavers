@@ -51,7 +51,7 @@ import com.example.bitesavers.customer.discovery.data.DiscoveryViewMode
 import com.example.bitesavers.customer.discovery.data.NotificationUiModel
 import com.example.bitesavers.customer.discovery.data.UserUiModel
 import com.example.bitesavers.customer.discovery.logic.DiscoveryViewModel
-import com.example.bitesavers.customer.discovery.logic.LocationUtils.fetchDeviceCoordinates
+import com.example.bitesavers.util.LocationUtils.fetchDeviceCoordinates
 import com.example.bitesavers.customer.discovery.ui.components.DiscoveryEmptyState
 import com.example.bitesavers.customer.discovery.ui.components.DiscoveryFilterRow
 import com.example.bitesavers.customer.discovery.ui.components.DiscoveryHeader

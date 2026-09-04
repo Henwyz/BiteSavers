@@ -99,8 +99,10 @@ fun FoodDetailScreen(
     onEvent: (FoodDetailUiEvent) -> Unit
 ) {
     val isSoldOut = (state.offer?.quantityLeft ?: 0) <= 0
-    val isExpired = (state.offer?.hoursToClose ?: 1) <= 0
-    val isStoreOpen = state.offer?.isCurrentlyOpen ?: true
+    val isNgoClaimActive = state.offer?.isEligibleForNgoFree == true
+    // If it is inside the NGO free window, the claim window is active even if regular hours closed
+    val isStoreOpen = state.offer?.isCurrentlyOpen ?: true || isNgoClaimActive
+    val isExpired = if (isNgoClaimActive) false else (state.offer?.hoursToClose ?: 1) <= 0
 
     Scaffold(
         topBar = {
@@ -117,7 +119,7 @@ fun FoodDetailScreen(
                     isSoldOut = isSoldOut,
                     isExpired = isExpired,
                     isOpen = isStoreOpen,
-                    timeStatusText = state.offer.timeStatusText,
+                    timeStatusText = if (isNgoClaimActive) stringResource(R.string.status_ngo_free_claim) else state.offer.timeStatusText,
                     onReserveClick = { onEvent(FoodDetailUiEvent.OnReserveClicked) }
                 )
             }
@@ -187,10 +189,10 @@ fun FoodDetailScreen(
 
                             // Forwards current open condition and timing text to prevent false expired tags
                             FoodDetailStatusRow(
-                                hoursToClose = offer.hoursToClose,
+                                hoursToClose = if (isNgoClaimActive) 1 else offer.hoursToClose,
                                 stockLeft = offer.quantityLeft,
                                 isOpen = isStoreOpen,
-                                timeStatusText = offer.timeStatusText
+                                timeStatusText = if (isNgoClaimActive) stringResource(R.string.status_ngo_free_claim) else offer.timeStatusText
                             )
 
                             FoodDetailSafetyBanner(
@@ -208,8 +210,8 @@ fun FoodDetailScreen(
                                 description = offer.description
                             )
 
-                            // Only display quantity selector if stock is available, offer is active, and store is open
-                            if (!isSoldOut && !isExpired && isStoreOpen) {
+                            // Display quantity selector if stock is available and either store is open or NGO free claim is active
+                            if (!isSoldOut && (!isExpired || isNgoClaimActive)) {
                                 FoodDetailQuantitySelector(
                                     quantity = state.quantity,
                                     onIncrease = { onEvent(FoodDetailUiEvent.OnIncreaseQuantity) },

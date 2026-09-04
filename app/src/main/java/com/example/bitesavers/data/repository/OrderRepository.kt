@@ -22,6 +22,7 @@ private data class StoreOwnerInfo(
     @SerialName("owner_id")
     val ownerId: String
 )
+
 class OrderRepository {
     private val client = SupabaseClient.client
 
@@ -42,7 +43,8 @@ class OrderRepository {
                 .decodeSingle<UserDto>()
 
             val isNgoApproved = user.ngoStatus.equals("APPROVED", ignoreCase = true)
-            val isFreeClaim = totalPrice <= 0.0 || (isNgoApproved && totalPrice == 0.0)
+            // Evaluates free claim either by zero total price or explicit approved NGO role
+            val isFreeClaim = totalPrice <= 0.0 || (isNgoApproved && (userRole.equals("NGO", ignoreCase = true) || totalPrice == 0.0))
 
             val isPaidViaWallet = !isFreeClaim && (
                     paymentMethod.contains("BITESAVER", ignoreCase = true) ||
@@ -79,7 +81,7 @@ class OrderRepository {
                 totalPrice = if (isFreeClaim) 0.0 else totalPrice,
                 totalWeightKg = weight * quantity,
                 isNgoFreeClaim = isFreeClaim,
-                paymentMethod = if (isFreeClaim) "CASH_ON_PICKUP" else if (paymentMethod.isBlank()) "BITESAVER_PAY" else paymentMethod,
+                paymentMethod = if (isFreeClaim) "FREE_CLAIM" else if (paymentMethod.isBlank()) "BITESAVER_PAY" else paymentMethod,
                 status = "READY_FOR_PICKUP",
                 pickupPin = pickupPin
             )
@@ -96,7 +98,7 @@ class OrderRepository {
                     filter { eq("id", offerId) }
                 }
 
-            // 6. Deduct wallet balance ONLY for non-free orders paid via wallet
+            // 6. Deduct consumer wallet balance ONLY for non-free orders paid via wallet
             if (isPaidViaWallet) {
                 val updatedBalance = user.walletBalance - totalPrice
                 client.from("users")
@@ -104,7 +106,8 @@ class OrderRepository {
                         filter { eq("id", uid) }
                     }
             }
-// 6. Credit merchant wallet balance if paid via BiteSaver Pay
+
+            // 7. Resolve merchant owner ID for notification
             val resolvedStoreId = offer.storeId ?: "store_01"
             var merchantOwnerId: String? = null
 
@@ -114,31 +117,20 @@ class OrderRepository {
                     .decodeList<StoreOwnerInfo>()
 
                 merchantOwnerId = storeList.firstOrNull()?.ownerId
-
-                if (!merchantOwnerId.isNullOrBlank() && isPaidViaWallet) {
-                    val merchant = client.from("users")
-                        .select { filter { eq("id", merchantOwnerId) } }
-                        .decodeSingle<UserDto>()
-
-                    val updatedMerchantBalance = (merchant.walletBalance ?: 0.0) + totalPrice
-                    client.from("users")
-                        .update({ set("wallet_balance", updatedMerchantBalance) }) {
-                            filter { eq("id", merchantOwnerId) }
-                        }
-                }
             } catch (e: Exception) {
-                Log.e("OrderRepository", "Failed to update merchant wallet: ${e.message}")
+                Log.e("OrderRepository", "Failed to resolve merchant owner: ${e.message}")
             }
 
-            // 7. Insert new order notification for the store merchant
+            // 8. Insert new order notification for the store merchant
             if (!merchantOwnerId.isNullOrBlank()) {
                 try {
                     val notifId = "notif_${UUID.randomUUID().toString().take(8)}"
+                    val notificationTitle = if (isFreeClaim) "New NGO Free Claim! 🎁" else "New Order Received! 🛍️"
                     val merchantNotif = NotificationDto(
                         id = notifId,
                         userId = merchantOwnerId,
                         orderId = insertedOrder.id,
-                        title = "New Order Received! 🛍️",
+                        title = notificationTitle,
                         message = "You received a new order (${insertedOrder.id}) for $quantity x ${offer.title}.",
                         isRead = false
                     )

@@ -42,8 +42,8 @@ import com.example.bitesavers.business.temperature.logic.TemperatureViewModel
 import com.example.bitesavers.business.temperature.ui.AddBoxScreen
 import com.example.bitesavers.business.temperature.ui.TemperatureScreen
 import com.example.bitesavers.business.dashboard.ui.BusinessNotificationScreen
-import com.example.bitesavers.business.payment.logic.MerchantWalletViewModel
-import com.example.bitesavers.business.wallet.ui.MerchantWalletScreen
+import com.example.bitesavers.business.payout.logic.PayoutViewModel
+import com.example.bitesavers.business.payout.ui.MerchantPayoutScreen
 
 @Composable
 fun BusinessNavHost(
@@ -153,7 +153,7 @@ fun BusinessNavHost(
                     },
                     onViewWalletClick = { storeId ->
                         val targetId = if (storeId.isNotBlank()) storeId else (dashboardViewModel.currentStoreId ?: "")
-                        navController.navigate(BusinessScreen.Wallet.createRoute(targetId))
+                        navController.navigate(BusinessScreen.Payout.createRoute(targetId))
                     }
                 )
             }
@@ -175,16 +175,32 @@ fun BusinessNavHost(
                 )
             }
 
+            // WALLET OVERVIEW SCREEN
             composable(
-                route = BusinessScreen.Wallet.route,
+                route = BusinessScreen.Payout.route,
                 arguments = listOf(navArgument("storeId") { type = NavType.StringType })
             ) { backStackEntry ->
                 val storeId = backStackEntry.arguments?.getString("storeId").orEmpty()
-                val walletViewModel: MerchantWalletViewModel = viewModel()
+                val payoutViewModel: PayoutViewModel = viewModel()
 
-                MerchantWalletScreen(
-                    viewModel = walletViewModel,
+                MerchantPayoutScreen(
                     storeId = storeId,
+                    viewModel = payoutViewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // MERCHANT PAYOUT WITHDRAWAL SCREEN
+            composable(
+                route = BusinessScreen.Payout.route,
+                arguments = listOf(navArgument("storeId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val storeId = backStackEntry.arguments?.getString("storeId").orEmpty()
+                val payoutViewModel: PayoutViewModel = viewModel()
+
+                MerchantPayoutScreen(
+                    storeId = storeId,
+                    viewModel = payoutViewModel,
                     onNavigateBack = { navController.popBackStack() }
                 )
             }

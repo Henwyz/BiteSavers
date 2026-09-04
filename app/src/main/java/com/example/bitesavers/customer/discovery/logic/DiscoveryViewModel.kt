@@ -16,6 +16,7 @@ import com.example.bitesavers.data.repository.NotificationRepository
 import com.example.bitesavers.data.repository.OfferRepository
 import com.example.bitesavers.data.repository.SavedRepository
 import com.example.bitesavers.data.repository.UserRepository
+import com.example.bitesavers.util.LocationUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -341,8 +342,11 @@ class DiscoveryViewModel : ViewModel() {
         val currentLng = userLongitude
 
         val filteredSequence = sourceList.asSequence()
+            // 1. Availability Filter:
+            // Consumers only see items while the pickup window is still open (hoursToClose > 0).
+            // Approved NGOs can also see items if they are currently inside the free claim window.
             .filter { offer ->
-                offer.hoursToClose >= 0 || state.isNgoApproved
+                offer.hoursToClose > 0 || (state.isNgoApproved && offer.isEligibleForNgoFree)
             }
             // 2. Category Tab Filter:
             .filter { offer ->

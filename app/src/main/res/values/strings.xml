@@ -888,4 +888,36 @@
     <string name="storage_zone_cold">cold storage (&lt;= 8°C)</string>
     <string name="error_offer_not_found">Offer not found</string>
     <string name="cd_warning_icon">Warning icon</string>
+
+    <!-- Merchant Payout & Wallet Strings -->
+    <string name="payout_title">Merchant Payout</string>
+    <string name="payout_available_balance">Available Balance</string>
+    <string name="payout_card_header">Receiving Bank Account</string>
+    <string name="payout_card_bank_label">Bank Name</string>
+    <string name="payout_card_bank_hint">e.g. Maybank, CIMB</string>
+    <string name="payout_card_number_label">Account / Card Number</string>
+    <string name="payout_card_number_hint">e.g. 1234 5678 9012 3456</string>
+    <string name="payout_card_holder_label">Account Holder Name</string>
+    <string name="payout_card_holder_hint">e.g. Tan Ah Kao</string>
+    <string name="payout_amount_label">Withdrawal Amount (RM)</string>
+    <string name="payout_amount_hint">0.00</string>
+    <string name="payout_btn_request">Submit Payout Request</string>
+    <string name="payout_history_header">Recent Payouts</string>
+    <string name="payout_empty_history">No payout history recorded yet.</string>
+    <string name="payout_error_empty_fields">Please enter bank name, account number, and holder name.</string>
+    <string name="payout_error_invalid_amount">Enter a valid withdrawal amount greater than RM 0.00.</string>
+    <string name="payout_error_insufficient_funds">Insufficient wallet balance.</string>
+    <string name="payout_success_toast">Payout submitted successfully!</string>
+    <string name="cd_back_arrow">Navigate back</string>
+    <string name="cd_bank_card">Bank card icon</string>
+
+    <!-- Business Profile Wallet & Map -->
+    <string name="business_wallet_card_title">Store Balance</string>
+    <string name="business_wallet_action_payout">Payout</string>
+    <string name="business_map_static_label">Store Location</string>
+    <string name="cd_wallet_balance">Store wallet balance icon</string>
+
+    <string name="payout_error_invalid_card">Account or card number must be between 9 and 16 digits.</string>
+
+    <string name="status_ngo_free_claim">Free NGO Claim</string>
 </resources>

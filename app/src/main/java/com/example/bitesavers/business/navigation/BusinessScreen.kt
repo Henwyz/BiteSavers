@@ -15,6 +15,10 @@ sealed class BusinessScreen(val route: String) {
     object Wallet : BusinessScreen("merchant_wallet_route/{storeId}") {
         fun createRoute(storeId: String): String = "merchant_wallet_route/$storeId"
     }
+    // Route for the merchant payout withdrawal screen
+    object Payout : BusinessScreen("merchant_payout_route/{storeId}") {
+        fun createRoute(storeId: String): String = "merchant_payout_route/$storeId"
+    }
     object Verification : BusinessScreen("business_verification/{orderId}") {
         // Generates the destination route filled with the concrete order ID
         fun createRoute(orderId: String): String = "business_verification/$orderId"
@@ -26,15 +30,3 @@ sealed class BusinessScreen(val route: String) {
 
     data object Notification : BusinessScreen("business_notification")
 }
-/*
-    data object Home : BusinessScreen("business_home")
-    data object Listings : BusinessScreen("business_listings")
-    data object Analytics : BusinessScreen("business_analytics")
-    data object Profile : BusinessScreen("business_profile")
-    data object AddFood : BusinessScreen("business_add_food")
-    data object RegisterRestaurant : BusinessScreen("business_register_restaurant")
-    data object EditProfile : BusinessScreen("business_edit_profile")
-
-    data object UpdatePending : BusinessScreen("business_update_pending")
-}
-*/

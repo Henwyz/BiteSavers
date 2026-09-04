@@ -6,20 +6,22 @@ import com.example.bitesavers.R
 import com.example.bitesavers.customer.checkout.data.CheckoutUiState
 import com.example.bitesavers.customer.checkout.ui.CheckoutUiEvent
 import com.example.bitesavers.data.model.PaymentMethod
+import com.example.bitesavers.data.remote.UserSession
 import com.example.bitesavers.data.repository.OfferRepository
 import com.example.bitesavers.data.repository.OrderRepository
 import com.example.bitesavers.data.repository.PaymentRepository
+import com.example.bitesavers.data.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-
 class CheckoutViewModel(
     private val offerRepository: OfferRepository = OfferRepository(),
     private val orderRepository: OrderRepository = OrderRepository(),
-    private val paymentRepository: PaymentRepository = PaymentRepository()
+    private val paymentRepository: PaymentRepository = PaymentRepository(),
+    private val userRepository: UserRepository = UserRepository()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -31,11 +33,19 @@ class CheckoutViewModel(
     val uiState: StateFlow<CheckoutUiState> = _uiState.asStateFlow()
 
     private var currentOfferId: String = ""
+    private var isNgoApprovedUser: Boolean = false
 
     fun loadOffer(offerId: String, quantity: Int = 1) {
         currentOfferId = offerId
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorResId = null) }
+
+            // 1. Verify user NGO credentials
+            val userId = UserSession.getUserId()
+            if (userId.isNotBlank()) {
+                val ngoStatus = userRepository.fetchUserNgoStatus(userId)
+                isNgoApprovedUser = ngoStatus.equals("APPROVED", ignoreCase = true)
+            }
 
             val realBalance = paymentRepository.fetchWalletBalance()
             val savedMethods = paymentRepository.fetchPaymentMethods()
@@ -50,8 +60,10 @@ class CheckoutViewModel(
 
             if (offer != null) {
                 _uiState.update { current ->
-                    val totalPrice = offer.currentPrice * quantity
-                    val isFreeClaim = totalPrice <= 0.0
+                    // Dynamically override unit price to RM 0.00 if user is an approved NGO and offer is in free window
+                    val isFreeClaim = isNgoApprovedUser && offer.isEligibleForNgoFree
+                    val effectiveUnitPrice = if (isFreeClaim) 0.0 else offer.currentPrice
+                    val totalPrice = effectiveUnitPrice * quantity
 
                     val defaultMethod = if (isFreeClaim || realBalance >= totalPrice) {
                         PaymentMethod.BITESAVER_PAY
@@ -68,7 +80,7 @@ class CheckoutViewModel(
                         walletBalance = realBalance,
                         storeName = offer.storeName,
                         itemName = offer.title,
-                        unitPrice = offer.currentPrice,
+                        unitPrice = effectiveUnitPrice,
                         quantity = quantity,
                         selectedPaymentMethod = defaultMethod,
                         isTngLinked = isTngLinked,
@@ -132,7 +144,7 @@ class CheckoutViewModel(
         val state = _uiState.value
         val isFreeClaim = state.totalPrice <= 0.0
 
-        // Skip wallet checks completely if this is an NGO free claim or RM0 item
+        // Skip wallet balance checks completely if this is an NGO free claim
         if (!isFreeClaim) {
             when (state.selectedPaymentMethod) {
                 PaymentMethod.BITESAVER_PAY -> {
@@ -160,12 +172,15 @@ class CheckoutViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorResId = null) }
 
+            // Pass role as NGO when claiming a free item
+            val effectiveRole = if (isFreeClaim) "NGO" else "CONSUMER"
+
             val orderId = orderRepository.placeOrder(
                 offerId = currentOfferId,
-                userRole = "CONSUMER",
+                userRole = effectiveRole,
                 quantity = state.quantity,
                 totalPrice = state.totalPrice,
-                paymentMethod = state.selectedPaymentMethod.name
+                paymentMethod = if (isFreeClaim) "FREE_CLAIM" else state.selectedPaymentMethod.name
             )
 
             if (orderId != null) {

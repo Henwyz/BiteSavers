@@ -84,14 +84,17 @@ class BusinessProfileViewModel(application: Application) : AndroidViewModel(appl
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                // 1. Fetch User details from users table
+                var fetchedWalletBalance = 0.0
+
+                // 1. Fetch User details and live wallet balance from users table
                 if (userId.isNotBlank()) {
                     try {
                         val userDto = repository.getUser(userId)
+                        fetchedWalletBalance = userDto.walletBalance
                         val owner = BusinessOwnerAccountUiModel(name = userDto.name, email = userDto.email)
                         _ownerAccount.value = owner
                         _accountDraft.update { it.copy(name = owner.name, email = owner.email) }
-                        Log.d("BusinessProfile", "Loaded account: ${owner.name} (${owner.email})")
+                        Log.d("BusinessProfile", "Loaded account: ${owner.name} (${owner.email}), Balance: RM $fetchedWalletBalance")
                     } catch (e: Exception) {
                         Log.w("BusinessProfile", "Could not fetch user: ${e.message}")
                     }
@@ -114,7 +117,11 @@ class BusinessProfileViewModel(application: Application) : AndroidViewModel(appl
                     currentLatitude = activeApprovedStore.latitude ?: 5.4674
                     currentLongitude = activeApprovedStore.longitude ?: 100.2790
 
-                    val storeUi = activeApprovedStore.toUiModel()
+                    // Maps the active approved store to UI model and attaches storeId and walletBalance
+                    val storeUi = activeApprovedStore.toUiModel().copy(
+                        storeId = activeApprovedStore.id,
+                        walletBalance = fetchedWalletBalance
+                    )
                     _profile.value = storeUi
 
                     // Pre-fill business draft with the APPROVED details

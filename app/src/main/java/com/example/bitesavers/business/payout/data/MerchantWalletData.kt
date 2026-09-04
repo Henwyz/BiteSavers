@@ -1,4 +1,4 @@
-package com.example.bitesavers.business.payment.data
+package com.example.bitesavers.business.payout.data
 
 import com.example.bitesavers.data.remote.dto.MerchantPayoutDto
 

@@ -17,6 +17,11 @@ object UserSession {
     private const val KEY_STORE_STATUS = "saved_store_status" // Added to persist store status on disk
     private const val KEY_NOTIFIED_BANNER_IDS = "saved_notified_banner_ids"
 
+    // Locally cached merchant payout credentials for low-latency retrieval
+    private const val KEY_PAYOUT_CARD_NUMBER = "saved_payout_card_number"
+    private const val KEY_PAYOUT_CARD_BANK = "saved_payout_card_bank"
+    private const val KEY_PAYOUT_CARD_HOLDER = "saved_payout_card_holder"
+
     // Holds Android SharedPreferences instance once initialized
     private var sharedPreferences: SharedPreferences? = null
 
@@ -31,6 +36,7 @@ object UserSession {
     private val _notificationRefreshEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val notificationRefreshEvent: SharedFlow<Unit> = _notificationRefreshEvent.asSharedFlow()
 
+    private var storeStatus: String = "PENDING"
 
     /**
      * Initializes disk storage access and restores any previously saved session.
@@ -84,6 +90,24 @@ object UserSession {
     fun getUserRole(): String = _currentUserRole.value
 
     /**
+     * Caches the merchant's payout account details directly to SharedPreferences.
+     * This avoids remote network roundtrips when loading the payout interface.
+     */
+    fun savePayoutCard(cardNumber: String, bankName: String, holderName: String) {
+        sharedPreferences?.edit()
+            ?.putString(KEY_PAYOUT_CARD_NUMBER, cardNumber)
+            ?.putString(KEY_PAYOUT_CARD_BANK, bankName)
+            ?.putString(KEY_PAYOUT_CARD_HOLDER, holderName)
+            ?.commit()
+    }
+
+    fun getPayoutCardNumber(): String = sharedPreferences?.getString(KEY_PAYOUT_CARD_NUMBER, "").orEmpty()
+
+    fun getPayoutCardBank(): String = sharedPreferences?.getString(KEY_PAYOUT_CARD_BANK, "").orEmpty()
+
+    fun getPayoutCardHolder(): String = sharedPreferences?.getString(KEY_PAYOUT_CARD_HOLDER, "").orEmpty()
+
+    /**
      * Returns the set of order IDs that have already displayed a system heads-up banner.
      */
     fun getNotifiedBannerOrderIds(): Set<String> {
@@ -122,8 +146,6 @@ object UserSession {
             ?.clear()
             ?.commit()
     }
-
-    private var storeStatus: String = "PENDING"
 
     fun setStoreStatus(status: String) {
         storeStatus = status

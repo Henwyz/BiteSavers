@@ -1,9 +1,11 @@
-package com.example.bitesavers.customer.discovery.logic
+package com.example.bitesavers.util
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.location.Geocoder
 import android.location.Location
 import android.location.LocationManager
+import java.util.Locale
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
@@ -60,6 +62,27 @@ object LocationUtils {
         } else {
             // Default fallback coordinates (e.g. Kuala Lumpur)
             onCoordinatesFetched(3.1390, 101.6869)
+        }
+    }
+
+    /**
+     * Converts an address string into latitude and longitude coordinates.
+     */
+    fun getCoordinatesFromAddress(context: Context, address: String): Pair<Double, Double> {
+        val fallback = Pair(5.4674, 100.2790) // Default: Penang
+        if (address.isBlank()) return fallback
+
+        return try {
+            val geocoder = Geocoder(context, Locale.getDefault())
+            @Suppress("DEPRECATION")
+            val results = geocoder.getFromLocationName(address, 1)
+            if (!results.isNullOrEmpty()) {
+                Pair(results[0].latitude, results[0].longitude)
+            } else {
+                fallback
+            }
+        } catch (e: Exception) {
+            fallback
         }
     }
 }
