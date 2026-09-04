@@ -55,8 +55,8 @@ fun OfferCard(
     onToggleBookmark: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    // Condition: Approved NGO user + eligible item + closing within 1 hour
-    val isNgoFree = isNgoApproved && offer.isEligibleForNgoFree && offer.hoursToClose <= 1
+    // Condition: Approved NGO user + eligible item
+    val isNgoFree = isNgoApproved && offer.isEligibleForNgoFree
 
     Card(
         modifier = modifier
@@ -73,7 +73,6 @@ fun OfferCard(
                 .fillMaxWidth()
                 .height(150.dp)
         ) {
-            // Asynchronous network image loading with Coil, falling back to local food drawable
             SubcomposeAsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(offer.imageUrl)
@@ -104,7 +103,7 @@ fun OfferCard(
                 }
             )
 
-            // Badge Display: Shows FREE CLAIM for Approved NGOs, or standard Discount % for Consumers
+            // Shortened to Free Claim for NGO to avoid two lines
             Box(
                 modifier = Modifier
                     .padding(10.dp)
@@ -116,23 +115,16 @@ fun OfferCard(
                     .align(Alignment.TopStart)
             ) {
                 Text(
-                    text = if (isNgoFree) {
-                        stringResource(id = R.string.badge_ngo_free)
-                    } else {
-                        stringResource(id = R.string.discount_tag, offer.discountPercent)
-                    },
+                    text = if (isNgoFree) stringResource(id = R.string.badge_free_claim)
+                    else stringResource(id = R.string.discount_tag, offer.discountPercent),
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                     style = MaterialTheme.typography.labelMedium,
-                    color = if (isNgoFree) {
-                        MaterialTheme.colorScheme.onPrimary
-                    } else {
-                        MaterialTheme.colorScheme.onTertiary
-                    },
+                    color = if (isNgoFree) MaterialTheme.colorScheme.onPrimary
+                    else MaterialTheme.colorScheme.onTertiary,
                     fontWeight = FontWeight.Bold
                 )
             }
 
-            // Bookmark / Favourite Toggle Button with ic_saved and clean inset margins
             IconButton(
                 onClick = { onToggleBookmark(offer.id) },
                 modifier = Modifier
@@ -153,7 +145,6 @@ fun OfferCard(
         }
 
         Column(modifier = Modifier.padding(12.dp)) {
-            // Food Title with fixed min height and max 2 lines to preserve card grid alignment
             Text(
                 text = offer.title,
                 style = MaterialTheme.typography.titleMedium,
@@ -165,43 +156,19 @@ fun OfferCard(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Store Name & Real Dynamic Rating Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = offer.storeName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false)
-                )
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_star_filled),
-                        contentDescription = stringResource(R.string.cd_store_rating),
-                        tint = Color(0xFFFFB800),
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Text(
-                        text = "%.1f".format(offer.storeRating),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-            }
+            // Store Name row
+            Text(
+                text = offer.storeName,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.fillMaxWidth()
+            )
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Price Row: Prevents wrapping 'RM' across lines and dynamically manages width
+            // Price Row using the mapper's unified visual price directly without double calculation
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -254,7 +221,7 @@ fun OfferCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Location, Quantity and Closing details: Formatted cleanly to avoid visual clutter
+            // Retains distance, quantity left, and closing text for discovery screen
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -282,7 +249,6 @@ fun OfferCard(
     }
 }
 
-// Offer card for map pin preview carousel
 @Composable
 fun CompactDiscoveryOfferCard(
     offer: OfferUiModel,
@@ -290,7 +256,7 @@ fun CompactDiscoveryOfferCard(
     onClick: (OfferUiModel) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isNgoFree = isNgoApproved && offer.isEligibleForNgoFree && offer.hoursToClose <= 1
+    val isNgoFree = isNgoApproved && offer.isEligibleForNgoFree
 
     Card(
         modifier = modifier.clickable { onClick(offer) },
@@ -304,7 +270,6 @@ fun CompactDiscoveryOfferCard(
             modifier = Modifier.padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Image Thumbnail
             Box(
                 modifier = Modifier
                     .size(54.dp)
@@ -336,7 +301,7 @@ fun CompactDiscoveryOfferCard(
                             .align(Alignment.TopStart)
                     ) {
                         Text(
-                            text = stringResource(id = R.string.price_free),
+                            text = stringResource(id = R.string.badge_free_claim),
                             color = MaterialTheme.colorScheme.onPrimary,
                             fontSize = 8.sp,
                             fontWeight = FontWeight.Bold
@@ -347,7 +312,6 @@ fun CompactDiscoveryOfferCard(
 
             Spacer(modifier = Modifier.width(10.dp))
 
-            // Details Column
             Column(
                 modifier = Modifier.weight(1f, fill = false),
                 verticalArrangement = Arrangement.Center
@@ -360,25 +324,13 @@ fun CompactDiscoveryOfferCard(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        text = offer.storeName,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
-                    )
-                    Text(
-                        text = "★%.1f".format(offer.storeRating),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFFFFB800),
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                Text(
+                    text = offer.storeName,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -413,7 +365,6 @@ private fun OfferCardConsumerPreview() {
                     id = "1",
                     title = "Bolognese Spaghetti with Signature Minced Beef Meatballs",
                     storeName = "Mr Lee Western Food",
-                    storeRating = 4.7,
                     imageResId = R.drawable.food_spaghetti,
                     imageUrl = null,
                     discountPercent = 30,
@@ -447,7 +398,6 @@ private fun OfferCardNgoPreview() {
                     id = "2",
                     title = "Artisan Butter Croissant",
                     storeName = "Madam Lim Bakery",
-                    storeRating = 4.9,
                     imageResId = R.drawable.food_spaghetti,
                     imageUrl = null,
                     discountPercent = 50,

@@ -940,4 +940,13 @@
     <string name="btn_claim_free_ngo">Claim for Free (NGO)</string>
 
     <string name="total_title">Total</string>
+
+    <string name="badge_free_claim">Free Claim</string>
+    <string name="label_free_claim_caps">FREE</string>
+    <string name="currency_rm_zero">RM 0.00</string>
+    <string name="label_tax_exempt">RM 0.00 (Exempt)</string>
+    <string name="tax_label_sst">SST (6%)</string>
+    <string name="subtotal_label_format">Subtotal (%1$dx)</string>
+
+    <string name="stock_remaining_count">%1$d left</string>
 </resources>

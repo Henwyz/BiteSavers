@@ -31,6 +31,7 @@ fun FoodDetailCheckoutBar(
     isSoldOut: Boolean,
     isExpired: Boolean,
     isOpen: Boolean = true,
+    isNgoFreeClaim: Boolean = false,
     timeStatusText: String = "",
     onReserveClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -66,6 +67,7 @@ fun FoodDetailCheckoutBar(
                     Text(
                         text = when {
                             isSoldOut -> stringResource(id = R.string.btn_sold_out)
+                            isNgoFreeClaim -> stringResource(id = R.string.badge_free_claim)
                             !isOpen -> if (timeStatusText.isNotBlank()) timeStatusText else stringResource(id = R.string.btn_store_closed)
                             isExpired -> stringResource(id = R.string.btn_offer_expired)
                             else -> stringResource(id = R.string.action_reserve_now)
@@ -78,13 +80,15 @@ fun FoodDetailCheckoutBar(
                             MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                         }
                     )
-                    if (isActionEnabled) {
+
+                    // Only display the price addition when it is a paid transaction
+                    if (isActionEnabled && !isNgoFreeClaim) {
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = stringResource(id = R.string.currency_rm, totalPrice),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                            color = MaterialTheme.colorScheme.onPrimary
                         )
                     }
                 }
@@ -99,11 +103,28 @@ fun FoodDetailCheckoutBar(
 private fun FoodDetailCheckoutBarPreview() {
     BiteSaversTheme {
         FoodDetailCheckoutBar(
-            totalPrice = 10.50,
+            totalPrice = 1.06,
             isSoldOut = false,
             isExpired = false,
             isOpen = true,
+            isNgoFreeClaim = false,
             timeStatusText = "Closes in 2h",
+            onReserveClick = {}
+        )
+    }
+}
+
+@Preview(name = "Checkout Bar - NGO Free Claim", showBackground = true)
+@Composable
+private fun FoodDetailCheckoutBarNgoPreview() {
+    BiteSaversTheme {
+        FoodDetailCheckoutBar(
+            totalPrice = 0.00,
+            isSoldOut = false,
+            isExpired = false,
+            isOpen = true,
+            isNgoFreeClaim = true,
+            timeStatusText = "Free Claim",
             onReserveClick = {}
         )
     }
@@ -114,7 +135,7 @@ private fun FoodDetailCheckoutBarPreview() {
 private fun FoodDetailCheckoutBarClosedPreview() {
     BiteSaversTheme {
         FoodDetailCheckoutBar(
-            totalPrice = 10.50,
+            totalPrice = 1.06,
             isSoldOut = false,
             isExpired = false,
             isOpen = false,
@@ -129,7 +150,7 @@ private fun FoodDetailCheckoutBarClosedPreview() {
 private fun FoodDetailCheckoutBarSoldOutPreview() {
     BiteSaversTheme {
         FoodDetailCheckoutBar(
-            totalPrice = 10.50,
+            totalPrice = 1.06,
             isSoldOut = true,
             isExpired = false,
             isOpen = true,

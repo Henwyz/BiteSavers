@@ -115,11 +115,16 @@ fun FoodDetailScreen(
         else -> true
     }
 
-    // Resolves proper button text with dynamic minute status
+    // Resolves visual pricing with 6% SST added
+    val isFreeClaim = isNgoClaimEligible || state.totalPrice <= 0.0
+    val visualPriceWithTax = if (isFreeClaim) 0.0 else Math.round(state.totalPrice * 1.06 * 100.0) / 100.0
+    val visualTax = if (isFreeClaim) 0.0 else Math.round(state.totalPrice * 0.06 * 100.0) / 100.0
+
+    // Resolves button text
     val dynamicTimingText = state.liveTimeStatus.ifBlank { offer?.timeStatusText ?: "" }
     val actionButtonText = when {
         isSoldOut -> stringResource(R.string.btn_sold_out)
-        isNgoClaimEligible -> stringResource(R.string.btn_claim_free_ngo)
+        isNgoClaimEligible -> stringResource(R.string.badge_free_claim)
         !isStoreOpen -> stringResource(R.string.btn_store_closed)
         isPickupExpired && !state.isNgoApproved -> stringResource(R.string.btn_pickup_closed_consumer)
         else -> dynamicTimingText
@@ -136,10 +141,11 @@ fun FoodDetailScreen(
         bottomBar = {
             if (offer != null) {
                 FoodDetailCheckoutBar(
-                    totalPrice = state.totalPrice,
+                    totalPrice = visualPriceWithTax,
                     isSoldOut = isSoldOut,
                     isExpired = !canUserReserve,
                     isOpen = isStoreOpen || isNgoClaimEligible,
+                    isNgoFreeClaim = isNgoClaimEligible,
                     timeStatusText = actionButtonText,
                     onReserveClick = { onEvent(FoodDetailUiEvent.OnReserveClicked) }
                 )
@@ -211,7 +217,7 @@ fun FoodDetailScreen(
                                 hoursToClose = if (isNgoClaimEligible) 1 else if (state.minutesToClose > 0) 1 else 0,
                                 stockLeft = offer.quantityLeft,
                                 isOpen = isStoreOpen || isNgoClaimEligible,
-                                timeStatusText = if (isNgoClaimEligible) stringResource(R.string.status_ngo_free_claim) else dynamicTimingText
+                                timeStatusText = if (isNgoClaimEligible) stringResource(R.string.badge_free_claim) else dynamicTimingText
                             )
 
                             FoodDetailSafetyBanner(
@@ -223,7 +229,7 @@ fun FoodDetailScreen(
                                 description = offer.description
                             )
 
-                            // Display quantity selector only if stock is available and user is eligible to reserve
+                            // Display quantity selector and visual tax breakdown card
                             if (canUserReserve) {
                                 FoodDetailQuantitySelector(
                                     quantity = state.quantity,
@@ -231,7 +237,6 @@ fun FoodDetailScreen(
                                     onDecrease = { onEvent(FoodDetailUiEvent.OnDecreaseQuantity) }
                                 )
 
-                                // Visual tax breakdown card
                                 Card(
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(12.dp),
@@ -243,14 +248,15 @@ fun FoodDetailScreen(
                                             horizontalArrangement = Arrangement.SpaceBetween
                                         ) {
                                             Text(
-                                                text = "Subtotal (${state.quantity}x)",
+                                                text = stringResource(R.string.subtotal_label_format, state.quantity),
                                                 fontSize = 12.sp,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                             Text(
-                                                text = stringResource(R.string.currency_rm, state.subtotal),
+                                                text = if (isFreeClaim) stringResource(R.string.label_free_claim_caps) else stringResource(R.string.currency_rm, state.subtotal),
                                                 fontSize = 12.sp,
-                                                color = MaterialTheme.colorScheme.onSurface
+                                                fontWeight = if (isFreeClaim) FontWeight.Bold else FontWeight.Normal,
+                                                color = if (isFreeClaim) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                                             )
                                         }
 
@@ -261,12 +267,12 @@ fun FoodDetailScreen(
                                             horizontalArrangement = Arrangement.SpaceBetween
                                         ) {
                                             Text(
-                                                text = "SST (6% incl.)",
+                                                text = stringResource(R.string.tax_label_sst),
                                                 fontSize = 12.sp,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                             Text(
-                                                text = stringResource(R.string.currency_rm, state.visualTaxAmount),
+                                                text = if (isFreeClaim) stringResource(R.string.label_tax_exempt) else stringResource(R.string.currency_rm, visualTax),
                                                 fontSize = 12.sp,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -287,7 +293,7 @@ fun FoodDetailScreen(
                                                 color = MaterialTheme.colorScheme.onSurface
                                             )
                                             Text(
-                                                text = stringResource(R.string.currency_rm, state.totalPrice),
+                                                text = if (isFreeClaim) stringResource(R.string.currency_rm_zero) else stringResource(R.string.currency_rm, visualPriceWithTax),
                                                 fontSize = 14.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 color = MaterialTheme.colorScheme.primary
@@ -316,7 +322,7 @@ private fun FoodDetailScreenPreview() {
                 isLoading = false,
                 isSaved = false,
                 quantity = 1,
-                totalPrice = 9.90,
+                totalPrice = 1.00,
                 isTemperatureSafe = true,
                 isNgoApproved = false,
                 minutesToClose = 45,
@@ -329,8 +335,8 @@ private fun FoodDetailScreenPreview() {
                     storeRating = 4.9,
                     imageResId = R.drawable.food_spaghetti,
                     discountPercent = 45,
-                    currentPrice = 9.90,
-                    originalPrice = 18.00,
+                    currentPrice = 1.00,
+                    originalPrice = 2.00,
                     distanceKm = 0.3,
                     quantityLeft = 6,
                     hoursToClose = 1,

@@ -37,14 +37,18 @@ fun FoodDetailStatusRow(
     modifier: Modifier = Modifier
 ) {
     val isSoldOut = stockLeft <= 0
-    // Item is only truly expired if the store was open and current time passed the window
     val isExpired = isOpen && hoursToClose <= 0 && timeStatusText.equals("Closed", ignoreCase = true)
+
+    // Formats any NGO label to single line "Free Claim"
+    val cleanStatusText = when {
+        timeStatusText.contains("NGO", ignoreCase = true) || timeStatusText.contains("Free", ignoreCase = true) -> stringResource(R.string.badge_free_claim)
+        else -> timeStatusText.removePrefix("Closes in ")
+    }
 
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // 1. TIME STATUS CARD (Opens In / Closes In / Free NGO Claim / Expired)
         Card(
             modifier = Modifier
                 .weight(1f)
@@ -91,10 +95,9 @@ fun FoodDetailStatusRow(
                     )
                 }
 
-                // Prioritizes the dynamic live minute string over static hours
                 Text(
                     text = when {
-                        timeStatusText.isNotBlank() -> timeStatusText.removePrefix("Closes in ")
+                        cleanStatusText.isNotBlank() -> cleanStatusText
                         isExpired -> stringResource(id = R.string.detail_status_expired)
                         hoursToClose > 0 -> stringResource(id = R.string.detail_expires_in_time, hoursToClose)
                         else -> stringResource(id = R.string.detail_status_expired)
@@ -105,12 +108,12 @@ fun FoodDetailStatusRow(
                         !isOpen -> MaterialTheme.colorScheme.onSurfaceVariant
                         else -> MaterialTheme.colorScheme.onTertiaryContainer
                     },
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1
                 )
             }
         }
 
-        // 2. STOCK LEFT CARD (Green tint / Error tint if sold out)
         Card(
             modifier = Modifier.weight(1f),
             shape = RoundedCornerShape(12.dp),
@@ -134,11 +137,7 @@ fun FoodDetailStatusRow(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = if (isSoldOut) {
-                        stringResource(id = R.string.stock_sold_out)
-                    } else {
-                        stockLeft.toString()
-                    },
+                    text = if (isSoldOut) stringResource(id = R.string.stock_sold_out) else stockLeft.toString(),
                     style = MaterialTheme.typography.titleLarge,
                     color = if (isSoldOut) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSecondaryContainer,
                     fontWeight = FontWeight.Bold
@@ -149,6 +148,7 @@ fun FoodDetailStatusRow(
 }
 
 @Preview(name = "Status Row - Available", showBackground = true)
+@Preview(name = "Status Row - Available - Dark", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
 private fun FoodDetailStatusRowAvailablePreview() {
     BiteSaversTheme {
@@ -163,46 +163,16 @@ private fun FoodDetailStatusRowAvailablePreview() {
     }
 }
 
-@Preview(name = "Status Row - Opening Soon", showBackground = true)
+@Preview(name = "Status Row - Free Claim", showBackground = true)
 @Composable
-private fun FoodDetailStatusRowOpeningSoonPreview() {
+private fun FoodDetailStatusRowFreeClaimPreview() {
     BiteSaversTheme {
         Box(modifier = Modifier.padding(16.dp)) {
             FoodDetailStatusRow(
-                hoursToClose = 0,
-                stockLeft = 6,
-                isOpen = false,
-                timeStatusText = "Opens in 6h"
-            )
-        }
-    }
-}
-
-@Preview(name = "Status Row - Expired", showBackground = true)
-@Composable
-private fun FoodDetailStatusRowExpiredPreview() {
-    BiteSaversTheme {
-        Box(modifier = Modifier.padding(16.dp)) {
-            FoodDetailStatusRow(
-                hoursToClose = 0,
+                hoursToClose = 1,
                 stockLeft = 6,
                 isOpen = true,
-                timeStatusText = "Closed"
-            )
-        }
-    }
-}
-
-@Preview(name = "Status Row - Sold Out", showBackground = true)
-@Composable
-private fun FoodDetailStatusRowSoldOutPreview() {
-    BiteSaversTheme {
-        Box(modifier = Modifier.padding(16.dp)) {
-            FoodDetailStatusRow(
-                hoursToClose = 2,
-                stockLeft = 0,
-                isOpen = true,
-                timeStatusText = "Closes in 2h"
+                timeStatusText = "Free Claim"
             )
         }
     }

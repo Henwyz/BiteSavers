@@ -82,29 +82,19 @@ fun SavedOfferCard(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // Center details: store name, rating, title, pricing, and sold out / remaining status
+            // Center details: store name, title, pricing, and clean stock remaining status
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = offer.storeName,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = "⭐ ${offer.storeRating}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                // Store name only (Rating removed)
+                Text(
+                    text = offer.storeName,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
 
                 Text(
                     text = offer.title,
@@ -133,24 +123,20 @@ fun SavedOfferCard(
                     )
                 }
 
-                // Displays "Sold Out" in red/error styling when stock is 0, otherwise shows remaining count and distance
+                // Displays "Sold Out" when stock is 0, otherwise shows only remaining count (Distance removed)
                 if (isSoldOut) {
                     Text(
-                        text = stringResource(R.string.sold_out_status, offer.distanceKm),
+                        text = stringResource(R.string.stock_sold_out),
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.error
                     )
                 } else {
                     Text(
-                        text = stringResource(
-                            R.string.offer_details,
-                            offer.distanceKm,
-                            offer.quantityLeft,
-                            offer.hoursToClose
-                        ),
+                        text = stringResource(R.string.stock_remaining_count, offer.quantityLeft),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Medium
                     )
                 }
             }
@@ -180,7 +166,6 @@ private fun SavedOfferCardAvailablePreview() {
                 id = "e1",
                 title = "Japanese Matcha Mille Crepe",
                 storeName = "Sweet Treats Cafe",
-                storeRating = 4.9,
                 imageResId = R.drawable.food_spaghetti,
                 discountPercent = 50,
                 currentPrice = 8.00,
@@ -210,7 +195,6 @@ private fun SavedOfferCardSoldOutPreview() {
                 id = "e2",
                 title = "Japanese Matcha Mille Crepe",
                 storeName = "Sweet Treats Cafe",
-                storeRating = 4.9,
                 imageResId = R.drawable.food_spaghetti,
                 discountPercent = 50,
                 currentPrice = 8.00,

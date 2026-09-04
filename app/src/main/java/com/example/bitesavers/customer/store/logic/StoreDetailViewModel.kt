@@ -6,8 +6,6 @@ import com.example.bitesavers.R
 import com.example.bitesavers.customer.store.data.StoreDetailUiModel
 import com.example.bitesavers.customer.store.data.StoreDetailUiState
 import com.example.bitesavers.customer.store.ui.StoreDetailUiEvent
-import com.example.bitesavers.data.model.DiscoveryCategory
-import com.example.bitesavers.data.model.OfferUiModel
 import com.example.bitesavers.data.mapper.toUiModel
 import com.example.bitesavers.data.repository.StoreRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -59,38 +57,15 @@ class StoreDetailViewModel : ViewModel() {
                         name = storeNameNonNull,
                         address = storeDto.address.ifBlank { "Location not specified" },
                         rating = storeRatingNonNull,
-                        contactPhone = storeDto.contactPhone, // 👈 Now contains the latest approved phone number
+                        contactPhone = storeDto.contactPhone,
                         operatingHours = "Mon – Sun: $openTime - $closeTime",
                         imageUrl = storeDto.imageUrl
                     )
 
+                    // Maps offers using toUiModel so visual tax and NGO claim rules are identical across screens
                     val offerDtos = repository.getOffersByStoreId(storeId)
                     val offerUiList = offerDtos.map { dto ->
-                        val discount = if (dto.originalPrice > 0) {
-                            (((dto.originalPrice - dto.discountedPrice) / dto.originalPrice) * 100).toInt()
-                        } else 0
-
-                        OfferUiModel(
-                            id = dto.id,
-                            title = dto.title,
-                            storeName = storeNameNonNull,
-                            storeRating = storeRatingNonNull,
-                            imageResId = R.drawable.ic_launcher_foreground,
-                            imageUrl = dto.imageUrl,
-                            discountPercent = discount,
-                            currentPrice = dto.discountedPrice,
-                            originalPrice = dto.originalPrice,
-                            distanceKm = 0.0,
-                            quantityLeft = dto.quantityAvailable,
-                            hoursToClose = 2,
-                            pickupWindow = "Today, $openTime - $closeTime",
-                            category = DiscoveryCategory.BAKERY,
-                            isEligibleForNgoFree = dto.isEligibleForNgoFree,
-                            storageType = "HOT",
-                            description = dto.description ?: "Fresh surplus food ready for rescue.",
-                            latitude = storeDto.latitude ?: 5.4674,
-                            longitude = storeDto.longitude ?: 100.2790
-                        )
+                        dto.toUiModel(store = storeDto)
                     }
 
                     _uiState.update {

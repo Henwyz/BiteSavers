@@ -59,7 +59,13 @@ class FoodDetailViewModel(
                 delay(30_000L) // 30-second interval
                 _uiState.value.offer?.let { offer ->
                     val (mins, statusText) = calculateRemainingMinutesAndStatus(offer)
-                    _uiState.update { it.copy(minutesToClose = mins, liveTimeStatus = statusText) }
+                    val isFreeNgo = isNgoApprovedUser && offer.isEligibleForNgoFree
+                    _uiState.update {
+                        it.copy(
+                            minutesToClose = mins,
+                            liveTimeStatus = if (isFreeNgo) "Free Claim" else statusText
+                        )
+                    }
                 }
             }
         }
@@ -142,6 +148,7 @@ class FoodDetailViewModel(
 
                 val isSafe = if (isHot) temp >= 55.0 else temp <= 8.0
 
+                // If active user is an approved NGO and item is in free claim window, price becomes RM 0.00
                 val isFreeForNgo = isNgoApprovedUser && offer.isEligibleForNgoFree
                 val unitPrice = if (isFreeForNgo) 0.0 else offer.currentPrice
 
@@ -157,7 +164,7 @@ class FoodDetailViewModel(
                         isTemperatureSafe = isSafe,
                         isNgoApproved = isNgoApprovedUser,
                         minutesToClose = minsLeft,
-                        liveTimeStatus = statusText,
+                        liveTimeStatus = if (isFreeForNgo) "Free Claim" else statusText,
                         errorMessage = null
                     )
                 }

@@ -27,14 +27,37 @@ class OfferRepository {
 
             val storeIds: List<String> = offers.mapNotNull { it.storeId }.distinct()
             val storesMap = if (storeIds.isNotEmpty()) {
-                client.from("stores")
+                val rawStores = client.from("stores")
                     .select {
                         filter {
                             isIn("id", storeIds)
                         }
                     }
                     .decodeList<StoreDto>()
-                    .associateBy { it.id }
+
+                // Resolves latest store record per owner so edited store names and hours stay in sync
+                val ownerIds = rawStores.mapNotNull { it.ownerId }.distinct()
+                val latestStoresByOwner = if (ownerIds.isNotEmpty()) {
+                    client.from("stores")
+                        .select {
+                            filter {
+                                isIn("owner_id", ownerIds)
+                            }
+                        }
+                        .decodeList<StoreDto>()
+                        .groupBy { it.ownerId }
+                        .mapValues { entry ->
+                            entry.value.firstOrNull { it.status.equals("APPROVED", ignoreCase = true) }
+                                ?: entry.value.lastOrNull()
+                        }
+                } else emptyMap()
+
+                rawStores.associateBy(
+                    keySelector = { it.id },
+                    valueTransform = { store ->
+                        store.ownerId?.let { latestStoresByOwner[it] } ?: store
+                    }
+                )
             } else {
                 emptyMap()
             }
@@ -72,13 +95,25 @@ class OfferRepository {
                 .select { filter { eq("id", offerId) } }
                 .decodeSingle<OfferDto>()
 
-            // Fetch Store for Location & Rating
+            // Fetch Store for Location & Rating, resolving latest edited store by owner_id
             val targetStoreId = offer.storeId
             val store = if (!targetStoreId.isNullOrBlank()) {
                 try {
-                    client.from("stores")
+                    val initialStore = client.from("stores")
                         .select { filter { eq("id", targetStoreId) } }
                         .decodeSingle<StoreDto>()
+
+                    if (!initialStore.ownerId.isNullOrBlank()) {
+                        val ownerStores = client.from("stores")
+                            .select { filter { eq("owner_id", initialStore.ownerId) } }
+                            .decodeList<StoreDto>()
+
+                        ownerStores.firstOrNull { it.status.equals("APPROVED", ignoreCase = true) }
+                            ?: ownerStores.lastOrNull()
+                            ?: initialStore
+                    } else {
+                        initialStore
+                    }
                 } catch (_: Exception) {
                     null
                 }

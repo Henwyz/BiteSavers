@@ -82,6 +82,20 @@ class DiscoveryViewModel : ViewModel() {
                         )
                     }
 
+                    // Refresh offer visibility with validated NGO status
+                    if (allOffers.isNotEmpty()) {
+                        _uiState.update { current ->
+                            val visibleOffers = applyFilters(current, allOffers)
+                            val baseLat = userLatitude ?: defaultLatitude
+                            val baseLng = userLongitude ?: defaultLongitude
+                            current.copy(
+                                offers = visibleOffers,
+                                stores = deriveStoresFromOffers(visibleOffers, baseLat, baseLng),
+                                nearbyMarkers = groupOffersByStore(visibleOffers, baseLat, baseLng)
+                            )
+                        }
+                    }
+
                     // Load bookmarks for this active user
                     savedRepository.loadUserSavedOffers(userId)
 
@@ -151,18 +165,29 @@ class DiscoveryViewModel : ViewModel() {
             _uiState.update { it.copy(isLoading = true) }
 
             try {
+                // Ensure NGO verification is resolved before filtering
+                val userId = UserSession.getUserId().ifBlank { UserSession.currentUserId.value }
+                var isApprovedNgo = _uiState.value.isNgoApproved
+                if (userId.isNotBlank()) {
+                    try {
+                        val status = userRepository.fetchUserNgoStatus(userId)
+                        isApprovedNgo = status.equals("APPROVED", ignoreCase = true)
+                    } catch (_: Exception) {}
+                }
+
                 // Fetch all items from Supabase safely
                 allOffers = repository.fetchOffers()
 
                 // Filter them and generate map markers & stores
                 _uiState.update { current ->
-                    val visibleOffers = applyFilters(current, allOffers)
+                    val updatedState = current.copy(isNgoApproved = isApprovedNgo)
+                    val visibleOffers = applyFilters(updatedState, allOffers)
                     val baseLat = userLatitude ?: defaultLatitude
                     val baseLng = userLongitude ?: defaultLongitude
                     val visibleStores = deriveStoresFromOffers(visibleOffers, baseLat, baseLng)
                     val generatedMarkers = groupOffersByStore(visibleOffers, baseLat, baseLng)
 
-                    current.copy(
+                    updatedState.copy(
                         isLoading = false,
                         userLatitude = userLatitude,
                         userLongitude = userLongitude,
@@ -197,7 +222,6 @@ class DiscoveryViewModel : ViewModel() {
                     firstOffer.distanceKm
                 }
 
-                // Resolves genuine store ID, eliminating incorrect fallback to offer ID
                 val trueStoreId = firstOffer.storeId.ifBlank { "store_01" }
 
                 DiscoveryStoreUiModel(
@@ -240,7 +264,6 @@ class DiscoveryViewModel : ViewModel() {
                     "RM %.2f".format(firstOffer.currentPrice)
                 }
 
-                // Pin target navigates using the authentic store ID
                 val markerStoreId = firstOffer.storeId.ifBlank { "store_01" }
 
                 NearbyDealMarkerUiModel(
@@ -254,7 +277,6 @@ class DiscoveryViewModel : ViewModel() {
             }
     }
 
-    // Handles map pin selection
     fun onMapMarkerClicked(markerStoreId: String?) {
         _uiState.update { current ->
             current.copy(selectedMapOfferId = markerStoreId)
@@ -295,7 +317,6 @@ class DiscoveryViewModel : ViewModel() {
         }
     }
 
-    // Queries the users table in Supabase to verify if ngo_status is APPROVED before unlocking free claims
     fun onUserRoleChanged(role: UserRole? = null) {
         viewModelScope.launch {
             val userId = UserSession.getUserId()
@@ -342,10 +363,6 @@ class DiscoveryViewModel : ViewModel() {
         val currentLng = userLongitude
 
         val filteredSequence = sourceList.asSequence()
-            // 1. Availability Filter:
-            // Keep all active, closed, and expired offers visible so the UI can display badges
-            // and prevent purchase on the detail page as designed.
-            // When filtering by FREE, restrict strictly to approved NGO eligible items.
             .filter { offer ->
                 if (state.selectedCategory == DiscoveryCategory.FREE) {
                     state.isNgoApproved && offer.isEligibleForNgoFree
@@ -353,7 +370,6 @@ class DiscoveryViewModel : ViewModel() {
                     true
                 }
             }
-            // 2. Category Tab Filter:
             .filter { offer ->
                 when (state.selectedCategory) {
                     DiscoveryCategory.ALL -> true
@@ -362,12 +378,10 @@ class DiscoveryViewModel : ViewModel() {
                     DiscoveryCategory.DESSERTS -> offer.category == DiscoveryCategory.DESSERTS
                     DiscoveryCategory.BEVERAGES -> offer.category == DiscoveryCategory.BEVERAGES
                     DiscoveryCategory.FREE -> {
-                        // Unpurchased rescue items become free exclusively to approved NGOs
                         state.isNgoApproved && offer.isEligibleForNgoFree
                     }
                 }
             }
-            // 3. Search Query Filter:
             .filter { offer ->
                 query.isBlank() ||
                         offer.title.lowercase().contains(query) ||

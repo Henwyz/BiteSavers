@@ -24,6 +24,10 @@ fun OfferDto.toUiModel(
         (((origPrice - discPrice) / origPrice) * 100).toInt()
     } else 0
 
+    // Visual 6% tax calculation applied across all UI models so card, header, and detail prices tally
+    val visualCurrentPrice = if (discPrice > 0.0) Math.round(discPrice * 1.06 * 100.0) / 100.0 else 0.0
+    val visualOriginalPrice = if (origPrice > 0.0) Math.round(origPrice * 1.06 * 100.0) / 100.0 else 0.0
+
     // Normalizes input strings by converting spaces and dashes to underscores so "Hot Meals" matches HOT_MEALS
     val normalizedCategory = category
         ?.trim()
@@ -62,12 +66,12 @@ fun OfferDto.toUiModel(
         else -> R.drawable.ic_launcher_foreground
     }
 
-    // Resolves IoT storage classification and live temperature reading from connected storage box
+    // IoT storage classification and live temperature reading from connected storage box
     val isHotHolding = storageBox?.storageType?.contains("Hot", ignoreCase = true) == true
     val resolvedStorageType = if (isHotHolding) "HOT" else "COLD"
     val resolvedTemperature = storageBox?.currentTemperature ?: if (isHotHolding) 60.0 else 4.0
 
-    // Evaluates dynamic NGO free claim windows across Afternoon (final 60m) and Closing/Cleaning windows
+    // Evaluates dynamic NGO free claim windows across 1-hour post-pickup and store cleaning periods
     val dynamicNgoEligible = evaluateNgoFreeEligibility(
         pickupStartStr = this.pickupStart,
         pickupEndStr = this.pickupEnd,
@@ -84,8 +88,8 @@ fun OfferDto.toUiModel(
         storeRating = store?.rating ?: 4.8,
         imageUrl = this.imageUrl,
         discountPercent = calculatedDiscount,
-        currentPrice = discPrice,
-        originalPrice = origPrice,
+        currentPrice = visualCurrentPrice,
+        originalPrice = visualOriginalPrice,
         distanceKm = 0.0,
         quantityLeft = this.quantityAvailable ?: 0,
         hoursToClose = remainingHours,
@@ -104,8 +108,8 @@ fun OfferDto.toUiModel(
 
 /**
  * Evaluates NGO Free Eligibility across two operational scenarios in Malaysia Standard Time:
- * 1. Afternoon window: for 1 hour immediately following the merchant's custom pickup_end (e.g., 4:00 PM - 5:00 PM).
- * 2. Closing window: pickup_end aligns with closing time, remaining free throughout the store's cleanup period.
+ * 1. Afternoon window: for 1 hour immediately following the merchant's custom pickup_end (and before store closing hour).
+ * 2. Closing and Cleaning window: active from store closing time until store cleaning ends (e.g. 5:00 PM to 10:00 PM).
  */
 private fun evaluateNgoFreeEligibility(
     pickupStartStr: String?,
@@ -114,25 +118,25 @@ private fun evaluateNgoFreeEligibility(
     storeCleaningStr: String?,
     persistedFlag: Boolean
 ): Boolean {
-    // If the merchant explicitly enabled it on backend, respect the preference
     if (persistedFlag) return true
 
     val currentMinutes = TimeUtils.getCurrentMinutesOfDay()
-    val pickupEndMinutes = parseTimeToMinutes(pickupEndStr) ?: return false
+    val pickupEndMinutes = parseTimeToMinutes(pickupEndStr)
     val storeClosingMinutes = parseTimeToMinutes(storeClosingStr)
-    val storeCleaningMinutes = parseTimeToMinutes(storeCleaningStr) ?: (pickupEndMinutes + 60)
+    val storeCleaningMinutes = parseTimeToMinutes(storeCleaningStr)
+        ?: (storeClosingMinutes?.plus(60) ?: ((pickupEndMinutes ?: 0) + 60))
 
-    // Check whether this is an evening closing window (pickup ends near or at closing time)
-    val isClosingWindow = storeClosingMinutes != null && Math.abs(pickupEndMinutes - storeClosingMinutes) <= 30
+    // Scenario 2: During the cleaning period after store close (e.g. 5:00 PM to 10:00 PM)
+    val isCleaningPeriod = storeClosingMinutes != null && currentMinutes in storeClosingMinutes..storeCleaningMinutes
 
-    return if (isClosingWindow) {
-        // Scenario 2: End-of-day closing window — free from pickup end until store cleaning time ends
-        currentMinutes in pickupEndMinutes..storeCleaningMinutes
-    } else {
-        // Scenario 1: Afternoon window — free for 1 hour immediately after regular pickup ends (e.g., 4:00 PM to 5:00 PM)
+    // Scenario 1: Afternoon window — free for 1 hour immediately after regular pickup ends, before store closing
+    val isPostPickupPeriod = if (pickupEndMinutes != null) {
         val oneHourAfterPickupEnd = pickupEndMinutes + 60
-        currentMinutes in pickupEndMinutes..oneHourAfterPickupEnd
-    }
+        val isBeforeStoreClose = storeClosingMinutes == null || currentMinutes < storeClosingMinutes
+        currentMinutes in pickupEndMinutes..oneHourAfterPickupEnd && isBeforeStoreClose
+    } else false
+
+    return isCleaningPeriod || isPostPickupPeriod
 }
 
 // Evaluates current system time against store opening and closing intervals to derive dynamic status text
