@@ -55,7 +55,6 @@ fun BusinessHomeScreen(
     viewModel: DashboardViewModel = viewModel(),
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToAddFood: () -> Unit = {},
-    onNavigateToListings: () -> Unit = {},
     onNavigateToOrders: () -> Unit = {},
     onNavigateToVerification: (String) -> Unit = {},
     onNavigateToAnalytics: () -> Unit = {},
@@ -162,8 +161,7 @@ fun BusinessHomeScreen(
                             label = "Active Listings",
                             value = "${metrics.activeListingsCount}",
                             subText = "${metrics.expiringSoonCount} expiring soon",
-                            modifier = Modifier.weight(1f),
-                            onClick = onNavigateToListings
+                            modifier = Modifier.weight(1f)
                         )
                         MetricCard(
                             icon = "\uD83D\uDCC8",
