@@ -158,14 +158,14 @@ fun BusinessHomeScreen(
                     ) {
                         MetricCard(
                             icon = "\uD83D\uDCE6",
-                            label = "Active Listings",
+                            label = stringResource(R.string.dashboard_active_listings),
                             value = "${metrics.activeListingsCount}",
-                            subText = "${metrics.expiringSoonCount} expiring soon",
+                            subText = stringResource(R.string.dashboard_expiring_soon_format, metrics.expiringSoonCount),
                             modifier = Modifier.weight(1f)
                         )
                         MetricCard(
                             icon = "\uD83D\uDCC8",
-                            label = "Food Sold Today",
+                            label = stringResource(R.string.dashboard_food_sold_today),
                             value = "${metrics.foodSoldToday}",
                             subText = metrics.soldGrowthText,
                             modifier = Modifier.weight(1f)
@@ -177,17 +177,17 @@ fun BusinessHomeScreen(
                     ) {
                         MetricCard(
                             icon = "\uD83D\uDCB0",
-                            label = "Revenue Recovered",
-                            value = "RM %.2f".format(metrics.revenueRecovered),
-                            subText = "Today's total",
+                            label = stringResource(R.string.dashboard_revenue_recovered),
+                            value = stringResource(R.string.dashboard_currency_format, metrics.revenueRecovered),
+                            subText = stringResource(R.string.dashboard_todays_total),
                             modifier = Modifier.weight(1f)
                         )
                         MetricCard(
                             icon = "\uD83C\uDF43",
-                            label = "Waste Reduced",
-                            value = "${metrics.wasteReducedKg} kg",
-                            subText = "CO₂ saved: ${metrics.co2SavedKg}kg",
-                            modifier = Modifier.weight(1f),
+                            label = stringResource(R.string.dashboard_waste_reduced),
+                            value = stringResource(R.string.dashboard_waste_kg_format, metrics.wasteReducedKg),
+                            subText = stringResource(R.string.dashboard_co2_saved_format, metrics.co2SavedKg),
+                            modifier = Modifier.weight(1f)
                         )
                     }
                 }
@@ -288,14 +288,13 @@ fun MetricCard(
     label: String,
     value: String,
     subText: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
+    modifier: Modifier = Modifier
 ) {
     Card(
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        modifier = modifier.clickable { onClick() }
+        modifier = modifier
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Box(

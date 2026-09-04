@@ -478,7 +478,7 @@
     <string name="dashboard_expiring_soon_format">%1$d expiring soon</string>
     <string name="dashboard_co2_saved_format">CO₂ saved: %1$.1fkg</string>
     <string name="dashboard_waste_kg_format">%1$.1f kg</string>
-    <string name="dashboard_currency_format">RM %.0f</string>
+    <string name="dashboard_currency_format">RM %.2f</string>
 
     <!-- Business Notification Strings -->
     <string name="notification_icon_desc">Notifications</string>
@@ -596,7 +596,12 @@
     <string name="btn_edit">Edit</string>
     <string name="btn_delete">Delete</string>
     <string name="remaining_count">%1$d remaining</string>
+    <string name="badge_free_ngo">FREE (NGO)</string>
+    <string name="badge_free_percent">-100%</string>
+    <string name="format_discount_percent">-%1$d%%</string>
+    <string name="format_currency_price">RM %.2f</string>
 
+    <!-- Add Food Screen -->
     <string name="add_food_title">Add Surplus Food</string>
     <string name="upload_photo_title">Upload Food Photo</string>
     <string name="upload_photo_subtitle">Tap to take photo or pick from gallery</string>
@@ -621,6 +626,8 @@
     <string name="btn_update_listing">Update Listing</string>
     <string name="btn_publish_listing">Publish Listing</string>
     <string name="format_current_temp">Current: %.1f°C</string>
+    <string name="storage_box_safety_warning">Units with abnormal temperatures are locked and excluded for food safety.</string>
+    <string name="storage_box_none_available_warning">No safe storage units available right now. Please resolve temperature warnings before publishing.</string>
 
     <!-- Photo Selection -->
     <string name="title_choose_photo_source">Choose Photo Source</string>
