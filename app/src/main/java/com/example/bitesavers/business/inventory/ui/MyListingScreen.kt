@@ -52,9 +52,6 @@ import com.example.bitesavers.business.inventory.data.ListingItem
 import com.example.bitesavers.business.inventory.logic.InventoryViewModel
 import com.example.bitesavers.ui.theme.BiteSaversTheme
 import com.example.bitesavers.util.TimeUtils
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,9 +62,9 @@ fun MyListingScreen(
 ) {
     val listings by viewModel.listings.collectAsState()
 
-    // Compare status case-insensitively to match both "ACTIVE" and "Active"
+    // Active count checks whether the listing is not expired and has stock
     val activeCount = listings.count {
-        it.status.equals("Active", ignoreCase = true) && !isPickupEnd(it.pickupEnd)
+        it.status.equals("Active", ignoreCase = true) && !isPickupEnd(it.pickupEnd) && it.quantity > 0
     }
 
     Scaffold(
@@ -101,7 +98,6 @@ fun MyListingScreen(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
-                // Uses painterResource for vector add icon
                 Icon(
                     painter = painterResource(id = R.drawable.ic_add),
                     contentDescription = null,
@@ -134,44 +130,49 @@ fun MyListingScreen(
     }
 }
 
-
-// Checks if current system time has passed pickup end time, supporting multi-day and 12h/24h formats
-// Checks if current system time has passed pickup end time, supporting multi-day and 12h/24h formats
-fun isPickupEnd(pickupEndTimeStr: String?): Boolean {
-    if (pickupEndTimeStr.isNullOrBlank()) return false
+// Self-contained, crash-proof parser for 12h/24h time strings to minutes from midnight
+private fun parseLocalMinutes(timeStr: String?): Int? {
+    if (timeStr.isNullOrBlank()) return null
+    val raw = timeStr.trim().uppercase()
     return try {
-        val trimmed = pickupEndTimeStr.trim()
-        val is12Hour = trimmed.endsWith("AM", ignoreCase = true) || trimmed.endsWith("PM", ignoreCase = true)
-        val parser = if (is12Hour) {
-            SimpleDateFormat("hh:mm a", Locale.US)
-        } else {
-            SimpleDateFormat("HH:mm", Locale.US)
-        }
+        val isPm = raw.contains("PM")
+        val isAm = raw.contains("AM")
+        val clean = raw.replace("AM", "").replace("PM", "").trim()
+        val parts = clean.split(":")
+        var hour = parts[0].trim().toInt()
+        val minute = if (parts.size > 1) parts[1].trim().take(2).toInt() else 0
 
-        val parsedDate = parser.parse(trimmed.take(8)) ?: return false
+        if (isPm && hour < 12) hour += 12
+        if (isAm && hour == 12) hour = 0
 
-        val endCalendar = Calendar.getInstance().apply { time = parsedDate }
-        val endHour = endCalendar.get(Calendar.HOUR_OF_DAY)
-        val endMinute = endCalendar.get(Calendar.MINUTE)
-
-        val currentCal = Calendar.getInstance()
-        val currentHour = currentCal.get(Calendar.HOUR_OF_DAY)
-        val currentMinute = currentCal.get(Calendar.MINUTE)
-
-        // Convert both to total minutes from midnight for foolproof comparison
-        val currentTotalMinutes = currentHour * 60 + currentMinute
-        val endTotalMinutes = endHour * 60 + endMinute
-
-        // If it's early morning (e.g., 00:00 to 05:59) and the pickup window was in the evening (e.g., 19:00 onwards),
-        // the pickup window definitely happened yesterday and has ended.
-        if (currentHour < 6 && endHour >= 18) {
-            return true
-        }
-
-        currentTotalMinutes > endTotalMinutes
+        (hour * 60) + minute
     } catch (_: Exception) {
-        false
+        null
     }
+}
+
+/**
+ * Foolproof pickup window expiration check locked to Malaysia Standard Time (GMT+8).
+ */
+fun isPickupEnd(pickupEndTimeStr: String?): Boolean {
+    val endMinutes = parseLocalMinutes(pickupEndTimeStr) ?: return false
+    val currentMinutes = TimeUtils.getCurrentMinutesOfDay()
+    return currentMinutes > endMinutes
+}
+
+/**
+ * Evaluates whether an item is actively inside the NGO Rescue claim window:
+ * Scenario 1: Within 1 hour post-pickup (pickup_end .. pickup_end + 60m).
+ * Scenario 2: Between pickup_end and store cleanupEndTime.
+ */
+fun isNgoRescueWindow(pickupEndTimeStr: String?, cleanupEndTimeStr: String?): Boolean {
+    val endMinutes = parseLocalMinutes(pickupEndTimeStr) ?: return false
+    val currentMinutes = TimeUtils.getCurrentMinutesOfDay()
+
+    val cleanupMinutes = parseLocalMinutes(cleanupEndTimeStr) ?: (endMinutes + 60)
+    val maxEligibleMinute = maxOf(endMinutes + 60, cleanupMinutes)
+
+    return currentMinutes in endMinutes..maxEligibleMinute
 }
 
 @Composable
@@ -180,8 +181,18 @@ fun ListingCard(
     onEditClick: (String) -> Unit,
     onDelete: () -> Unit
 ) {
-    val isExpired = isPickupEnd(item.pickupEnd)
-    val isNgoRescueTier = item.isEligibleForNgoFree || item.discountPrice == 0.0 || isExpired
+    val isAfterPickup = isPickupEnd(item.pickupEnd)
+    val isNgoWindow = isNgoRescueWindow(item.pickupEnd, item.cleanupEndTime)
+    val isNgoRescueTier = item.isEligibleForNgoFree || item.discountPrice == 0.0 || (isAfterPickup && isNgoWindow)
+
+    // Dynamic resolution of the merchant badge
+    val effectiveStatus = when {
+        item.quantity <= 0 -> "SOLD OUT"
+        item.status.equals("PAUSED", ignoreCase = true) -> "PAUSED"
+        !isAfterPickup -> "ACTIVE"
+        isNgoWindow -> "NGO RESCUE"
+        else -> "PAUSED"
+    }
 
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -300,7 +311,6 @@ fun ListingCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    // Construct explicit pickup duration string
                     val pickupWindowDisplay = if (item.pickupStart.isNotBlank() && item.pickupEnd.isNotBlank()) {
                         "${item.pickupStart} - ${item.pickupEnd}"
                     } else {
@@ -316,27 +326,12 @@ fun ListingCard(
                     )
                 }
 
-                // Determine active phase using pickup and store cleanup boundaries
-                val isPausedState = item.status.equals("PAUSED", ignoreCase = true)
-                val isAfterPickup = isPickupEnd(item.pickupEnd)
-                val isBeforeCleanup = TimeUtils.isCurrentTimeWithin(item.pickupEnd, item.cleanupEndTime) ||
-                        (TimeUtils.getCurrentMinutesOfDay() <= TimeUtils.timeStringToMinutes(item.pickupEnd))
-
-                // Compute badge display for merchant: ACTIVE, NGO RESCUE, or PAUSED
-                val effectiveStatus = when {
-                    isPausedState -> "PAUSED"
-                    // Active during or before pickup window
-                    !isAfterPickup -> "ACTIVE"
-                    // NGO Rescue active between pickup end and cleanup end time
-                    isAfterPickup && TimeUtils.isCurrentTimeWithin(item.pickupEnd, item.cleanupEndTime) -> "NGO RESCUE"
-                    // Past cleanup/closing time (e.g., 2:30 AM), automatically pause/close the listing for the day
-                    else -> "PAUSED"
-                }
-
+                // Status styling according to the resolved status
                 val (statusBg, statusText) = when (effectiveStatus) {
                     "ACTIVE" -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
                     "NGO RESCUE" -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
-                    else -> MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.onErrorContainer
+                    "SOLD OUT" -> MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.onErrorContainer
+                    else -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
                 }
 
                 Box(

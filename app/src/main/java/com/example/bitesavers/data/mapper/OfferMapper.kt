@@ -172,12 +172,21 @@ private fun calculateTimeStatus(
 }
 
 // Parses SQL 24-hour time strings safely into total minutes since midnight
+// Parses both 12-hour AM/PM ("02:30:00 PM") and 24-hour ("14:30:00") time strings into minutes from midnight
 private fun parseTimeToMinutes(timeString: String?): Int? {
     if (timeString.isNullOrBlank()) return null
+    val raw = timeString.trim().uppercase()
     return try {
-        val parts = timeString.split(":")
-        val hour = parts[0].trim().toInt()
-        val minute = if (parts.size > 1) parts[1].trim().take(2).toInt() else 0
+        val isPm = raw.contains("PM")
+        val isAm = raw.contains("AM")
+        val clean = raw.replace("AM", "").replace("PM", "").trim()
+        val parts = clean.split(":")
+        var hour = parts[0].trim().toInt()
+        val minute = if (parts.size > 1) parts[1].trim().toInt() else 0
+
+        if (isPm && hour < 12) hour += 12
+        if (isAm && hour == 12) hour = 0
+
         (hour * 60) + minute
     } catch (_: Exception) {
         null

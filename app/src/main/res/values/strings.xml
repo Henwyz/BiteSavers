@@ -911,4 +911,6 @@
     <string name="cd_wallet_balance">Store wallet balance icon</string>
 
     <string name="payout_error_invalid_card">Account or card number must be between 9 and 16 digits.</string>
+
+    <string name="status_ngo_free_claim">Free NGO Claim</string>
 </resources>

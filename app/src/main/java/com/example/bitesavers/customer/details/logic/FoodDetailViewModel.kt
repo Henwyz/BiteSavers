@@ -8,6 +8,7 @@ import com.example.bitesavers.customer.details.ui.FoodDetailUiEvent
 import com.example.bitesavers.data.remote.UserSession
 import com.example.bitesavers.data.repository.OfferRepository
 import com.example.bitesavers.data.repository.SavedRepository
+import com.example.bitesavers.data.repository.UserRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,20 +25,33 @@ class FoodDetailViewModel(
 
     private val repository: OfferRepository = OfferRepository()
     private val savedRepository: SavedRepository = SavedRepository()
+    private val userRepository: UserRepository = UserRepository()
 
     private val _uiState = MutableStateFlow(FoodDetailUiState())
     val uiState: StateFlow<FoodDetailUiState> = _uiState.asStateFlow()
 
     // Holds background polling coroutine job
     private var pollingJob: Job? = null
+    private var isNgoApprovedUser: Boolean = false
 
     init {
         val offerId: String? = savedStateHandle.get<String>("offerId")
+        checkNgoStatus()
         if (offerId != null) {
             startPolling(offerId)
             observeBookmarkStatus(offerId)
         } else {
             _uiState.update { it.copy(isLoading = false, errorMessage = "Offer not found") }
+        }
+    }
+
+    private fun checkNgoStatus() {
+        val userId = UserSession.getUserId()
+        if (userId.isNotBlank()) {
+            viewModelScope.launch {
+                val status = userRepository.fetchUserNgoStatus(userId)
+                isNgoApprovedUser = status.equals("APPROVED", ignoreCase = true)
+            }
         }
     }
 
@@ -79,7 +93,7 @@ class FoodDetailViewModel(
                 stopPolling()
             }
             is FoodDetailUiEvent.OnReserveClicked -> {
-                // send the card data to the database
+                // Handled in the UI/Route layer for navigation
             }
             is FoodDetailUiEvent.OnStoreClicked -> {
                 // Handled in the UI/Route layer for navigation
@@ -121,12 +135,16 @@ class FoodDetailViewModel(
                     temp <= 8.0
                 }
 
+                // If active user is an approved NGO and item is in free claim window, price becomes 0.0
+                val isFreeForNgo = isNgoApprovedUser && offer.isEligibleForNgoFree
+                val unitPrice = if (isFreeForNgo) 0.0 else offer.currentPrice
+
                 _uiState.update { current ->
                     current.copy(
                         isLoading = false,
                         offer = offer,
                         quantity = if (isInitialLoad) 1 else current.quantity,
-                        totalPrice = if (isInitialLoad) offer.currentPrice else (offer.currentPrice * current.quantity),
+                        totalPrice = unitPrice * (if (isInitialLoad) 1 else current.quantity),
                         isTemperatureSafe = isSafe
                     )
                 }
@@ -140,14 +158,14 @@ class FoodDetailViewModel(
         }
     }
 
-    // Notice these are private now! The UI can only access them via the switchboard.
     private fun increaseQuantity() {
         _uiState.update { current ->
             val maxStock = current.offer?.quantityLeft ?: 1
             if (current.quantity < maxStock) {
                 val newQuantity = current.quantity + 1
-                val newTotal = (current.offer?.currentPrice ?: 0.0) * newQuantity
-                current.copy(quantity = newQuantity, totalPrice = newTotal)
+                val isFree = isNgoApprovedUser && (current.offer?.isEligibleForNgoFree == true)
+                val unitPrice = if (isFree) 0.0 else (current.offer?.currentPrice ?: 0.0)
+                current.copy(quantity = newQuantity, totalPrice = unitPrice * newQuantity)
             } else {
                 current
             }
@@ -158,8 +176,9 @@ class FoodDetailViewModel(
         _uiState.update { current ->
             if (current.quantity > 1) {
                 val newQuantity = current.quantity - 1
-                val newTotal = (current.offer?.currentPrice ?: 0.0) * newQuantity
-                current.copy(quantity = newQuantity, totalPrice = newTotal)
+                val isFree = isNgoApprovedUser && (current.offer?.isEligibleForNgoFree == true)
+                val unitPrice = if (isFree) 0.0 else (current.offer?.currentPrice ?: 0.0)
+                current.copy(quantity = newQuantity, totalPrice = unitPrice * newQuantity)
             } else {
                 current
             }
