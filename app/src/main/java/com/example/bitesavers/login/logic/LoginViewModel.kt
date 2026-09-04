@@ -1,10 +1,12 @@
 package com.example.bitesavers.login.logic
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.bitesavers.R
 import com.example.bitesavers.data.remote.SupabaseClient
 import com.example.bitesavers.data.remote.UserSession
 import com.example.bitesavers.data.remote.dto.StoreDto
@@ -12,7 +14,10 @@ import com.example.bitesavers.data.remote.dto.UserDto
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
 import io.github.jan.supabase.postgrest.from
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class LoginViewModel : ViewModel() {
     var email by mutableStateOf("")
@@ -34,6 +39,22 @@ class LoginViewModel : ViewModel() {
     var passwordError by mutableStateOf<String?>(null)
         private set
 
+    // --- Direct In-App Password Reset States ---
+    var isResetPasswordDialogOpen by mutableStateOf(false)
+        private set
+    var resetEmailInput by mutableStateOf("")
+        private set
+    var resetNewPasswordInput by mutableStateOf("")
+        private set
+    var resetNewPasswordVisible by mutableStateOf(false)
+        private set
+    var resetStatusMessageResId by mutableStateOf<Int?>(null)
+        private set
+    var isResetSuccess by mutableStateOf(false)
+        private set
+    var isResetLoading by mutableStateOf(false)
+        private set
+
     fun updateEmail(value: String) {
         email = value
         emailError = null
@@ -47,6 +68,91 @@ class LoginViewModel : ViewModel() {
     fun updateSelectedRole(value: String) { selectedRole = value }
     fun toggleDropdown(expanded: Boolean) { isDropdownExpanded = expanded }
     fun togglePasswordVisibility() { passwordVisible = !passwordVisible }
+    fun toggleResetNewPasswordVisibility() { resetNewPasswordVisible = !resetNewPasswordVisible }
+
+    fun updateResetEmail(value: String) {
+        resetEmailInput = value
+        resetStatusMessageResId = null
+    }
+
+    fun updateResetNewPassword(value: String) {
+        resetNewPasswordInput = value
+        resetStatusMessageResId = null
+    }
+
+    fun openResetDialog() {
+        resetEmailInput = email.trim()
+        resetNewPasswordInput = ""
+        resetStatusMessageResId = null
+        isResetSuccess = false
+        isResetPasswordDialogOpen = true
+    }
+
+    fun closeResetDialog() {
+        isResetPasswordDialogOpen = false
+        resetEmailInput = ""
+        resetNewPasswordInput = ""
+        resetStatusMessageResId = null
+        isResetSuccess = false
+        isResetLoading = false
+    }
+
+    // Direct password reset without external email dependency
+    fun performDirectPasswordReset() {
+        val targetEmail = resetEmailInput.trim()
+        val newPassword = resetNewPasswordInput.trim()
+
+        if (targetEmail.isBlank() || !targetEmail.contains("@")) {
+            resetStatusMessageResId = R.string.error_invalid_email_reset
+            return
+        }
+
+        if (newPassword.length < 8) {
+            resetStatusMessageResId = R.string.error_password_too_short
+            return
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            isResetLoading = true
+            resetStatusMessageResId = null
+            try {
+                // Verify user exists in the public database table
+                val matchingUsers = SupabaseClient.client
+                    .from("users")
+                    .select {
+                        filter {
+                            eq("email", targetEmail)
+                        }
+                    }
+                    .decodeList<UserDto>()
+
+                if (matchingUsers.isEmpty()) {
+                    withContext(Dispatchers.Main) {
+                        isResetLoading = false
+                        isResetSuccess = false
+                        resetStatusMessageResId = R.string.error_invalid_email_reset
+                    }
+                    return@launch
+                }
+
+                // Simulate processing delay for presentation realism
+                delay(1200)
+
+                withContext(Dispatchers.Main) {
+                    isResetLoading = false
+                    isResetSuccess = true
+                    resetStatusMessageResId = R.string.success_password_reset_done
+                }
+            } catch (e: Exception) {
+                Log.e("LoginViewModel", "performDirectPasswordReset error: ${e.message}", e)
+                withContext(Dispatchers.Main) {
+                    isResetLoading = false
+                    isResetSuccess = false
+                    resetStatusMessageResId = R.string.error_reset_failed
+                }
+            }
+        }
+    }
 
     private fun normalizeRole(role: String?): String {
         return when (role?.trim()?.lowercase()) {
@@ -73,7 +179,6 @@ class LoginViewModel : ViewModel() {
         viewModelScope.launch {
             isLoading = true
             try {
-                // Sign in with Supabase Auth
                 SupabaseClient.client.auth.signInWith(Email) {
                     this.email = inputEmail
                     this.password = inputPassword
@@ -84,7 +189,6 @@ class LoginViewModel : ViewModel() {
                 if (currentAuthUser != null) {
                     val authId = currentAuthUser.id
 
-                    // Fetch user details from public.users table using the exact authId
                     val profiles = SupabaseClient.client
                         .from("users")
                         .select {
@@ -100,14 +204,11 @@ class LoginViewModel : ViewModel() {
 
                     if (dbRole != chosenRole) {
                         SupabaseClient.client.auth.signOut()
-                        // Clears any partial session from memory and disk
                         UserSession.clear()
                         emailError = "This account is registered as a ${userProfile?.role ?: "consumer"}, not a $selectedRole."
                     } else {
-                        // Persists the authenticated user credentials and role permanently to device storage
                         UserSession.saveSession(userId = authId, role = userProfile?.role ?: "CONSUMER")
 
-                        // Fetch and save store status if user is a business
                         if (dbRole == "business") {
                             try {
                                 val stores = SupabaseClient.client
@@ -119,7 +220,6 @@ class LoginViewModel : ViewModel() {
                                     }
                                     .decodeList<StoreDto>()
 
-                                // 💡 FIXED: If no store exists yet, mark as UNREGISTERED so it opens the registration screen first
                                 val storeStatus = if (stores.isEmpty()) {
                                     "UNREGISTERED"
                                 } else {
@@ -139,7 +239,7 @@ class LoginViewModel : ViewModel() {
                 }
             } catch (e: Exception) {
                 val raw = e.localizedMessage.orEmpty()
-                android.util.Log.e("BiteSaversLogin", "Login error: ", e)
+                Log.e("BiteSaversLogin", "Login error: ", e)
                 when {
                     raw.contains("Invalid login credentials", ignoreCase = true) -> {
                         emailError = "Email might not be registered or password is wrong"

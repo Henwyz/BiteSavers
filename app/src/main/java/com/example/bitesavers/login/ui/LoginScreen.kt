@@ -1,5 +1,6 @@
 package com.example.bitesavers.login.ui
 
+import android.content.res.Configuration
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -32,6 +34,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -81,7 +84,7 @@ fun LoginScreen(
                     .blur(1.dp)
             )
 
-            // Fixed: Using a dark translucent overlay instead of theme secondary color so text is visible in dark mode
+            // Dark translucent overlay for consistent contrast across dark/light themes
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -113,7 +116,6 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                // Fixed: High-contrast white text so it clearly shows over the dark overlay in any mode
                 Text(
                     text = stringResource(R.string.login_tagline),
                     style = MaterialTheme.typography.bodyMedium,
@@ -324,6 +326,7 @@ fun LoginScreen(
                         }
                     }
 
+                    // Opens the reset password dialog
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -335,7 +338,7 @@ fun LoginScreen(
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.clickable { /* Handle click */ }
+                            modifier = Modifier.clickable { viewModel.openResetDialog() }
                         )
                     }
 
@@ -397,5 +400,133 @@ fun LoginScreen(
             }
         }
     }
+
+    // Direct In-App Password Reset Dialog
+    if (viewModel.isResetPasswordDialogOpen) {
+        AlertDialog(
+            onDismissRequest = { viewModel.closeResetDialog() },
+            title = {
+                Text(
+                    text = stringResource(R.string.forgot_password_dialog_title),
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = stringResource(R.string.forgot_password_dialog_desc),
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Registered Email Field
+                    OutlinedTextField(
+                        value = viewModel.resetEmailInput,
+                        onValueChange = { viewModel.updateResetEmail(it) },
+                        label = { Text(stringResource(R.string.login_email_label)) },
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_mail),
+                                contentDescription = stringResource(R.string.cd_email_icon),
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // New Password Field
+                    OutlinedTextField(
+                        value = viewModel.resetNewPasswordInput,
+                        onValueChange = { viewModel.updateResetNewPassword(it) },
+                        label = { Text(stringResource(R.string.profile_new_password_label)) },
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_password),
+                                contentDescription = stringResource(R.string.cd_password_icon),
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = { viewModel.toggleResetNewPasswordVisibility() }) {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (viewModel.resetNewPasswordVisible) R.drawable.ic_show else R.drawable.ic_hide
+                                    ),
+                                    contentDescription = stringResource(R.string.cd_toggle_password),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        },
+                        visualTransformation = if (viewModel.resetNewPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+
+                    // Status / Success / Error feedback message
+                    if (viewModel.resetStatusMessageResId != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(viewModel.resetStatusMessageResId!!),
+                            fontSize = 12.sp,
+                            color = if (viewModel.isResetSuccess) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.performDirectPasswordReset() },
+                    enabled = !viewModel.isResetLoading,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                ) {
+                    if (viewModel.isResetLoading) {
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(text = stringResource(R.string.update_password_btn))
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.closeResetDialog() }) {
+                    Text(
+                        text = stringResource(R.string.delete_action), // Cancel
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.surface,
+            shape = RoundedCornerShape(20.dp)
+        )
+    }
 }
 
+@Preview(name = "Login Screen - Light", showBackground = true)
+@Preview(name = "Login Screen - Dark", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Composable
+private fun LoginScreenPreview() {
+    BiteSaversTheme {
+        LoginScreen(
+            viewModel = viewModel(),
+            onLoginSuccess = {},
+            onNavigateToSignUp = {}
+        )
+    }
+}
